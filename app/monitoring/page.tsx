@@ -31,7 +31,7 @@ function MonitoringContent() {
     const [error, setError] = useState<string | null>(null);
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
     const [isRefreshing, setIsRefreshing] = useState(false);
-    const [countdown, setCountdown] = useState(30);
+    const [countdown, setCountdown] = useState(15);
 
     const fetchData = useCallback(async (nocache = false, date?: string) => {
         // Only show full loading state on initial load or date change
@@ -64,14 +64,14 @@ function MonitoringContent() {
     // Auto-refresh logic
     useEffect(() => {
         // Reset countdown and start interval
-        setCountdown(30);
+        setCountdown(15);
 
         const timer = setInterval(() => {
             setCountdown((prev) => {
                 if (prev <= 1) {
                     setIsRefreshing(true);
                     fetchData(true, selectedDate);
-                    return 30; // Reset countdown
+                    return 15; // Reset countdown
                 }
                 return prev - 1;
             });
@@ -82,7 +82,7 @@ function MonitoringContent() {
 
     const handleRefresh = () => {
         setIsRefreshing(true);
-        setCountdown(30);
+        setCountdown(15);
         fetchData(true, selectedDate);
     };
 

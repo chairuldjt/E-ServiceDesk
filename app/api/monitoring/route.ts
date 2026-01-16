@@ -4,7 +4,7 @@ import { getPayloadFromCookie } from '@/lib/jwt';
 
 // Simple in-memory cache
 let cache: { data: any; timestamp: number } | null = null;
-const CACHE_TTL = 30 * 1000; // 30 seconds
+const CACHE_TTL = 15 * 1000; // 15 seconds (reduced for faster updates)
 const STATUSES = [11, 12, 15]; // followup, running, done
 
 export async function GET(request: NextRequest) {
@@ -24,23 +24,23 @@ export async function GET(request: NextRequest) {
     try {
         const { jwt, BASE } = await getExternalToken(payload.id);
 
-        // 3. Get Orders
-        let allOrders: any[] = [];
-        for (const status of STATUSES) {
+        // 3. Get Orders in Parallel (MUCH FASTER)
+        const fetchStatus = async (status: number) => {
             const orderRes = await fetch(`${BASE}/order/order_list_by_status/${status}`, {
                 headers: {
                     'Authorization': `Bearer ${jwt}`,
                     'Accept': 'application/json',
                 },
             });
-
             if (orderRes.ok) {
                 const data = await orderRes.json();
-                if (data.result && Array.isArray(data.result)) {
-                    allOrders = [...allOrders, ...data.result];
-                }
+                return data.result && Array.isArray(data.result) ? data.result : [];
             }
-        }
+            return [];
+        };
+
+        const results = await Promise.all(STATUSES.map(fetchStatus));
+        const allOrders = results.flat();
 
         // 4. Process Data
         const today = new Date();
