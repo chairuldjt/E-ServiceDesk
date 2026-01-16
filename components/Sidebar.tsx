@@ -53,19 +53,21 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       )}
 
       {/* Sidebar Container */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white flex flex-col shadow-2xl transition-all duration-300 ease-in-out lg:relative ${isOpen ? 'translate-x-0 ml-0 shadow-xl' : '-translate-x-full lg:-ml-64 shadow-none'
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white flex flex-col shadow-2xl transition-all duration-300 ease-in-out lg:relative ${isOpen ? 'translate-x-0 ml-0 shadow-xl' : '-translate-x-full lg:-ml-64 shadow-none'
         }`}>
         {/* Logo Section */}
-        <div className="h-16 flex items-center justify-between px-6 border-b border-slate-800 shrink-0">
+        <div className="h-16 flex items-center justify-between px-6 border-b border-slate-700/50 shrink-0 bg-gradient-to-r from-blue-600/10 to-indigo-600/10">
           <div className="flex items-center gap-2">
-            <span className="text-2xl">🏢</span>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-teal-400 bg-clip-text text-transparent">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center text-lg shadow-lg">
+              🏢
+            </div>
+            <h1 className="text-xl font-black bg-gradient-to-r from-blue-400 to-teal-400 bg-clip-text text-transparent">
               E-ServiceDesk
             </h1>
           </div>
           <button
             onClick={onClose}
-            className="lg:hidden text-slate-400 hover:text-white p-2 hover:bg-slate-800 rounded-lg transition-colors"
+            className="lg:hidden text-slate-400 hover:text-white p-2 hover:bg-slate-700/50 rounded-lg transition-colors"
           >
             ✕
           </button>
@@ -83,22 +85,26 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               onClick={() => {
                 if (window.innerWidth < 1024) onClose();
               }}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${isActive(item.path)
-                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
-                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative overflow-hidden ${isActive(item.path)
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30'
+                : 'text-slate-400 hover:bg-slate-700/50 hover:text-white'
                 }`}
             >
-              <span className={`text-xl transition-transform duration-200 group-hover:scale-110`}>
+              {isActive(item.path) && (
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-indigo-400/20 animate-pulse"></div>
+              )}
+              <span className={`text-xl transition-transform duration-200 group-hover:scale-110 relative z-10`}>
                 {item.icon}
               </span>
-              <span className="font-medium">{item.name}</span>
+              <span className="font-bold relative z-10">{item.name}</span>
             </Link>
           ))}
         </nav>
 
         {/* Footer Info */}
-        <div className="p-6 border-t border-slate-800">
+        <div className="p-6 border-t border-slate-700/50 bg-gradient-to-r from-slate-800/50 to-slate-900/50">
           <div className="flex items-center gap-2 text-slate-500 text-[10px] font-medium uppercase tracking-widest">
+            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
             <span>© 2026 E-ServiceDesk</span>
           </div>
         </div>
