@@ -62,6 +62,48 @@ npx tsx reset-admin.ts
 ```
 Akun akan direset menjadi: `admin` / `admin123`.
 
+---
+
+## 🌐 Production Deployment (Ubuntu/Linux Server)
+
+Langkah-langkah untuk mendeploy aplikasi ini ke server production:
+
+### 1. Persiapan Server
+Pastikan server Anda sudah terinstal Node.js (v18+) dan MySQL.
+
+### 2. Setup Project
+```bash
+# Clone repository
+git clone https://github.com/chairuldjt/E-ServiceDesk.git
+cd E-ServiceDesk
+
+# Install dependensi
+npm install
+```
+
+### 3. Konfigurasi Environment
+Salin template env dan sesuaikan dengan database server Anda:
+```bash
+cp .env.example .env.local
+nano .env.local
+```
+
+### 4. Build & Inisialisasi Database
+```bash
+# Inisialisasi Database & Tabel (Hanya jalankan sekali)
+npx tsx init-db.ts
+
+# Build aplikasi Next.js
+npm run build
+```
+
+### 5. Jalankan Aplikasi
+Jalankan server production:
+```bash
+npm start
+```
+Aplikasi akan berjalan pada port default (3000). Untuk urusan startup otomatis atau process management, silakan sesuaikan dengan konfigurasi server Anda (seperti PM2, Systemd, atau Docker).
+
 ## 🏃 Menjalankan Aplikasi
 
 Jalankan server pengembangan:
