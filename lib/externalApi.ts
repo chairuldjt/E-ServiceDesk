@@ -2,6 +2,10 @@ import { getWebminConfig } from './settings';
 
 const BASE = process.env.EXTERNAL_API_BASE || 'http://172.16.1.212:5010';
 
+// In-memory token cache (per user ID)
+const tokenCache: { [key: number]: { jwt: string; expiry: number } } = {};
+const TOKEN_TTL = 30 * 60 * 1000; // 30 minutes cache for JWT
+
 export async function getExternalToken(userId: number) {
     const config = await getWebminConfig(userId);
 
@@ -10,6 +14,12 @@ export async function getExternalToken(userId: number) {
     }
 
     const { user: USER, pass: PASS } = config;
+
+    // Check Cache
+    const cached = tokenCache[userId];
+    if (cached && cached.expiry > Date.now()) {
+        return { jwt: cached.jwt, BASE };
+    }
 
     try {
         // 1. Login
@@ -45,6 +55,12 @@ export async function getExternalToken(userId: number) {
         if (!jwt) {
             throw new Error('JWT not found in external API response');
         }
+
+        // Store in cache
+        tokenCache[userId] = {
+            jwt,
+            expiry: Date.now() + TOKEN_TTL
+        };
 
         return { jwt, BASE };
     } catch (error: any) {

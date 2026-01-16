@@ -16,8 +16,18 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   if (!user) return null;
 
   const isActive = (path: string) => {
-    if (path === '/dashboard') return pathname === '/dashboard';
-    return pathname === path || (path !== '/' && pathname?.startsWith(path + '/'));
+    // Priority 1: Exact Match
+    if (pathname === path) return true;
+
+    // Priority 2: Sub-path match, but ONLY if there isn't a better match in menuItems
+    if (path !== '/' && pathname?.startsWith(path + '/')) {
+      const isBetterMatchExist = menuItems.some(item =>
+        item.path !== path && item.path.startsWith(path) && pathname?.startsWith(item.path)
+      );
+      return !isBetterMatchExist;
+    }
+
+    return false;
   };
 
   const menuItems = [
