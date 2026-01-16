@@ -1,6 +1,7 @@
 import * as dotenv from 'dotenv';
 import mysql from 'mysql2/promise';
 import fs from 'fs';
+import bcrypt from 'bcryptjs';
 
 // Load environment variables
 const envPath = fs.existsSync('.env.local') ? '.env.local' : '.env';
@@ -92,12 +93,13 @@ async function initDatabase() {
         const [adminExists]: any = await connection.query('SELECT id FROM users WHERE username = "admin" OR email = "admin@logbook.com"');
 
         if (adminExists.length === 0) {
-            const adminPasswordHash = '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcg7b3XeKeUxWdeS86E36Z5SrUm'; // Password: admin123
+            const adminPassword = 'admin123';
+            const adminPasswordHash = await bcrypt.hash(adminPassword, 10);
             await connection.query(
                 'INSERT INTO users (username, email, password_hash, role) VALUES (?, ?, ?, ?)',
                 ['admin', 'admin@logbook.com', adminPasswordHash, 'admin']
             );
-            console.log('✅ Admin user created (admin@logbook.com / admin123)');
+            console.log(`✅ Admin user created (admin@logbook.com / ${adminPassword})`);
         } else {
             console.log('ℹ️ Admin user already exists');
         }
