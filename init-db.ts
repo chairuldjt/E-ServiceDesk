@@ -81,12 +81,23 @@ async function initDatabase() {
                 title VARCHAR(255) NOT NULL,
                 content TEXT,
                 color VARCHAR(50) DEFAULT 'white',
+                is_public TINYINT(1) DEFAULT 0,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         `);
         console.log('   - Table "notes" ready');
+
+        // Step 3.5: Migration - Check for missing columns
+        console.log('Checking for schema updates...');
+        const [columns]: any = await connection.query('SHOW COLUMNS FROM notes');
+        const hasIsPublic = columns.some((col: any) => col.Field === 'is_public');
+        if (!hasIsPublic) {
+            console.log('   - Adding missing "is_public" column to "notes" table...');
+            await connection.query('ALTER TABLE notes ADD COLUMN is_public TINYINT(1) DEFAULT 0 AFTER color');
+            console.log('   - Column "is_public" added successfully');
+        }
 
         // Step 4: Seed Admin User
         console.log('Seeding admin user...');
