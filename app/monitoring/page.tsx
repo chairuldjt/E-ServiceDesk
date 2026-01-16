@@ -31,9 +31,13 @@ function MonitoringContent() {
     const [error, setError] = useState<string | null>(null);
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [countdown, setCountdown] = useState(30);
 
     const fetchData = useCallback(async (nocache = false, date?: string) => {
-        setLoading(true);
+        // Only show full loading state on initial load or date change
+        // For auto-refresh, we use isRefreshing to show a subtle indicator
+        if (!data) setLoading(true);
+
         try {
             let url = `/api/monitoring?`;
             if (nocache) url += `nocache=1&`;
@@ -50,14 +54,35 @@ function MonitoringContent() {
             setLoading(false);
             setIsRefreshing(false);
         }
-    }, []);
+    }, [data]);
 
+    // Initial load
     useEffect(() => {
         fetchData(false, selectedDate);
+    }, [selectedDate]); // Removed fetchData from deps to avoid infinite loops, depend on selectedDate
+
+    // Auto-refresh logic
+    useEffect(() => {
+        // Reset countdown and start interval
+        setCountdown(30);
+
+        const timer = setInterval(() => {
+            setCountdown((prev) => {
+                if (prev <= 1) {
+                    setIsRefreshing(true);
+                    fetchData(true, selectedDate);
+                    return 30; // Reset countdown
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(timer);
     }, [fetchData, selectedDate]);
 
     const handleRefresh = () => {
         setIsRefreshing(true);
+        setCountdown(30);
         fetchData(true, selectedDate);
     };
 
@@ -78,7 +103,11 @@ function MonitoringContent() {
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
                         </span>
-                        Live Updates Dashboard
+                        Live Updates
+                        <span className="text-xs bg-slate-100 px-2 py-0.5 rounded-full text-slate-400 flex items-center gap-1 ml-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
+                            Refresh in {countdown}s
+                        </span>
                     </p>
                 </div>
 

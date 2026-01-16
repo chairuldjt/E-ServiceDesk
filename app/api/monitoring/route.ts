@@ -4,7 +4,7 @@ const BASE = process.env.EXTERNAL_API_BASE || 'http://172.16.1.212:5010';
 const USER = process.env.EXTERNAL_API_USER || 'mhafidz';
 const PASS = process.env.EXTERNAL_API_PASS || '2023';
 
-const STATUSES = [11, 12, 15, 30]; // followup, running, done, verify
+const STATUSES = [11, 12, 15]; // followup, running, done, verify
 
 // Simple in-memory cache
 let cache: { data: any; timestamp: number } | null = null;
