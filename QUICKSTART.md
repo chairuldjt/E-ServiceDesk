@@ -3,13 +3,11 @@
 ## 📋 Checklist
 
 - [x] Project initialized dengan Next.js
-- [x] Database (logbook_db) created
-- [x] Tables (users, logbook) created
-- [x] Admin user created
+- [x] Database & Tables created via `init-db.ts`
+- [x] Admin user created via `init-db.ts`
 - [x] All APIs implemented
 - [x] Frontend pages completed
-- [x] Authentication working
-- [x] Export Excel working
+- [x] Authentication & Export CDR working
 - [x] Development server running
 
 ---

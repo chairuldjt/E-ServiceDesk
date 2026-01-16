@@ -33,21 +33,14 @@ cd logbook
 npm install
 ```
 
-#### 5. Database Setup
-Database dan tables sudah dibuat. Verify dengan:
+#### 5. Database Setup & Initialization
+Jalankan script otomatis untuk membuat database, tabel, dan admin:
 ```bash
-mysql -h localhost -u root -p"Rsdk#admin*1"
-# di MySQL CLI:
-SHOW DATABASES;
-USE logbook_db;
-SHOW TABLES;
+npx tsx init-db.ts
 ```
 
 #### 6. Environment Configuration
-File `.env.local` sudah dibuat dengan semua setting yang diperlukan.
-
-#### 7. Create Admin User
-Admin user sudah dibuat (lihat kredensial di PANDUAN.md).
+File `.env.local` sudah disiapkan. Pastikan `MYSQL_USER` dan `MYSQL_PASSWORD` sesuai dengan server Anda.
 
 #### 8. Run Development Server
 ```bash

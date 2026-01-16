@@ -42,24 +42,17 @@ JWT_SECRET=rahasia_anda_yang_sangat_kuat_123!
 JWT_EXPIRES_IN=7d
 ```
 
-### 4. Setup Database
-1. Buka **phpMyAdmin** (http://localhost/phpmyadmin).
-2. Buat database baru dengan nama `logbook_db`.
-3. Buat tabel `users` dan `logbook` menggunakan skema standar (atau jalankan script inisialisasi di bawah).
-
-### 5. Jalankan Script Inisialisasi
-Jalankan perintah berikut untuk menyiapkan tabel dan user admin default:
+### 4. Setup & Inisialisasi Database
+Jalankan perintah berikut untuk membuat database, tabel, dan user admin secara otomatis:
 
 ```bash
-# Tambah kolom is_active dan update schema user
-npx tsx update-users-schema.ts
-
-# Inisialisasi Tabel Notepad
-npx tsx setup-notepad.ts
-
-# Seed Admin User Default
-npx tsx seed-admin.ts
+npx tsx init-db.ts
 ```
+
+Script ini akan:
+1. Membuat database `logbook_db` jika belum ada.
+2. Membuat semua tabel (`users`, `logbook`, `notes`).
+3. Menyiapkan user admin default.
 
 ## 🏃 Menjalankan Aplikasi
 

@@ -18,13 +18,13 @@ Website pencatatan logbook berbasis web yang dibangun dengan:
 - All dependencies terinstall dengan benar
 
 ### 2. ✓ Database Configuration
-- Database: `logbook_db` sudah dibuat
-- 2 tables: `users` dan `logbook` sudah dibuat dengan schema yang benar
-- MySQL credentials: root / Rsdk#admin*1
+- Database: `logbook_db` dibuat secara otomatis
+- Tables: `users`, `logbook`, dan `notes` dibuat secara otomatis via `init-db.ts`
+- MySQL credentials: root / [Sesuai .env.local Anda]
 
 ### 3. ✓ Environment Setup
-- File `.env.local` sudah dikonfigurasi dengan semua credentials
-- JWT secret dan configurations sudah set
+- File `.env.local` digunakan untuk menyimpan credentials
+- File `.env.example` disediakan sebagai panduan konfigurasi
 
 ### 4. ✓ Authentication System
 - Login API (`/api/auth/login`)

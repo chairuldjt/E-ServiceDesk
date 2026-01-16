@@ -25,10 +25,9 @@ Website pencatatan logbook yang lengkap dengan authentication, dashboard, CRUD o
 - **Documentation**: 2000+ lines
 
 ### Database
-- **Tables**: 2 (users, logbook)
-- **Relationships**: 1 (users → logbook)
-- **Indexes**: Proper foreign keys
-- **Constraints**: Cascade delete
+- **Tables**: 3 (users, logbook, notes)
+- **Relationships**: Properly configured foreign keys
+- **Automation**: One-step initialization via `init-db.ts`
 
 ---
 
