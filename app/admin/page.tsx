@@ -1,11 +1,11 @@
 'use client';
 
 import { ProtectedRoute } from '@/components/ProtectedRoute';
-
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useUI } from '@/context/UIContext';
+import { PageHeader, PremiumCard, PremiumButton, PremiumModal, PremiumInput, PremiumBadge } from '@/components/ui/PremiumComponents';
 
 interface LogbookEntry {
   id: number;
@@ -32,9 +32,9 @@ export default function AdminPage() {
 interface User {
   id: number;
   email: string;
-  username: string; // Added username
+  username: string;
   role: string;
-  is_active: number; // Added is_active (using number for boolean from MySQL)
+  is_active: number;
   created_at: string;
 }
 
@@ -208,7 +208,6 @@ function AdminContent() {
     });
   };
 
-
   if (userLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -218,225 +217,369 @@ function AdminContent() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">🛡️ Admin Dashboard</h1>
+    <div className="min-h-screen p-4 md:p-8 space-y-8 animate-in fade-in duration-700">
+      <PageHeader
+        icon="🛡️"
+        title="Admin Dashboard"
+        subtitle="Manajemen sistem dan user"
+      />
 
-        {/* Tab Navigation */}
-        <div className="mb-8 border-b border-gray-200">
-          <div className="flex gap-8">
-            <button onClick={() => setActiveTab('overview')} className={`py-2 px-1 font-medium text-sm border-b-2 transition ${activeTab === 'overview' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-900'}`}>📊 Overview</button>
-            <button onClick={() => setActiveTab('logbook')} className={`py-2 px-1 font-medium text-sm border-b-2 transition ${activeTab === 'logbook' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-900'}`}>📚 Logbook</button>
-            <button onClick={() => setActiveTab('users')} className={`py-2 px-1 font-medium text-sm border-b-2 transition ${activeTab === 'users' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-900'}`}>👥 Users</button>
+      {/* Tab Navigation */}
+      <PremiumCard className="p-2">
+        <div className="flex gap-2">
+          <button
+            onClick={() => setActiveTab('overview')}
+            className={`flex-1 py-3 px-4 font-bold text-sm rounded-xl transition-all ${activeTab === 'overview'
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                : 'text-slate-600 hover:bg-slate-50'
+              }`}
+          >
+            📊 Overview
+          </button>
+          <button
+            onClick={() => setActiveTab('logbook')}
+            className={`flex-1 py-3 px-4 font-bold text-sm rounded-xl transition-all ${activeTab === 'logbook'
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                : 'text-slate-600 hover:bg-slate-50'
+              }`}
+          >
+            📚 Logbook
+          </button>
+          <button
+            onClick={() => setActiveTab('users')}
+            className={`flex-1 py-3 px-4 font-bold text-sm rounded-xl transition-all ${activeTab === 'users'
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                : 'text-slate-600 hover:bg-slate-50'
+              }`}
+          >
+            👥 Users
+          </button>
+        </div>
+      </PremiumCard>
+
+      {activeTab === 'overview' && (
+        <div className="space-y-8">
+          {/* Logbook Stats */}
+          <div>
+            <h2 className="text-xl font-black text-slate-900 mb-4 flex items-center gap-2">
+              📚 Statistik Logbook
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <PremiumCard gradient="blue" className="p-6 hover:scale-105 transition-transform">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-slate-600 text-sm font-bold uppercase tracking-wider">Total Logbook</p>
+                    <p className="text-4xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mt-2">{stats.total}</p>
+                  </div>
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg">
+                    📚
+                  </div>
+                </div>
+              </PremiumCard>
+
+              <PremiumCard gradient="emerald" className="p-6 hover:scale-105 transition-transform">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-emerald-700 text-sm font-bold uppercase tracking-wider">Selesai</p>
+                    <p className="text-4xl font-black text-emerald-600 mt-2">{stats.completed}</p>
+                  </div>
+                  <div className="w-16 h-16 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg">
+                    ✅
+                  </div>
+                </div>
+              </PremiumCard>
+
+              <PremiumCard gradient="amber" className="p-6 hover:scale-105 transition-transform">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-amber-700 text-sm font-bold uppercase tracking-wider">Draft</p>
+                    <p className="text-4xl font-black text-amber-600 mt-2">{stats.draft}</p>
+                  </div>
+                  <div className="w-16 h-16 bg-gradient-to-br from-amber-600 to-yellow-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg">
+                    📝
+                  </div>
+                </div>
+              </PremiumCard>
+            </div>
+          </div>
+
+          {/* User Stats */}
+          <div>
+            <h2 className="text-xl font-black text-slate-900 mb-4 flex items-center gap-2">
+              👥 Statistik Users
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <PremiumCard gradient="purple" className="p-6 hover:scale-105 transition-transform">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-purple-700 text-sm font-bold uppercase tracking-wider">Total Users</p>
+                    <p className="text-4xl font-black text-purple-600 mt-2">{stats.totalUsers}</p>
+                  </div>
+                  <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg">
+                    👥
+                  </div>
+                </div>
+              </PremiumCard>
+
+              <PremiumCard gradient="slate" className="p-6 hover:scale-105 transition-transform">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-slate-700 text-sm font-bold uppercase tracking-wider">Admin</p>
+                    <p className="text-4xl font-black text-slate-600 mt-2">{stats.adminUsers}</p>
+                  </div>
+                  <div className="w-16 h-16 bg-gradient-to-br from-slate-600 to-gray-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg">
+                    🛡️
+                  </div>
+                </div>
+              </PremiumCard>
+
+              <PremiumCard gradient="blue" className="p-6 hover:scale-105 transition-transform">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-indigo-700 text-sm font-bold uppercase tracking-wider">User</p>
+                    <p className="text-4xl font-black text-indigo-600 mt-2">{stats.userUsers}</p>
+                  </div>
+                  <div className="w-16 h-16 bg-gradient-to-br from-indigo-600 to-blue-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg">
+                    👤
+                  </div>
+                </div>
+              </PremiumCard>
+            </div>
           </div>
         </div>
+      )}
 
-        {activeTab === 'overview' && (
-          <div>
-            {/* ... Existing Overview code ... (Assuming no changes needed here, but simplifying for brevity in replacement) */}
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Ringkasan Sistem</h2>
-            <div className="mb-8">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Statistik Logbook</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white rounded-lg shadow p-6"><div><p className="text-gray-600 text-sm font-medium">Total Logbook</p><p className="text-3xl font-bold text-blue-600 mt-2">{stats.total}</p></div></div>
-                <div className="bg-white rounded-lg shadow p-6"><div><p className="text-gray-600 text-sm font-medium">Selesai</p><p className="text-3xl font-bold text-green-600 mt-2">{stats.completed}</p></div></div>
-                <div className="bg-white rounded-lg shadow p-6"><div><p className="text-gray-600 text-sm font-medium">Draft</p><p className="text-3xl font-bold text-yellow-600 mt-2">{stats.draft}</p></div></div>
-              </div>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Statistik Users</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white rounded-lg shadow p-6"><div><p className="text-gray-600 text-sm font-medium">Total Users</p><p className="text-3xl font-bold text-purple-600 mt-2">{stats.totalUsers}</p></div></div>
-                <div className="bg-white rounded-lg shadow p-6"><div><p className="text-gray-600 text-sm font-medium">Admin</p><p className="text-3xl font-bold text-red-600 mt-2">{stats.adminUsers}</p></div></div>
-                <div className="bg-white rounded-lg shadow p-6"><div><p className="text-gray-600 text-sm font-medium">User</p><p className="text-3xl font-bold text-indigo-600 mt-2">{stats.userUsers}</p></div></div>
-              </div>
-            </div>
+      {activeTab === 'logbook' && (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-black text-slate-900">Semua Logbook</h2>
+            <a href="/api/logbook/export" download>
+              <PremiumButton variant="success">
+                <span className="text-lg">📥</span> Export Excel
+              </PremiumButton>
+            </a>
           </div>
-        )}
 
-        {activeTab === 'logbook' && (
-          <div>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-gray-900">Semua Logbook</h2>
-              <a href="/api/logbook/export" download className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">📥 Export Excel</a>
-            </div>
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
+          <PremiumCard className="overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gradient-to-r from-slate-50 to-gray-50 border-b-2 border-slate-200">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-black text-slate-700 uppercase tracking-wider">Extensi</th>
+                    <th className="px-6 py-4 text-left text-xs font-black text-slate-700 uppercase tracking-wider">Nama</th>
+                    <th className="px-6 py-4 text-left text-xs font-black text-slate-700 uppercase tracking-wider">Lokasi</th>
+                    <th className="px-6 py-4 text-left text-xs font-black text-slate-700 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-4 text-left text-xs font-black text-slate-700 uppercase tracking-wider">Dibuat</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {logbookEntries.length === 0 ? (
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Extensi</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Nama</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Lokasi</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Dibuat</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {logbookEntries.length === 0 ? (
-                      <tr><td colSpan={5} className="px-6 py-4 text-center text-gray-500">Belum ada data logbook</td></tr>
-                    ) : (
-                      logbookEntries.map((entry) => (
-                        <tr key={entry.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 text-sm text-gray-900">{entry.extensi}</td>
-                          <td className="px-6 py-4 text-sm text-gray-900">{entry.nama}</td>
-                          <td className="px-6 py-4 text-sm text-gray-900">{entry.lokasi}</td>
-                          <td className="px-6 py-4 text-sm">
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${entry.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                              {entry.status === 'completed' ? '✅ Selesai' : '📝 Draft'}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-500">{new Date(entry.created_at).toLocaleDateString('id-ID')}</td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'users' && (
-          <div>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-gray-900">Manajemen Users</h2>
-              <button
-                onClick={() => setIsUserModalOpen(true)}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
-              >
-                <span>➕</span> Tambah User
-              </button>
-            </div>
-
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Info User</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Role</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {users.map((u) => (
-                      <tr key={u.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4">
-                          <div className="flex flex-col">
-                            <span className="font-bold text-gray-900">{u.username}</span>
-                            <span className="text-sm text-gray-500">{u.email}</span>
+                      <td colSpan={5} className="px-6 py-12 text-center">
+                        <div className="flex flex-col items-center">
+                          <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-3xl mb-3">
+                            📚
                           </div>
+                          <p className="text-slate-400 font-medium">Belum ada data logbook</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    logbookEntries.map((entry) => (
+                      <tr key={entry.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-6 py-4 text-sm font-semibold text-slate-900">{entry.extensi}</td>
+                        <td className="px-6 py-4 text-sm font-semibold text-slate-900">{entry.nama}</td>
+                        <td className="px-6 py-4 text-sm text-slate-700">{entry.lokasi}</td>
+                        <td className="px-6 py-4 text-sm">
+                          <PremiumBadge variant={entry.status === 'completed' ? 'emerald' : 'amber'} size="sm">
+                            {entry.status === 'completed' ? '✅ Selesai' : '📝 Draft'}
+                          </PremiumBadge>
                         </td>
-                        <td className="px-6 py-4">
-                          <button
-                            onClick={() => handleChangeRole(u.id, u.role)}
-                            className={`px-3 py-1 rounded-full text-xs font-bold border transition ${u.role === 'admin'
-                              ? 'bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-200'
-                              : 'bg-indigo-100 text-indigo-700 border-indigo-200 hover:bg-indigo-200'
-                              }`}
-                          >
-                            {u.role === 'admin' ? '🛡️ Admin' : '👤 User'}
-                          </button>
+                        <td className="px-6 py-4 text-sm text-slate-500 font-medium">
+                          {new Date(entry.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                         </td>
-                        <td className="px-6 py-4">
-                          <button
-                            onClick={() => handleUpdateStatus(u.id, u.is_active)}
-                            className={`px-3 py-1 rounded-full text-xs font-bold border transition ${u.is_active
-                              ? 'bg-green-100 text-green-700 border-green-200 hover:bg-green-200'
-                              : 'bg-red-100 text-red-700 border-red-200 hover:bg-red-200'
-                              }`}
-                          >
-                            {u.is_active ? '✅ Aktif' : '❌ Nonaktif'}
-                          </button>
-                        </td>
-                        <td className="px-6 py-4 text-sm space-x-2">
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </PremiumCard>
+        </div>
+      )}
+
+      {activeTab === 'users' && (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-black text-slate-900">Manajemen Users</h2>
+            <PremiumButton onClick={() => setIsUserModalOpen(true)}>
+              <span className="text-lg">➕</span> Tambah User
+            </PremiumButton>
+          </div>
+
+          <PremiumCard className="overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gradient-to-r from-slate-50 to-gray-50 border-b-2 border-slate-200">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-black text-slate-700 uppercase tracking-wider">Info User</th>
+                    <th className="px-6 py-4 text-left text-xs font-black text-slate-700 uppercase tracking-wider">Role</th>
+                    <th className="px-6 py-4 text-left text-xs font-black text-slate-700 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-4 text-left text-xs font-black text-slate-700 uppercase tracking-wider">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {users.map((u) => (
+                    <tr key={u.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col">
+                          <span className="font-black text-slate-900">{u.username}</span>
+                          <span className="text-sm text-slate-500 font-medium">{u.email}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <button
+                          onClick={() => handleChangeRole(u.id, u.role)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-black border-2 transition-all hover:scale-105 uppercase tracking-wider ${u.role === 'admin'
+                              ? 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100'
+                              : 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
+                            }`}
+                        >
+                          {u.role === 'admin' ? '🛡️ Admin' : '👤 User'}
+                        </button>
+                      </td>
+                      <td className="px-6 py-4">
+                        <button
+                          onClick={() => handleUpdateStatus(u.id, u.is_active)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-black border-2 transition-all hover:scale-105 uppercase tracking-wider ${u.is_active
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                              : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+                            }`}
+                        >
+                          {u.is_active ? '✅ Aktif' : '❌ Nonaktif'}
+                        </button>
+                      </td>
+                      <td className="px-6 py-4 text-sm">
+                        <div className="flex gap-2">
                           <button
                             onClick={() => {
                               setSelectedUser(u);
                               setIsResetPasswordModalOpen(true);
                             }}
-                            className="text-orange-600 hover:text-orange-800 font-medium"
+                            className="text-orange-600 hover:text-orange-700 font-bold hover:bg-orange-50 px-2 py-1 rounded-lg transition"
                             title="Reset Password"
                           >
-                            🔑 Reset Pass
+                            🔑
                           </button>
                           <button
                             onClick={() => handleDeleteUser(u.id)}
-                            className="text-red-600 hover:text-red-800 font-medium"
+                            className="text-red-600 hover:text-red-700 font-bold hover:bg-red-50 px-2 py-1 rounded-lg transition"
                             title="Hapus User"
                           >
-                            🗑️ Hapus
+                            🗑️
                           </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          </div>
-        )}
-      </div>
+          </PremiumCard>
+        </div>
+      )}
 
       {/* MODAL: Add User */}
-      {isUserModalOpen && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
-            <h2 className="text-xl font-bold mb-4">Tambah User Baru</h2>
-            <form onSubmit={handleCreateUser} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Username</label>
-                <input type="text" required value={userFormData.username} onChange={e => setUserFormData({ ...userFormData, username: e.target.value })} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Email</label>
-                <input type="email" required value={userFormData.email} onChange={e => setUserFormData({ ...userFormData, email: e.target.value })} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Password</label>
-                <input type="password" required value={userFormData.password} onChange={e => setUserFormData({ ...userFormData, password: e.target.value })} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Role</label>
-                <select value={userFormData.role} onChange={e => setUserFormData({ ...userFormData, role: e.target.value })} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-                  <option value="user">User</option>
-                  <option value="admin">Admin</option>
-                </select>
-              </div>
-              <div className="flex justify-end gap-2 mt-6">
-                <button type="button" onClick={() => setIsUserModalOpen(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Batal</button>
-                <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Simpan</button>
-              </div>
-            </form>
+      <PremiumModal
+        isOpen={isUserModalOpen}
+        onClose={() => setIsUserModalOpen(false)}
+        title="Tambah User Baru"
+        size="sm"
+      >
+        <form onSubmit={handleCreateUser} className="space-y-4">
+          <PremiumInput
+            label="Username"
+            type="text"
+            required
+            value={userFormData.username}
+            onChange={e => setUserFormData({ ...userFormData, username: e.target.value })}
+          />
+          <PremiumInput
+            label="Email"
+            type="email"
+            required
+            value={userFormData.email}
+            onChange={e => setUserFormData({ ...userFormData, email: e.target.value })}
+          />
+          <PremiumInput
+            label="Password"
+            type="password"
+            required
+            value={userFormData.password}
+            onChange={e => setUserFormData({ ...userFormData, password: e.target.value })}
+          />
+          <div>
+            <label className="block text-sm font-black text-slate-700 mb-2 uppercase tracking-wider">Role</label>
+            <select
+              value={userFormData.role}
+              onChange={e => setUserFormData({ ...userFormData, role: e.target.value })}
+              className="w-full px-4 py-3 border-2 border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium"
+            >
+              <option value="user">User</option>
+              <option value="admin">Admin</option>
+            </select>
           </div>
-        </div>
-      )}
+          <div className="flex justify-end gap-3 pt-4">
+            <PremiumButton type="button" variant="secondary" onClick={() => setIsUserModalOpen(false)}>
+              Batal
+            </PremiumButton>
+            <PremiumButton type="submit">
+              💾 Simpan
+            </PremiumButton>
+          </div>
+        </form>
+      </PremiumModal>
 
       {/* MODAL: Reset Password */}
-      {isResetPasswordModalOpen && selectedUser && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-sm p-6">
-            <h2 className="text-lg font-bold mb-4">Reset Password</h2>
-            <p className="text-sm text-gray-600 mb-4">Masukkan password baru untuk <strong>{selectedUser.username}</strong></p>
-            <form onSubmit={handleResetPassword} className="space-y-4">
-              <input
-                type="password"
-                placeholder="Password Baru"
-                required
-                value={resetPassword}
-                onChange={e => setResetPassword(e.target.value)}
-                className="block w-full border border-gray-300 rounded-md shadow-sm p-2"
-              />
-              <div className="flex justify-end gap-2 mt-6">
-                <button type="button" onClick={() => { setIsResetPasswordModalOpen(false); setSelectedUser(null); }} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Batal</button>
-                <button type="submit" className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700">Reset Password</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <PremiumModal
+        isOpen={isResetPasswordModalOpen}
+        onClose={() => {
+          setIsResetPasswordModalOpen(false);
+          setSelectedUser(null);
+        }}
+        title="Reset Password"
+        size="sm"
+      >
+        {selectedUser && (
+          <form onSubmit={handleResetPassword} className="space-y-4">
+            <p className="text-sm text-slate-600 font-medium">
+              Masukkan password baru untuk <strong className="text-slate-900">{selectedUser.username}</strong>
+            </p>
+            <PremiumInput
+              type="password"
+              placeholder="Password Baru"
+              required
+              value={resetPassword}
+              onChange={e => setResetPassword(e.target.value)}
+            />
+            <div className="flex justify-end gap-3 pt-4">
+              <PremiumButton
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  setIsResetPasswordModalOpen(false);
+                  setSelectedUser(null);
+                }}
+              >
+                Batal
+              </PremiumButton>
+              <PremiumButton type="submit" variant="danger">
+                🔑 Reset Password
+              </PremiumButton>
+            </div>
+          </form>
+        )}
+      </PremiumModal>
     </div>
   );
 }

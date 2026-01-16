@@ -66,7 +66,7 @@ export function PremiumButton({
             type={type}
             onClick={onClick}
             disabled={disabled}
-            className={`${buttonVariants[variant]} ${buttonSizes[size]} text-white rounded-2xl hover:shadow-xl transition-all font-bold flex items-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
+            className={`${buttonVariants[variant]} ${buttonSizes[size]} text-white rounded-2xl hover:shadow-xl transition-all font-bold flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
         >
             {children}
         </button>
@@ -76,6 +76,7 @@ export function PremiumButton({
 interface PremiumInputProps {
     label?: string;
     type?: string;
+    name?: string;
     value: string;
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
     placeholder?: string;
@@ -87,6 +88,7 @@ interface PremiumInputProps {
 export function PremiumInput({
     label,
     type = 'text',
+    name,
     value,
     onChange,
     placeholder,
@@ -103,6 +105,7 @@ export function PremiumInput({
             )}
             <input
                 type={type}
+                name={name}
                 value={value}
                 onChange={onChange}
                 placeholder={placeholder}
@@ -116,6 +119,7 @@ export function PremiumInput({
 
 interface PremiumTextareaProps {
     label?: string;
+    name?: string;
     value: string;
     onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
     placeholder?: string;
@@ -127,6 +131,7 @@ interface PremiumTextareaProps {
 
 export function PremiumTextarea({
     label,
+    name,
     value,
     onChange,
     placeholder,
@@ -143,6 +148,7 @@ export function PremiumTextarea({
                 </label>
             )}
             <textarea
+                name={name}
                 value={value}
                 onChange={onChange}
                 placeholder={placeholder}

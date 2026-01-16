@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useUI } from '@/context/UIContext';
+import { PageHeader, PremiumCard, PremiumButton, PremiumInput, PremiumTextarea } from '@/components/ui/PremiumComponents';
 
 export default function CreateLogbookPage() {
   return (
@@ -67,135 +68,119 @@ function CreateLogbookContent() {
   };
 
   return (
-    <div className="space-y-6">
-
-      <div className="p-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">
-              ➕ Tambah Logbook Baru
-            </h1>
-            <Link href="/logbook" className="text-blue-600 hover:text-blue-700 font-semibold">
+    <div className="min-h-screen p-4 md:p-8 space-y-8 animate-in fade-in duration-700">
+      <PageHeader
+        icon="➕"
+        title="Tambah Logbook Baru"
+        subtitle="Buat catatan pekerjaan dan service baru"
+        actions={
+          <Link href="/logbook">
+            <PremiumButton variant="secondary">
               ← Kembali
-            </Link>
-          </div>
+            </PremiumButton>
+          </Link>
+        }
+      />
 
-          <div className="bg-white rounded-lg shadow p-8">
-            {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
-                {error}
-              </div>
-            )}
+      <div className="max-w-4xl mx-auto">
+        <PremiumCard className="p-8">
+          {error && (
+            <div className="bg-red-50 border-2 border-red-200 text-red-700 px-6 py-4 rounded-2xl mb-6 font-semibold flex items-center gap-3">
+              <span className="text-2xl">⚠️</span>
+              <span>{error}</span>
+            </div>
+          )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-gray-700 font-semibold mb-2">
-                    Extensi <span className="text-red-600">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="extensi"
-                    value={formData.extensi}
-                    onChange={handleChange}
-                    placeholder="Contoh: ext. 1234"
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
-                  />
-                </div>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <PremiumInput
+                label="Extensi"
+                type="text"
+                name="extensi"
+                value={formData.extensi}
+                onChange={handleChange}
+                placeholder="Contoh: ext. 1234"
+                required
+              />
 
-                <div>
-                  <label className="block text-gray-700 font-semibold mb-2">
-                    Nama <span className="text-red-600">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="nama"
-                    value={formData.nama}
-                    onChange={handleChange}
-                    placeholder="Nama kegiatan"
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
-                  />
-                </div>
-              </div>
+              <PremiumInput
+                label="Nama"
+                type="text"
+                name="nama"
+                value={formData.nama}
+                onChange={handleChange}
+                placeholder="Nama kegiatan"
+                required
+              />
+            </div>
 
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  Lokasi <span className="text-red-600">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="lokasi"
-                  value={formData.lokasi}
-                  onChange={handleChange}
-                  placeholder="Lokasi kegiatan"
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
-                />
-              </div>
+            <PremiumInput
+              label="Lokasi"
+              type="text"
+              name="lokasi"
+              value={formData.lokasi}
+              onChange={handleChange}
+              placeholder="Lokasi kegiatan"
+              required
+            />
 
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  Catatan
-                </label>
-                <textarea
-                  name="catatan"
-                  value={formData.catatan}
-                  onChange={handleChange}
-                  placeholder="Catatan mengenai kegiatan"
-                  rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
-                />
-              </div>
+            <PremiumTextarea
+              label="Catatan"
+              name="catatan"
+              value={formData.catatan}
+              onChange={handleChange}
+              placeholder="Catatan mengenai kegiatan"
+              rows={3}
+            />
 
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  Solusi
-                </label>
-                <textarea
-                  name="solusi"
-                  value={formData.solusi}
-                  onChange={handleChange}
-                  placeholder="Solusi yang diberikan"
-                  rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
-                />
-              </div>
+            <PremiumTextarea
+              label="Solusi"
+              name="solusi"
+              value={formData.solusi}
+              onChange={handleChange}
+              placeholder="Solusi yang diberikan"
+              rows={3}
+            />
 
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  Penyelesaian
-                </label>
-                <textarea
-                  name="penyelesaian"
-                  value={formData.penyelesaian}
-                  onChange={handleChange}
-                  placeholder="Hasil penyelesaian"
-                  rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
-                />
-              </div>
+            <PremiumTextarea
+              label="Penyelesaian"
+              name="penyelesaian"
+              value={formData.penyelesaian}
+              onChange={handleChange}
+              placeholder="Hasil penyelesaian"
+              rows={3}
+            />
 
-              <div className="flex gap-4">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? 'Sedang menyimpan...' : '💾 Simpan Logbook'}
-                </button>
-
-                <Link
-                  href="/logbook"
-                  className="bg-gray-400 text-white font-semibold py-2 px-6 rounded-lg hover:bg-gray-500 transition"
+            <div className="flex gap-4 pt-4 border-t border-slate-100">
+              <Link href="/logbook" className="flex-1">
+                <PremiumButton
+                  type="button"
+                  variant="secondary"
+                  className="w-full"
                 >
                   Batal
-                </Link>
-              </div>
-            </form>
-          </div>
-        </div>
+                </PremiumButton>
+              </Link>
+              <PremiumButton
+                type="submit"
+                disabled={loading}
+                className="flex-1"
+              >
+                {loading ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Sedang menyimpan...
+                  </>
+                ) : (
+                  <>💾 Simpan Logbook</>
+                )}
+              </PremiumButton>
+            </div>
+          </form>
+        </PremiumCard>
       </div>
     </div>
   );
