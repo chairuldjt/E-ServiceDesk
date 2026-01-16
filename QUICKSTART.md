@@ -26,7 +26,7 @@ npm run dev
 
 ### 3. Login (1 menit)
 - Buka: http://localhost:3000
-- Email: `admin@logbook.com`
+- Username: `admin` (atau Email: `admin@logbook.com`)
 - Password: `admin123`
 - Klik "Login"
 
@@ -127,7 +127,7 @@ Access: /admin dashboard
 |-------|----------|
 | "Can't connect to MySQL" | Check XAMPP MySQL running |
 | "Port 3000 in use" | Kill process or use different port |
-| "Login failed" | Check credentials (admin@logbook.com / admin123) |
+| "Login failed" | Check credentials (admin / admin@logbook.com / admin123) |
 | "Can't see logbook" | Make sure you created one & you're logged in |
 | "Export not working" | Check xlsx package installed |
 

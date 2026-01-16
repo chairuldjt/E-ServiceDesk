@@ -199,6 +199,11 @@ mysqldump -h localhost -u root -p"Rsdk#admin*1" logbook_db > backup.sql
 mysql -h prod-host -u prod-user -p < backup.sql
 ```
 
+**Admin Credentials**:
+- Username: `admin`
+- Email: `admin@logbook.com`
+- Password: `admin123`
+
 ---
 
 ## 🔧 Build & Deployment Commands

@@ -73,8 +73,9 @@ Server akan berjalan di: `http://localhost:3000`
 ### 3. Test Login
 - Buka: http://localhost:3000
 - Login dengan:
-  - Email: `admin@logbook.com`
-  - Password: `admin123`
+  - **Username**: `admin`
+  - **Email**: `admin@logbook.com`
+  - **Password**: `admin123`
 
 ---
 
@@ -84,7 +85,7 @@ Server akan berjalan di: `http://localhost:3000`
 
 #### Login
 1. Buka homepage → akan redirect ke `/login`
-2. Masukkan email dan password
+2. Masukkan username atau email dan password
 3. Klik "Login"
 4. Jika berhasil, akan redirect ke dashboard
 

@@ -1,13 +1,14 @@
-# 📔 E-ServiceDesk
+# 🏢 E-ServiceDesk
 
-Sistem Manajemen Logbook Internal yang modern, responsif, dan mudah digunakan. Dibangun dengan Next.js, MySQL, dan Tailwind CSS.
+Internal Service Desk System yang modern, responsif, dan mudah digunakan. Dibangun dengan Next.js, MySQL, dan Tailwind CSS.
 
 ## ✨ Fitur Utama
-- **📚 Logbook Management**: Pencatatan kegiatan, keluhan, dan solusi secara terstruktur.
+- **🏢 Service Desk Management**: Pencatatan kegiatan, keluhan, dan solusi secara terstruktur.
 - **📝 Notepad Interactive**: Catatan tempel digital untuk catatan cepat.
 - **🛡️ Admin Dashboard**: Manajemen user (Add, Edit, Activate/Deactivate, Reset Password) dan monitoring sistem.
-- **📥 Export Excel**: Kemudahan laporan dengan satu klik.
-- **🔒 Secure Auth**: Autentikasi menggunakan JWT dan enkripsi password Bcrypt.
+- **📊 Export CDR**: Export rekaman telepon dari Divatel langsung ke CSV.
+- **📥 Export Excel**: Kemudahan laporan logbook dengan satu klik.
+- **🔒 Secure Auth**: Login menggunakan **Username** atau **Email** dengan JWT dan Bcrypt.
 - **🎨 Modern UI**: Antarmuka bersih dengan dukungan backdrop-blur dan micro-animations.
 
 ## 🚀 Persiapan (Prerequisites)
@@ -63,7 +64,8 @@ npm run dev
 Buka [http://localhost:3000](http://localhost:3000) di browser Anda.
 
 ## 🔐 Akun Login Default
-Gunakan akun ini untuk masuk pertama kali sebagai Admin:
+Gunakan akun ini untuk masuk pertama kali (bisa menggunakan Email atau Username):
+- **Username**: `admin`
 - **Email**: `admin@logbook.com`
 - **Password**: `admin123`
 
