@@ -209,7 +209,7 @@ function NotepadContent() {
                                         {(note.user_id === user?.id || user?.role === 'admin') && (
                                             <button
                                                 onClick={(e) => handleDelete(note.id, e)}
-                                                className="text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition p-1"
+                                                className="text-red-500 hover:text-red-700 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition p-1"
                                                 title="Hapus"
                                             >
                                                 🗑️
@@ -313,6 +313,20 @@ function NotepadContent() {
                                 </div>
 
                                 <div className="p-6 bg-gray-50 flex justify-end gap-3 rounded-b-xl">
+                                    <div className="flex-1">
+                                        {editingNote && (editingNote.user_id === user?.id || user?.role === 'admin') && (
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    setIsModalOpen(false);
+                                                    handleDelete(editingNote.id, e as any);
+                                                }}
+                                                className="text-red-600 font-medium hover:text-red-700 flex items-center gap-1"
+                                            >
+                                                🗑️ Hapus
+                                            </button>
+                                        )}
+                                    </div>
                                     <button
                                         type="button"
                                         onClick={() => setIsModalOpen(false)}
