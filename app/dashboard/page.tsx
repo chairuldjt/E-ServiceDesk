@@ -3,8 +3,9 @@
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import axios from 'axios';
 
 interface LogbookEntry {
   id: number;
@@ -28,6 +29,10 @@ function DashboardContent() {
   const [logbookEntries, setLogbookEntries] = useState<LogbookEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ total: 0, completed: 0, draft: 0 });
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [exportPassword, setExportPassword] = useState('');
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState('');
 
   useEffect(() => {
     const fetchLogbook = async () => {
@@ -51,6 +56,51 @@ function DashboardContent() {
     fetchLogbook();
   }, []);
 
+  const handleExportCDR = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsExporting(true);
+    setExportError('');
+
+    try {
+      const response = await axios.post('/api/cdr/export', {
+        username: user?.username,
+        password: exportPassword,
+      }, {
+        responseType: 'blob'
+      });
+
+      // Create a link to download the file
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+
+      // Format: CDRReport-2026Jan16.064931-[namauser].csv
+      const now = new Date();
+      const year = now.getFullYear();
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const month = monthNames[now.getMonth()];
+      const day = String(now.getDate()).padStart(2, '0');
+      const time = now.getHours().toString().padStart(2, '0') +
+        now.getMinutes().toString().padStart(2, '0') +
+        now.getSeconds().toString().padStart(2, '0');
+
+      const fileName = `CDRReport-${year}${month}${day}.${time}-${user?.username}.csv`;
+
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      setIsExportModalOpen(false);
+      setExportPassword('');
+    } catch (error: any) {
+      console.error('Export error:', error);
+      setExportError(error.response?.data?.error || 'Gagal mengekspor CDR. Pastikan password benar.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -67,13 +117,84 @@ function DashboardContent() {
           <h1 className="text-3xl font-bold text-gray-900">
             👋 Selamat datang, {user?.username}!
           </h1>
-          <Link
-            href="/logbook/create"
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-semibold"
-          >
-            ➕ Tambah Logbook
-          </Link>
+          <div className="flex gap-4">
+            <button
+              onClick={() => setIsExportModalOpen(true)}
+              className="bg-emerald-600 text-white px-6 py-2 rounded-lg hover:bg-emerald-700 transition font-semibold flex items-center gap-2"
+            >
+              📊 Export CDR
+            </button>
+            <Link
+              href="/logbook/create"
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-semibold"
+            >
+              ➕ Tambah Logbook
+            </Link>
+          </div>
         </div>
+
+        {/* Export CDR Modal */}
+        {isExportModalOpen && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in duration-200">
+              <div className="bg-emerald-600 p-6 text-white">
+                <h3 className="text-xl font-bold flex items-center gap-2">
+                  📊 Konfirmasi Export CDR
+                </h3>
+                <p className="text-emerald-100 text-sm mt-1">
+                  Masukkan password akun <strong>{user?.username}</strong> Anda untuk mengakses data CDR.
+                </p>
+              </div>
+              <form onSubmit={handleExportCDR} className="p-6 space-y-4">
+                {exportError && (
+                  <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-100">
+                    ⚠️ {exportError}
+                  </div>
+                )}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    value={exportPassword}
+                    onChange={(e) => setExportPassword(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition"
+                    placeholder="Masukkan password Anda"
+                  />
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsExportModalOpen(false);
+                      setExportError('');
+                      setExportPassword('');
+                    }}
+                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isExporting}
+                    className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {isExporting ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Memproses...
+                      </>
+                    ) : (
+                      'Export Sekarang'
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
