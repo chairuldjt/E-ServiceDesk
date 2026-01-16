@@ -18,6 +18,16 @@ interface LogbookEntry {
   updated_at: string;
 }
 
+interface ExternalCatalog {
+  service_catalog_id: number;
+  service_catalog_name: string;
+}
+
+interface ExternalUser {
+  user_id: number;
+  full_name: string;
+}
+
 export default function LogbookListPage() {
   return (
     <ProtectedRoute>
@@ -32,6 +42,11 @@ function LogbookListContent() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+
+  // External Data
+  const [catalogs, setCatalogs] = useState<ExternalCatalog[]>([]);
+  const [externalUsers, setExternalUsers] = useState<ExternalUser[]>([]);
+  const [isLoadingExternal, setIsLoadingExternal] = useState(false);
 
   // Edit Modal State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -50,8 +65,8 @@ function LogbookListContent() {
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<LogbookEntry | null>(null);
   const [orderFormData, setOrderFormData] = useState({
-    service_catalog_id: '11',
-    order_by: '33'
+    service_catalog_id: '',
+    order_by: ''
   });
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
 
@@ -59,8 +74,7 @@ function LogbookListContent() {
   const [isSettingModalOpen, setIsSettingModalOpen] = useState(false);
   const [webminConfig, setWebminConfig] = useState({
     user: '',
-    pass: '',
-    base_url: 'http://172.16.1.212:5010'
+    pass: ''
   });
   const [isSavingSetting, setIsSavingSetting] = useState(false);
 
@@ -86,9 +100,36 @@ function LogbookListContent() {
     try {
       const response = await fetch('/api/settings/webmin');
       const data = await response.json();
-      setWebminConfig(data);
+      setWebminConfig({ user: data.user || '', pass: data.pass || '' });
     } catch (error) {
       console.error('Error fetching webmin config:', error);
+    }
+  };
+
+  const fetchExternalData = async () => {
+    setIsLoadingExternal(true);
+    try {
+      const response = await fetch('/api/monitoring/external-data');
+      const data = await response.json();
+      if (response.ok) {
+        setCatalogs(data.catalogs || []);
+        setExternalUsers(data.users || []);
+
+        // Set default values
+        if (data.catalogs?.length > 0) {
+          setOrderFormData(prev => ({ ...prev, service_catalog_id: data.catalogs[0].service_catalog_id.toString() }));
+        }
+        if (data.users?.length > 0) {
+          setOrderFormData(prev => ({ ...prev, order_by: data.users[0].user_id.toString() }));
+        }
+      } else {
+        showToast(data.error || 'Gagal mengambil data katalog/user external', 'error');
+      }
+    } catch (error) {
+      console.error('Error fetching external data:', error);
+      showToast('Terjadi kesalahan saat menghubungi server external', 'error');
+    } finally {
+      setIsLoadingExternal(false);
     }
   };
 
@@ -96,6 +137,7 @@ function LogbookListContent() {
     e.preventDefault();
     setIsSavingSetting(true);
     try {
+      // Base URL taken from env via API route
       const response = await fetch('/api/settings/webmin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -204,6 +246,7 @@ function LogbookListContent() {
   const handleOrderClick = (entry: LogbookEntry) => {
     setSelectedEntry(entry);
     setIsOrderModalOpen(true);
+    fetchExternalData(); // Fetch dynamic lists when opening modal
   };
 
   const handleCreateOrder = async (e: React.FormEvent) => {
@@ -464,17 +507,6 @@ function LogbookListContent() {
             <form onSubmit={handleSaveSetting} className="p-6 space-y-5">
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">Base URL API</label>
-                  <input
-                    type="text"
-                    required
-                    value={webminConfig.base_url}
-                    onChange={e => setWebminConfig({ ...webminConfig, base_url: e.target.value })}
-                    placeholder="http://172.16.1.212:5010"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-slate-500 outline-none transition-all font-medium"
-                  />
-                </div>
-                <div>
                   <label className="block text-sm font-bold text-slate-700 mb-2">Username Webmin</label>
                   <input
                     type="text"
@@ -548,44 +580,61 @@ function LogbookListContent() {
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
-                    📁 Service Catalog
-                    <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded-full text-slate-500">ID 1-50</span>
-                  </label>
-                  <select
-                    value={orderFormData.service_catalog_id}
-                    onChange={e => setOrderFormData({ ...orderFormData, service_catalog_id: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all font-medium"
-                  >
-                    {Array.from({ length: 50 }, (_, i) => i + 1).map(id => (
-                      <option key={id} value={id}>Category ID: {id}</option>
-                    ))}
-                  </select>
+              {isLoadingExternal ? (
+                <div className="py-10 flex flex-col items-center justify-center gap-3">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+                  <p className="text-xs text-slate-500 animate-pulse text-center">Mengambil data katalog & user<br />dari system external...</p>
                 </div>
+              ) : (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
+                      📁 Service Catalog
+                    </label>
+                    <select
+                      value={orderFormData.service_catalog_id}
+                      onChange={e => setOrderFormData({ ...orderFormData, service_catalog_id: e.target.value })}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all font-medium"
+                    >
+                      {catalogs.length > 0 ? (
+                        catalogs.map(cat => (
+                          <option key={cat.service_catalog_id} value={cat.service_catalog_id}>
+                            {cat.service_catalog_name} (ID: {cat.service_catalog_id})
+                          </option>
+                        ))
+                      ) : (
+                        <option value="">Tidak ada katalog tersedia</option>
+                      )}
+                    </select>
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
-                    👤 Order By (User)
-                    <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded-full text-slate-500">ID 1-80</span>
-                  </label>
-                  <select
-                    value={orderFormData.order_by}
-                    onChange={e => setOrderFormData({ ...orderFormData, order_by: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all font-medium"
-                  >
-                    {Array.from({ length: 80 }, (_, i) => i + 1).map(id => (
-                      <option key={id} value={id}>User ID: {id}</option>
-                    ))}
-                  </select>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
+                      👤 Order By (User)
+                    </label>
+                    <select
+                      value={orderFormData.order_by}
+                      onChange={e => setOrderFormData({ ...orderFormData, order_by: e.target.value })}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all font-medium"
+                    >
+                      {externalUsers.length > 0 ? (
+                        externalUsers.map(u => (
+                          <option key={u.user_id} value={u.user_id}>
+                            {u.full_name} (ID: {u.user_id})
+                          </option>
+                        ))
+                      ) : (
+                        <option value="">Tidak ada user tersedia</option>
+                      )}
+                    </select>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="flex flex-col gap-3 pt-4">
                 <button
                   type="submit"
-                  disabled={isSubmittingOrder}
+                  disabled={isSubmittingOrder || isLoadingExternal}
                   className="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-200 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {isSubmittingOrder ? (

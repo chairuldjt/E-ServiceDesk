@@ -1,5 +1,7 @@
 import { getWebminConfig } from './settings';
 
+const BASE = process.env.EXTERNAL_API_BASE || 'http://172.16.1.212:5010';
+
 export async function getExternalToken(userId: number) {
     const config = await getWebminConfig(userId);
 
@@ -7,7 +9,7 @@ export async function getExternalToken(userId: number) {
         throw new Error('Koneksi belum disetting. Silakan cek menu Setting Webmin.');
     }
 
-    const { user: USER, pass: PASS, base_url: BASE } = config;
+    const { user: USER, pass: PASS } = config;
 
     try {
         // 1. Login
@@ -54,7 +56,7 @@ export async function getExternalToken(userId: number) {
 }
 
 export async function postExternalOrder(userId: number, data: any) {
-    const { jwt, BASE } = await getExternalToken(userId);
+    const { jwt } = await getExternalToken(userId);
     const res = await fetch(`${BASE}/order/order_save`, {
         method: 'POST',
         headers: {
@@ -71,4 +73,32 @@ export async function postExternalOrder(userId: number, data: any) {
     }
 
     return await res.json();
+}
+
+export async function getExternalCatalogs(userId: number) {
+    const { jwt } = await getExternalToken(userId);
+    const res = await fetch(`${BASE}/order/service_catalog_list`, {
+        headers: {
+            'Authorization': `Bearer ${jwt}`,
+            'Accept': 'application/json',
+        },
+    });
+
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.result || [];
+}
+
+export async function getExternalUsers(userId: number) {
+    const { jwt } = await getExternalToken(userId);
+    const res = await fetch(`${BASE}/user/user_list`, {
+        headers: {
+            'Authorization': `Bearer ${jwt}`,
+            'Accept': 'application/json',
+        },
+    });
+
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.result || [];
 }
