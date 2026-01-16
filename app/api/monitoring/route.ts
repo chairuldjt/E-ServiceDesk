@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getExternalToken } from '@/lib/externalApi';
 
 const BASE = process.env.EXTERNAL_API_BASE || 'http://172.16.1.212:5010';
-const USER = process.env.EXTERNAL_API_USER || 'mhafidz';
-const PASS = process.env.EXTERNAL_API_PASS || '2023';
-
-const STATUSES = [11, 12, 15]; // followup, running, done, verify
+const STATUSES = [11, 12, 15]; // followup, running, done
 
 // Simple in-memory cache
 let cache: { data: any; timestamp: number } | null = null;
@@ -20,39 +18,7 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-        // 1. Login
-        const loginRes = await fetch(`${BASE}/secure/auth_validate_login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ login: USER, pwd: PASS }),
-        });
-
-        if (!loginRes.ok) {
-            throw new Error('Login failed');
-        }
-
-        // Capture cookies
-        const setCookie = loginRes.headers.get('set-cookie');
-
-        // 2. Get JWT
-        const verifyRes = await fetch(`${BASE}/secure/verify`, {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-                'Cookie': setCookie || '',
-            },
-        });
-
-        if (!verifyRes.ok) {
-            throw new Error('Verification failed');
-        }
-
-        const verifyData = await verifyRes.json();
-        const jwt = verifyData.refresh_token;
-
-        if (!jwt) {
-            return NextResponse.json({ error: 'TOKEN NOT FOUND' }, { status: 401 });
-        }
+        const jwt = await getExternalToken();
 
         // 3. Get Orders
         let allOrders: any[] = [];
@@ -77,7 +43,6 @@ export async function GET(request: NextRequest) {
         const dateToFilter = requestedDate ? new Date(requestedDate) : today;
 
         // PHP format: "d M y" (e.g., "16 Jan 26")
-        // Let's be careful with date formatting
         const day = String(dateToFilter.getDate()).padStart(2, '0');
         const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         const month = months[dateToFilter.getMonth()];

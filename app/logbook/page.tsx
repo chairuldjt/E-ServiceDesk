@@ -2,7 +2,6 @@
 
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import Link from 'next/link';
-// import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useUI } from '@/context/UIContext';
 
@@ -47,8 +46,27 @@ function LogbookListContent() {
     status: 'draft'
   });
 
+  // Order Modal State
+  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
+  const [selectedEntry, setSelectedEntry] = useState<LogbookEntry | null>(null);
+  const [orderFormData, setOrderFormData] = useState({
+    service_catalog_id: '11',
+    order_by: '33'
+  });
+  const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
+
+  // Webmin Setting Modal State
+  const [isSettingModalOpen, setIsSettingModalOpen] = useState(false);
+  const [webminConfig, setWebminConfig] = useState({
+    user: '',
+    pass: '',
+    base_url: 'http://172.16.1.212:5010'
+  });
+  const [isSavingSetting, setIsSavingSetting] = useState(false);
+
   useEffect(() => {
     fetchLogbook();
+    fetchWebminConfig();
   }, []);
 
   const fetchLogbook = async () => {
@@ -61,6 +79,39 @@ function LogbookListContent() {
       showToast('Gagal mengambil data logbook', 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchWebminConfig = async () => {
+    try {
+      const response = await fetch('/api/settings/webmin');
+      const data = await response.json();
+      setWebminConfig(data);
+    } catch (error) {
+      console.error('Error fetching webmin config:', error);
+    }
+  };
+
+  const handleSaveSetting = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingSetting(true);
+    try {
+      const response = await fetch('/api/settings/webmin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(webminConfig),
+      });
+
+      if (response.ok) {
+        showToast('Setting Webmin berhasil disimpan', 'success');
+        setIsSettingModalOpen(false);
+      } else {
+        showToast('Gagal menyimpan setting', 'error');
+      }
+    } catch (error) {
+      showToast('Terjadi kesalahan saat menyimpan', 'error');
+    } finally {
+      setIsSavingSetting(false);
     }
   };
 
@@ -150,6 +201,43 @@ function LogbookListContent() {
     });
   };
 
+  const handleOrderClick = (entry: LogbookEntry) => {
+    setSelectedEntry(entry);
+    setIsOrderModalOpen(true);
+  };
+
+  const handleCreateOrder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedEntry) return;
+
+    setIsSubmittingOrder(true);
+    try {
+      const response = await fetch('/api/monitoring/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          catatan: selectedEntry.catatan || selectedEntry.nama,
+          ext_phone: selectedEntry.extensi,
+          location_desc: selectedEntry.lokasi,
+          service_catalog_id: orderFormData.service_catalog_id,
+          order_by: orderFormData.order_by
+        }),
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        showToast('Order berhasil dikirim ke system external', 'success');
+        setIsOrderModalOpen(false);
+      } else {
+        showToast(`Gagal: ${result.error}`, 'error');
+      }
+    } catch (error: any) {
+      console.error('Error creating order:', error);
+      showToast('Terjadi kesalahan saat mengirim order', 'error');
+    } finally {
+      setIsSubmittingOrder(false);
+    }
+  };
 
   const filteredEntries = logbookEntries.filter((entry) => {
     const matchSearch =
@@ -177,12 +265,20 @@ function LogbookListContent() {
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
             📚 Daftar Logbook
           </h1>
-          <Link
-            href="/logbook/create"
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-semibold"
-          >
-            ➕ Tambah Logbook
-          </Link>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setIsSettingModalOpen(true)}
+              className="bg-slate-800 text-white px-6 py-2 rounded-lg hover:bg-slate-900 transition font-semibold flex items-center gap-2"
+            >
+              ⚙️ Setting Webmin
+            </button>
+            <Link
+              href="/logbook/create"
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-semibold"
+            >
+              ➕ Tambah Logbook
+            </Link>
+          </div>
         </div>
 
         {/* Filter and Search */}
@@ -254,6 +350,13 @@ function LogbookListContent() {
                       </td>
                       <td className="px-6 py-4 text-sm space-x-2 flex">
                         <button
+                          onClick={() => handleOrderClick(entry)}
+                          className="text-emerald-600 hover:text-emerald-700 font-semibold flex items-center gap-1"
+                          title="Kirim ke Order System"
+                        >
+                          🛒 Order
+                        </button>
+                        <button
                           onClick={() => handleEditClick(entry)}
                           className="text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1"
                         >
@@ -288,8 +391,8 @@ function LogbookListContent() {
 
       {/* Edit Modal */}
       {isEditModalOpen && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50 p-4 animate-fade-in">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-scale-in">
+        <div className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-200 flex justify-between items-center">
               <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                 Edit Logbook
@@ -340,6 +443,170 @@ function LogbookListContent() {
               <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
                 <button type="button" onClick={() => setIsEditModalOpen(false)} className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 font-medium">Batal</button>
                 <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium shadow-sm">Simpan Perubahan</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Webmin Setting Modal */}
+      {isSettingModalOpen && (
+        <div className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-scale-in">
+            <div className="p-6 bg-slate-800 text-white flex justify-between items-center">
+              <div>
+                <h2 className="text-xl font-bold">⚙️ Setting Koneksi Webmin</h2>
+                <p className="text-slate-300 text-xs mt-1">Konfigurasi kredensial API eksternal</p>
+              </div>
+              <button onClick={() => setIsSettingModalOpen(false)} className="text-white/80 hover:text-white text-2xl">&times;</button>
+            </div>
+
+            <form onSubmit={handleSaveSetting} className="p-6 space-y-5">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Base URL API</label>
+                  <input
+                    type="text"
+                    required
+                    value={webminConfig.base_url}
+                    onChange={e => setWebminConfig({ ...webminConfig, base_url: e.target.value })}
+                    placeholder="http://172.16.1.212:5010"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-slate-500 outline-none transition-all font-medium"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Username Webmin</label>
+                  <input
+                    type="text"
+                    required
+                    value={webminConfig.user}
+                    onChange={e => setWebminConfig({ ...webminConfig, user: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-slate-500 outline-none transition-all font-medium"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Password Webmin</label>
+                  <input
+                    type="password"
+                    required
+                    value={webminConfig.pass}
+                    onChange={e => setWebminConfig({ ...webminConfig, pass: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-slate-500 outline-none transition-all font-medium"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3 pt-4">
+                <button
+                  type="submit"
+                  disabled={isSavingSetting}
+                  className="w-full bg-slate-800 text-white font-bold py-3 rounded-xl hover:bg-slate-900 shadow-lg transition-all active:scale-95 disabled:opacity-50"
+                >
+                  {isSavingSetting ? 'Menyimpan...' : '💾 Simpan Konfigurasi'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsSettingModalOpen(false)}
+                  className="w-full py-3 text-slate-400 font-bold hover:text-slate-600 transition-colors"
+                >
+                  Batal
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Order Modal */}
+      {isOrderModalOpen && selectedEntry && (
+        <div className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-scale-in">
+            <div className="p-6 bg-gradient-to-r from-emerald-600 to-teal-600 text-white flex justify-between items-center">
+              <div>
+                <h2 className="text-xl font-bold">🚀 Buat Order Baru</h2>
+                <p className="text-emerald-100 text-xs mt-1">Kirim data logbook ke system external</p>
+              </div>
+              <button onClick={() => setIsOrderModalOpen(false)} className="text-white/80 hover:text-white text-2xl">&times;</button>
+            </div>
+
+            <form onSubmit={handleCreateOrder} className="p-6 space-y-5">
+              <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100 space-y-2">
+                <p className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Review Data Logbook</p>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <span className="text-slate-500 block text-[10px] uppercase">Extensi</span>
+                    <span className="font-semibold text-slate-700">{selectedEntry.extensi}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block text-[10px] uppercase">Lokasi</span>
+                    <span className="font-semibold text-slate-700">{selectedEntry.lokasi}</span>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="text-slate-500 block text-[10px] uppercase">Catatan</span>
+                    <span className="font-semibold text-slate-700 line-clamp-2">{selectedEntry.catatan || selectedEntry.nama}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
+                    📁 Service Catalog
+                    <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded-full text-slate-500">ID 1-50</span>
+                  </label>
+                  <select
+                    value={orderFormData.service_catalog_id}
+                    onChange={e => setOrderFormData({ ...orderFormData, service_catalog_id: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all font-medium"
+                  >
+                    {Array.from({ length: 50 }, (_, i) => i + 1).map(id => (
+                      <option key={id} value={id}>Category ID: {id}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
+                    👤 Order By (User)
+                    <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded-full text-slate-500">ID 1-80</span>
+                  </label>
+                  <select
+                    value={orderFormData.order_by}
+                    onChange={e => setOrderFormData({ ...orderFormData, order_by: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all font-medium"
+                  >
+                    {Array.from({ length: 80 }, (_, i) => i + 1).map(id => (
+                      <option key={id} value={id}>User ID: {id}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3 pt-4">
+                <button
+                  type="submit"
+                  disabled={isSubmittingOrder}
+                  className="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-200 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isSubmittingOrder ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Sedang Mengirim...
+                    </>
+                  ) : (
+                    'Konfirmasi & Kirim Order'
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsOrderModalOpen(false)}
+                  className="w-full py-3 text-slate-400 font-bold hover:text-slate-600 transition-colors"
+                >
+                  Batal
+                </button>
               </div>
             </form>
           </div>
