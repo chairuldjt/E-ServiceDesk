@@ -18,7 +18,7 @@ export async function PUT(
         }
 
         const { id } = await params;
-        const { title, content, color } = await request.json();
+        const { title, content, color, is_public } = await request.json();
 
         const connection = await pool.getConnection();
         const [existingNote]: any = await connection.execute( // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -36,8 +36,8 @@ export async function PUT(
 
         const note = existingNote[0];
 
-        // Check authorization
-        if (note.user_id !== payload.id) {
+        // Check authorization (allow if owner or admin)
+        if (note.user_id !== payload.id && payload.role !== 'admin') {
             connection.release();
             return NextResponse.json(
                 { error: 'Forbidden' },
@@ -46,8 +46,8 @@ export async function PUT(
         }
 
         await connection.execute(
-            'UPDATE notes SET title = ?, content = ?, color = ? WHERE id = ?',
-            [title, content, color, id]
+            'UPDATE notes SET title = ?, content = ?, color = ?, is_public = ? WHERE id = ?',
+            [title, content, color, is_public ? 1 : 0, id]
         );
 
         const [updated]: any = await connection.execute( // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -101,8 +101,8 @@ export async function DELETE(
 
         const note = existingNote[0];
 
-        // Check authorization
-        if (note.user_id !== payload.id) {
+        // Check authorization (allow if owner or admin)
+        if (note.user_id !== payload.id && payload.role !== 'admin') {
             connection.release();
             return NextResponse.json(
                 { error: 'Forbidden' },

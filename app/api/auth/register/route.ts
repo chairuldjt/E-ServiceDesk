@@ -32,51 +32,20 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user
+    // Create user with is_active = 0 (needs admin approval)
     await connection.execute(
-      'INSERT INTO users (username, email, password_hash, role) VALUES (?, ?, ?, ?)',
-      [username, email, hashedPassword, 'user']
+      'INSERT INTO users (username, email, password_hash, role, is_active) VALUES (?, ?, ?, ?, ?)',
+      [username, email, hashedPassword, 'user', 0]
     );
 
-    // Get created user
-    const [newUser]: any = await connection.execute(
-      'SELECT id, username, email, role FROM users WHERE email = ?',
-      [email]
-    );
     connection.release();
 
-    const user = newUser[0];
-    const token = generateToken({
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      role: user.role,
-    });
-
-    const response = NextResponse.json(
+    return NextResponse.json(
       {
-        message: 'Registrasi berhasil',
-        token,
-        user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          role: user.role,
-        },
+        message: 'Registrasi berhasil. Silakan tunggu persetujuan admin sebelum login.',
       },
       { status: 201 }
     );
-
-    response.cookies.set({
-      name: 'token',
-      value: token,
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7,
-    });
-
-    return response;
   } catch (error) {
     console.error('Register error:', error);
     return NextResponse.json(

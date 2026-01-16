@@ -4,6 +4,7 @@ import { ProtectedRoute } from '@/components/ProtectedRoute';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useUI } from '@/context/UIContext';
 
 interface LogbookEntry {
   id: number;
@@ -29,6 +30,7 @@ export default function DetailLogbookPage() {
 function DetailLogbookContent() {
   const router = useRouter();
   const params = useParams();
+  const { showToast } = useUI();
   const id = params.id as string;
 
   const [loading, setLoading] = useState(true);
@@ -108,7 +110,7 @@ function DetailLogbookContent() {
 
       setLogbook(data.data);
       setIsEditing(false);
-      alert('Logbook berhasil diupdate');
+      showToast('Logbook berhasil diupdate', 'success');
     } catch (error) {
       setError('Terjadi kesalahan: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
@@ -155,11 +157,10 @@ function DetailLogbookContent() {
                   <div>
                     <label className="block text-gray-500 text-sm font-medium">Status</label>
                     <span
-                      className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
-                        logbook.status === 'completed'
+                      className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${logbook.status === 'completed'
                           ? 'bg-green-100 text-green-800'
                           : 'bg-yellow-100 text-yellow-800'
-                      }`}
+                        }`}
                     >
                       {logbook.status === 'completed' ? '✅ Selesai' : '📝 Draft'}
                     </span>

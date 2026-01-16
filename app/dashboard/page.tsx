@@ -16,6 +16,23 @@ interface LogbookEntry {
   created_at: string;
 }
 
+interface Note {
+  id: number;
+  title: string;
+  content: string;
+  color: string;
+  updated_at: string;
+}
+
+const NOTE_COLORS = [
+  { name: 'white', value: 'bg-white', border: 'border-gray-200' },
+  { name: 'yellow', value: 'bg-yellow-100', border: 'border-yellow-200' },
+  { name: 'green', value: 'bg-green-100', border: 'border-green-200' },
+  { name: 'blue', value: 'bg-blue-100', border: 'border-blue-200' },
+  { name: 'red', value: 'bg-red-100', border: 'border-red-200' },
+  { name: 'purple', value: 'bg-purple-100', border: 'border-purple-200' },
+];
+
 export default function DashboardPage() {
   return (
     <ProtectedRoute>
@@ -27,6 +44,7 @@ export default function DashboardPage() {
 function DashboardContent() {
   const { user } = useAuth();
   const [logbookEntries, setLogbookEntries] = useState<LogbookEntry[]>([]);
+  const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ total: 0, completed: 0, draft: 0 });
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
@@ -35,25 +53,32 @@ function DashboardContent() {
   const [exportError, setExportError] = useState('');
 
   useEffect(() => {
-    const fetchLogbook = async () => {
+    const fetchDashboardData = async () => {
       try {
-        const response = await fetch('/api/logbook');
-        const data = await response.json();
-        setLogbookEntries(data.data);
+        // Fetch Logbooks
+        const logbookRes = await fetch('/api/logbook');
+        const logbookData = await logbookRes.json();
+        setLogbookEntries(logbookData.data || []);
 
-        const total = data.data.length;
-        const completed = data.data.filter((entry: LogbookEntry) => entry.status === 'completed').length;
-        const draft = data.data.filter((entry: LogbookEntry) => entry.status === 'draft').length;
+        const total = logbookData.data?.length || 0;
+        const completed = logbookData.data?.filter((entry: LogbookEntry) => entry.status === 'completed').length || 0;
+        const draft = logbookData.data?.filter((entry: LogbookEntry) => entry.status === 'draft').length || 0;
 
         setStats({ total, completed, draft });
+
+        // Fetch Notes
+        const notesRes = await fetch('/api/notes');
+        const notesData = await notesRes.json();
+        setNotes(notesData.data || []);
+
       } catch (error) {
-        console.error('Error fetching logbook:', error);
+        console.error('Error fetching dashboard data:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchLogbook();
+    fetchDashboardData();
   }, []);
 
   const handleExportCDR = async (e: React.FormEvent) => {
@@ -230,14 +255,14 @@ function DashboardContent() {
         </div>
 
         {/* Recent Logbook */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-white rounded-lg shadow overflow-hidden mb-8">
           <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Logbook Terbaru
+            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              📚 Logbook Terbaru
             </h2>
             <Link
               href="/logbook"
-              className="text-blue-600 hover:text-blue-700 font-semibold"
+              className="text-blue-600 hover:text-blue-700 font-semibold text-sm"
             >
               Lihat Semua →
             </Link>
@@ -247,22 +272,22 @@ function DashboardContent() {
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                     Extensi
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                     Nama
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                     Lokasi
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                     Dibuat
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                     Aksi
                   </th>
                 </tr>
@@ -270,24 +295,24 @@ function DashboardContent() {
               <tbody className="divide-y divide-gray-200">
                 {logbookEntries.slice(0, 5).length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                    <td colSpan={6} className="px-6 py-4 text-center text-gray-500 text-sm">
                       Belum ada data logbook
                     </td>
                   </tr>
                 ) : (
                   logbookEntries.slice(0, 5).map((entry) => (
-                    <tr key={entry.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 text-sm text-gray-900">{entry.extensi}</td>
+                    <tr key={entry.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 text-sm text-gray-900 font-medium">{entry.extensi}</td>
                       <td className="px-6 py-4 text-sm text-gray-900">{entry.nama}</td>
                       <td className="px-6 py-4 text-sm text-gray-900">{entry.lokasi}</td>
                       <td className="px-6 py-4 text-sm">
                         <span
-                          className={`px-3 py-1 rounded-full text-xs font-semibold ${entry.status === 'completed'
+                          className={`px-3 py-1 rounded-full text-[10px] uppercase tracking-wider font-bold ${entry.status === 'completed'
                             ? 'bg-green-100 text-green-800'
                             : 'bg-yellow-100 text-yellow-800'
                             }`}
                         >
-                          {entry.status === 'completed' ? '✅ Selesai' : '📝 Draft'}
+                          {entry.status === 'completed' ? 'Selesai' : 'Draft'}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-500">
@@ -306,6 +331,57 @@ function DashboardContent() {
                 )}
               </tbody>
             </table>
+          </div>
+        </div>
+
+        {/* Recent Notepad */}
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              📝 Catatan Terbaru
+            </h2>
+            <Link
+              href="/notepad"
+              className="text-blue-600 hover:text-blue-700 font-semibold text-sm"
+            >
+              Lihat Semua →
+            </Link>
+          </div>
+
+          <div className="p-6">
+            {notes.slice(0, 4).length === 0 ? (
+              <div className="text-center py-8 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                <p className="text-gray-500 text-sm">Belum ada catatan</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {notes.slice(0, 4).map((note) => {
+                  const colorObj = NOTE_COLORS.find((c) => c.name === note.color) || NOTE_COLORS[0];
+                  return (
+                    <Link
+                      key={note.id}
+                      href="/notepad"
+                      className={`${colorObj.value} border ${colorObj.border} rounded-xl p-4 shadow-sm hover:shadow-md transition-all group flex flex-col`}
+                    >
+                      <h3 className="font-bold text-gray-900 mb-2 truncate text-sm">
+                        {note.title}
+                      </h3>
+                      <p className="text-gray-700 text-xs whitespace-pre-wrap line-clamp-3 flex-1 mb-3">
+                        {note.content}
+                      </p>
+                      <div className="text-[10px] text-gray-400">
+                        {new Date(note.updated_at).toLocaleDateString('id-ID', {
+                          day: 'numeric',
+                          month: 'short',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </div>

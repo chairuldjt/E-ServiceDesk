@@ -16,7 +16,11 @@ export async function GET(request: NextRequest) {
 
         const connection = await pool.getConnection();
         const [rows]: any = await connection.execute(
-            'SELECT * FROM notes WHERE user_id = ? ORDER BY updated_at DESC',
+            `SELECT n.*, u.username 
+             FROM notes n 
+             JOIN users u ON n.user_id = u.id 
+             WHERE n.user_id = ? OR n.is_public = 1 
+             ORDER BY n.updated_at DESC`,
             [payload.id]
         ); // eslint-disable-line @typescript-eslint/no-explicit-any
         connection.release();
@@ -43,7 +47,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const { title, content, color } = await request.json();
+        const { title, content, color, is_public } = await request.json();
 
         if (!title) {
             return NextResponse.json(
@@ -54,8 +58,8 @@ export async function POST(request: NextRequest) {
 
         const connection = await pool.getConnection();
         await connection.execute(
-            'INSERT INTO notes (user_id, title, content, color) VALUES (?, ?, ?, ?)',
-            [payload.id, title, content || '', color || 'white']
+            'INSERT INTO notes (user_id, title, content, color, is_public) VALUES (?, ?, ?, ?, ?)',
+            [payload.id, title, content || '', color || 'white', is_public ? 1 : 0]
         );
 
         const [result]: any = await connection.execute(

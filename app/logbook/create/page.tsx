@@ -4,6 +4,7 @@ import { ProtectedRoute } from '@/components/ProtectedRoute';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { useUI } from '@/context/UIContext';
 
 export default function CreateLogbookPage() {
   return (
@@ -15,6 +16,7 @@ export default function CreateLogbookPage() {
 
 function CreateLogbookContent() {
   const router = useRouter();
+  const { showToast } = useUI();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({
@@ -55,7 +57,7 @@ function CreateLogbookContent() {
         return;
       }
 
-      alert('Logbook berhasil dibuat');
+      showToast('Logbook berhasil dibuat', 'success');
       router.push('/logbook');
     } catch (error) {
       setError('Terjadi kesalahan: ' + (error instanceof Error ? error.message : 'Unknown error'));

@@ -3,12 +3,16 @@
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { useState, useEffect } from 'react';
 import { useUI } from '@/context/UIContext';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Note {
     id: number;
+    user_id: number;
+    username?: string;
     title: string;
     content: string;
     color: string;
+    is_public: number;
     updated_at: string;
 }
 
@@ -30,6 +34,7 @@ export default function NotepadPage() {
 }
 
 function NotepadContent() {
+    const { user } = useAuth();
     const { showToast, confirm } = useUI();
     const [notes, setNotes] = useState<Note[]>([]);
     const [loading, setLoading] = useState(true);
@@ -41,6 +46,7 @@ function NotepadContent() {
         title: '',
         content: '',
         color: 'white',
+        is_public: false,
     });
 
     useEffect(() => {
@@ -62,7 +68,7 @@ function NotepadContent() {
 
     const handleCreate = () => {
         setEditingNote(null);
-        setFormData({ title: '', content: '', color: 'white' });
+        setFormData({ title: '', content: '', color: 'white', is_public: false });
         setIsModalOpen(true);
     };
 
@@ -72,6 +78,7 @@ function NotepadContent() {
             title: note.title,
             content: note.content,
             color: note.color,
+            is_public: note.is_public === 1,
         });
         setIsModalOpen(true);
     };
@@ -168,30 +175,46 @@ function NotepadContent() {
                                 <div
                                     key={note.id}
                                     onClick={() => handleEdit(note)}
-                                    className={`${colorObj.value} border ${colorObj.border} rounded-xl p-6 shadow-sm hover:shadow-md transition cursor-pointer group relative`}
+                                    className={`${colorObj.value} border ${colorObj.border} rounded-xl p-6 shadow-sm hover:shadow-md transition cursor-pointer group relative flex flex-col h-full`}
                                 >
-                                    <h3 className="font-bold text-gray-900 mb-2 truncate pr-6">
-                                        {note.title}
-                                    </h3>
-                                    <p className="text-gray-700 text-sm whitespace-pre-wrap line-clamp-6 min-h-[4rem]">
+                                    <div className="flex justify-between items-start mb-2 gap-2">
+                                        <h3 className="font-bold text-gray-900 truncate flex-1">
+                                            {note.title}
+                                        </h3>
+                                        <div className="flex gap-1">
+                                            {note.is_public === 1 && (
+                                                <span className="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                                                    Publik
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <p className="text-gray-700 text-sm whitespace-pre-wrap line-clamp-6 flex-1 mb-4">
                                         {note.content}
                                     </p>
-                                    <div className="mt-4 flex justify-between items-center text-xs text-gray-500">
-                                        <span>
-                                            {new Date(note.updated_at).toLocaleDateString('id-ID', {
-                                                day: 'numeric',
-                                                month: 'short',
-                                                hour: '2-digit',
-                                                minute: '2-digit',
-                                            })}
-                                        </span>
-                                        <button
-                                            onClick={(e) => handleDelete(note.id, e)}
-                                            className="text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition p-1"
-                                            title="Hapus"
-                                        >
-                                            🗑️
-                                        </button>
+                                    <div className="flex justify-between items-end text-[10px] text-gray-500 border-t border-black/5 pt-3">
+                                        <div className="flex flex-col">
+                                            <span className="font-semibold text-gray-700">
+                                                By: {note.user_id === user?.id ? 'Saya' : note.username}
+                                            </span>
+                                            <span>
+                                                {new Date(note.updated_at).toLocaleDateString('id-ID', {
+                                                    day: 'numeric',
+                                                    month: 'short',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit',
+                                                })}
+                                            </span>
+                                        </div>
+                                        {(note.user_id === user?.id || user?.role === 'admin') && (
+                                            <button
+                                                onClick={(e) => handleDelete(note.id, e)}
+                                                className="text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition p-1"
+                                                title="Hapus"
+                                            >
+                                                🗑️
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             );
@@ -206,7 +229,9 @@ function NotepadContent() {
                             <form onSubmit={handleSubmit}>
                                 <div className="p-6 border-b border-gray-100 flex justify-between items-center">
                                     <h2 className="text-xl font-bold text-gray-800">
-                                        {editingNote ? 'Edit Catatan' : 'Catatan Baru'}
+                                        {editingNote
+                                            ? (editingNote.user_id === user?.id || user?.role === 'admin' ? 'Edit Catatan' : 'Detail Catatan')
+                                            : 'Catatan Baru'}
                                     </h2>
                                     <button
                                         type="button"
@@ -225,7 +250,9 @@ function NotepadContent() {
                                         onChange={(e) =>
                                             setFormData({ ...formData, title: e.target.value })
                                         }
-                                        className="w-full text-xl font-bold border-b border-transparent hover:border-gray-200 focus:border-blue-500 focus:outline-none py-2 px-1 transition placeholder-gray-400"
+                                        readOnly={!!(editingNote && editingNote.user_id !== user?.id && user?.role !== 'admin')}
+                                        className={`w-full text-xl font-bold border-b border-transparent hover:border-gray-200 focus:border-blue-500 focus:outline-none py-2 px-1 transition placeholder-gray-400 ${editingNote && editingNote.user_id !== user?.id && user?.role !== 'admin' ? 'cursor-default' : ''
+                                            }`}
                                         required
                                         autoFocus
                                     />
@@ -236,29 +263,53 @@ function NotepadContent() {
                                         onChange={(e) =>
                                             setFormData({ ...formData, content: e.target.value })
                                         }
-                                        className="w-full h-64 resize-none border-none focus:ring-0 text-gray-700 text-base leading-relaxed p-1 placeholder-gray-400 bg-transparent"
+                                        readOnly={!!(editingNote && editingNote.user_id !== user?.id && user?.role !== 'admin')}
+                                        className={`w-full h-64 resize-none border-none focus:ring-0 text-gray-700 text-base leading-relaxed p-1 placeholder-gray-400 bg-transparent ${editingNote && editingNote.user_id !== user?.id && user?.role !== 'admin' ? 'cursor-default' : ''
+                                            }`}
                                     />
 
-                                    <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
-                                        <span className="text-sm font-medium text-gray-500">
-                                            Warna:
-                                        </span>
-                                        <div className="flex gap-2">
-                                            {COLORS.map((c) => (
-                                                <button
-                                                    key={c.name}
-                                                    type="button"
-                                                    onClick={() => setFormData({ ...formData, color: c.name })}
-                                                    className={`w-8 h-8 rounded-full border ${c.border
-                                                        } ${c.value} transition transform hover:scale-110 ${formData.color === c.name
-                                                            ? 'ring-2 ring-blue-500 ring-offset-1'
-                                                            : ''
-                                                        }`}
-                                                    title={c.name}
-                                                />
-                                            ))}
-                                        </div>
-                                    </div>
+                                    {(!editingNote || editingNote.user_id === user?.id || user?.role === 'admin') && (
+                                        <>
+                                            <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
+                                                <span className="text-sm font-medium text-gray-500">
+                                                    Warna:
+                                                </span>
+                                                <div className="flex gap-2">
+                                                    {COLORS.map((c) => (
+                                                        <button
+                                                            key={c.name}
+                                                            type="button"
+                                                            onClick={() => setFormData({ ...formData, color: c.name })}
+                                                            className={`w-8 h-8 rounded-full border ${c.border
+                                                                } ${c.value} transition transform hover:scale-110 ${formData.color === c.name
+                                                                    ? 'ring-2 ring-blue-500 ring-offset-1'
+                                                                    : ''
+                                                                }`}
+                                                            title={c.name}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
+                                                <label className="flex items-center cursor-pointer gap-3">
+                                                    <div className="relative">
+                                                        <input
+                                                            type="checkbox"
+                                                            className="sr-only"
+                                                            checked={formData.is_public}
+                                                            onChange={(e) => setFormData({ ...formData, is_public: e.target.checked })}
+                                                        />
+                                                        <div className={`w-10 h-6 rounded-full transition-colors ${formData.is_public ? 'bg-blue-600' : 'bg-gray-300'}`}></div>
+                                                        <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${formData.is_public ? 'translate-x-4' : ''}`}></div>
+                                                    </div>
+                                                    <span className="text-sm font-medium text-gray-700">
+                                                        Tampilkan ke semua user lain (Publik)
+                                                    </span>
+                                                </label>
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
 
                                 <div className="p-6 bg-gray-50 flex justify-end gap-3 rounded-b-xl">
@@ -267,14 +318,16 @@ function NotepadContent() {
                                         onClick={() => setIsModalOpen(false)}
                                         className="px-6 py-2 rounded-lg text-gray-600 font-medium hover:bg-gray-200 transition"
                                     >
-                                        Batal
+                                        {(!editingNote || editingNote.user_id === user?.id || user?.role === 'admin') ? 'Batal' : 'Tutup'}
                                     </button>
-                                    <button
-                                        type="submit"
-                                        className="px-6 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition shadow-sm"
-                                    >
-                                        Simpan
-                                    </button>
+                                    {(!editingNote || editingNote.user_id === user?.id || user?.role === 'admin') && (
+                                        <button
+                                            type="submit"
+                                            className="px-6 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition shadow-sm"
+                                        >
+                                            Simpan
+                                        </button>
+                                    )}
                                 </div>
                             </form>
                         </div>
