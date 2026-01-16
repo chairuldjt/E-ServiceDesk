@@ -4,7 +4,7 @@ import { getPayloadFromCookie } from '@/lib/jwt';
 
 // Simple in-memory cache
 let cache: { data: any; timestamp: number } | null = null;
-const CACHE_TTL = 15 * 1000; // 15 seconds (reduced for faster updates)
+const CACHE_TTL = 50 * 1000; // 15 seconds (reduced for faster updates)
 const STATUSES = [11, 12, 15]; // followup, running, done
 
 export async function GET(request: NextRequest) {
