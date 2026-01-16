@@ -19,6 +19,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   const menuItems = [
     { name: 'Dashboard', path: '/dashboard', icon: '📊' },
+    { name: 'Monitoring', path: '/monitoring', icon: '📡' },
     { name: 'Logbook', path: '/logbook', icon: '📔' },
     { name: 'Notepad', path: '/notepad', icon: '📝' },
   ];
@@ -45,7 +46,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <div className="flex items-center gap-2">
             <span className="text-2xl">🏢</span>
             <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-teal-400 bg-clip-text text-transparent">
-              ServiceDesk
+              E-ServiceDesk
             </h1>
           </div>
           <button
@@ -69,8 +70,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 if (window.innerWidth < 1024) onClose();
               }}
               className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${isActive(item.path)
-                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
-                  : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                 }`}
             >
               <span className={`text-xl transition-transform duration-200 group-hover:scale-110`}>
