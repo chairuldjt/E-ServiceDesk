@@ -1,9 +1,36 @@
 import db from '@/lib/db';
 
-export async function getWebminConfig() {
+async function ensureTableExists() {
     try {
+        // Attempt to create the table with the new schema if it doesn't exist
+        await db.query(`
+      CREATE TABLE IF NOT EXISTS settings (
+        id VARCHAR(50),
+        user_id INT,
+        value TEXT,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (id, user_id)
+      )
+    `);
+
+        // Check if user_id column exists (in case the table existed before with a different schema)
+        const [columns]: any = await db.query('SHOW COLUMNS FROM settings LIKE "user_id"');
+        if (columns.length === 0) {
+            // Table exists but no user_id, let's fix it
+            await db.query('ALTER TABLE settings ADD COLUMN user_id INT NOT NULL AFTER id');
+            await db.query('ALTER TABLE settings DROP PRIMARY KEY, ADD PRIMARY KEY (id, user_id)');
+        }
+    } catch (error) {
+        console.error('Error ensuring settings table exists:', error);
+    }
+}
+
+export async function getWebminConfig(userId: number) {
+    try {
+        await ensureTableExists();
         const [rows]: any = await db.query(
-            'SELECT value FROM settings WHERE id = "webmin_config"'
+            'SELECT value FROM settings WHERE id = ? AND user_id = ?',
+            ['webmin_config', userId]
         );
         if (rows.length > 0) {
             return JSON.parse(rows[0].value);
@@ -15,21 +42,13 @@ export async function getWebminConfig() {
     }
 }
 
-export async function saveWebminConfig(config: { user: string; pass: string; base_url: string }) {
+export async function saveWebminConfig(userId: number, config: { user: string; pass: string; base_url: string }) {
     try {
-        // Ensure table exists (simplified for this task)
-        await db.query(`
-      CREATE TABLE IF NOT EXISTS settings (
-        id VARCHAR(50) PRIMARY KEY,
-        value TEXT,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-      )
-    `);
-
+        await ensureTableExists();
         const value = JSON.stringify(config);
         await db.query(
-            'INSERT INTO settings (id, value) VALUES ("webmin_config", ?) ON DUPLICATE KEY UPDATE value = ?',
-            [value, value]
+            'INSERT INTO settings (id, user_id, value) VALUES ("webmin_config", ?, ?) ON DUPLICATE KEY UPDATE value = ?',
+            [userId, value, value]
         );
         return true;
     } catch (error) {

@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getExternalToken } from '@/lib/externalApi';
-
-const BASE = process.env.EXTERNAL_API_BASE || 'http://172.16.1.212:5010';
-const STATUSES = [11, 12, 15]; // followup, running, done
+import { getPayloadFromCookie } from '@/lib/jwt';
 
 // Simple in-memory cache
 let cache: { data: any; timestamp: number } | null = null;
 const CACHE_TTL = 30 * 1000; // 30 seconds
+const STATUSES = [11, 12, 15]; // followup, running, done
 
 export async function GET(request: NextRequest) {
+    const payload = await getPayloadFromCookie();
+    if (!payload) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const nocache = searchParams.get('nocache') === '1';
     const requestedDate = searchParams.get('date'); // YYYY-MM-DD
@@ -18,7 +22,7 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-        const jwt = await getExternalToken();
+        const { jwt, BASE } = await getExternalToken(payload.id);
 
         // 3. Get Orders
         let allOrders: any[] = [];

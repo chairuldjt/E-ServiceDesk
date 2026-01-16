@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { postExternalOrder } from '@/lib/externalApi';
+import { getPayloadFromCookie } from '@/lib/jwt';
 
 export async function POST(request: NextRequest) {
     try {
+        const payload = await getPayloadFromCookie();
+        if (!payload) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         const body = await request.json();
 
         // Validate required fields
@@ -12,7 +18,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        const payload = {
+        const externalPayload = {
             order_id: 0,
             catatan,
             create_date: "",
@@ -22,7 +28,7 @@ export async function POST(request: NextRequest) {
             order_by: parseInt(order_by) || 33
         };
 
-        const result = await postExternalOrder(payload);
+        const result = await postExternalOrder(payload.id, externalPayload);
 
         return NextResponse.json(result);
     } catch (error: any) {

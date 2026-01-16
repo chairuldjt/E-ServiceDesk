@@ -1,7 +1,7 @@
 import { getWebminConfig } from './settings';
 
-export async function getExternalToken() {
-    const config = await getWebminConfig();
+export async function getExternalToken(userId: number) {
+    const config = await getWebminConfig(userId);
 
     if (!config || !config.user || !config.pass) {
         throw new Error('Koneksi belum disetting. Silakan cek menu Setting Webmin.');
@@ -53,8 +53,8 @@ export async function getExternalToken() {
     }
 }
 
-export async function postExternalOrder(data: any) {
-    const { jwt, BASE } = await getExternalToken();
+export async function postExternalOrder(userId: number, data: any) {
+    const { jwt, BASE } = await getExternalToken(userId);
     const res = await fetch(`${BASE}/order/order_save`, {
         method: 'POST',
         headers: {
