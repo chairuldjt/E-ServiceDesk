@@ -6,25 +6,25 @@ import { generateToken } from '@/lib/jwt';
 export async function POST(request: NextRequest) {
   console.log("DB HOST =", process.env.MYSQL_HOST);   // 👈 TAMBAHKAN INI
   try {
-    const { email, password } = await request.json();
+    const { email: identifier, password } = await request.json();
 
-    if (!email || !password) {
+    if (!identifier || !password) {
       return NextResponse.json(
-        { error: 'Email dan password harus diisi' },
+        { error: 'Username/Email dan password harus diisi' },
         { status: 400 }
       );
     }
 
     const connection = await pool.getConnection();
     const [rows] = await connection.execute(
-      'SELECT * FROM users WHERE email = ?',
-      [email]
+      'SELECT * FROM users WHERE email = ? OR username = ?',
+      [identifier, identifier]
     ) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
     connection.release();
 
     if (rows.length === 0) {
       return NextResponse.json(
-        { error: 'Email atau password salah' },
+        { error: 'Username/Email atau password salah' },
         { status: 401 }
       );
     }
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
 
     if (!isPasswordValid) {
       return NextResponse.json(
-        { error: 'Email atau password salah' },
+        { error: 'Username/Email atau password salah' },
         { status: 401 }
       );
     }

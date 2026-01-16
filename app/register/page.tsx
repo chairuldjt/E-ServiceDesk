@@ -76,7 +76,7 @@ export default function RegisterPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-2xl p-8 w-full max-w-md">
         <h1 className="text-3xl font-bold text-center text-blue-600 mb-2">
-          📔 Logbook
+          🏢 E-ServiceDesk
         </h1>
         <p className="text-center text-gray-600 mb-8">
           Daftar Akun Baru
