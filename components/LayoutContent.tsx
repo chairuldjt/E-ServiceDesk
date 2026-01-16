@@ -40,7 +40,7 @@ export function LayoutContent({ children }: { children: React.ReactNode }) {
             <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
                 {/* Persistent Top Header */}
                 <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 z-30 shadow-sm shrink-0">
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 sm:gap-4">
                         <button
                             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                             className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-600"
@@ -48,7 +48,13 @@ export function LayoutContent({ children }: { children: React.ReactNode }) {
                         >
                             <span className="text-xl">☰</span>
                         </button>
-                        <h1 className="font-bold text-slate-800 tracking-tight text-lg hidden sm:block">E-ServiceDesk</h1>
+
+                        <Link href="/dashboard" className="flex items-center gap-2 group">
+                            <span className="text-2xl transition-transform group-hover:scale-110">🏢</span>
+                            <h1 className="font-bold text-slate-800 tracking-tight text-base sm:text-lg">
+                                E-<span className="text-blue-600">ServiceDesk</span>
+                            </h1>
+                        </Link>
                     </div>
 
                     <div className="flex items-center gap-4">
