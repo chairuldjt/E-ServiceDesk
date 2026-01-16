@@ -11,12 +11,34 @@ export async function GET() {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        // Check if Webmin credentials are configured
+        const config = await getWebminConfig(payload.id);
+        if (!config || !config.user || !config.pass) {
+            return NextResponse.json({
+                error: 'Kredensial Webmin belum dikonfigurasi. Silakan ke menu Settings → Account Setting untuk mengatur kredensial Webmin Anda.'
+            }, { status: 400 });
+        }
+
         // 1. Get List of Orders (DONE status 15)
         const data = await getExternalOrdersByStatus(payload.id, 15);
         return NextResponse.json({ result: data });
     } catch (error: any) {
         console.error('Verify List API Error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+
+        // Provide user-friendly error messages
+        if (error.message.includes('Gagal periksa User/PW')) {
+            return NextResponse.json({
+                error: 'Username atau Password Webmin salah. Silakan periksa kembali di menu Settings.'
+            }, { status: 401 });
+        }
+
+        if (error.message.includes('Gagal menghubungkan')) {
+            return NextResponse.json({
+                error: 'Tidak dapat terhubung ke server eksternal. Periksa koneksi jaringan atau coba lagi nanti.'
+            }, { status: 503 });
+        }
+
+        return NextResponse.json({ error: error.message || 'Terjadi kesalahan server' }, { status: 500 });
     }
 }
 

@@ -1,10 +1,21 @@
 import { getWebminConfig } from './settings';
 
 const BASE = process.env.EXTERNAL_API_BASE || 'http://172.16.1.212:5010';
+const FETCH_TIMEOUT = 10000; // 10 seconds timeout
 
 // In-memory token cache (per user ID)
 const tokenCache: { [key: number]: { jwt: string; expiry: number } } = {};
 const TOKEN_TTL = 30 * 60 * 1000; // 30 minutes cache for JWT
+
+// Timeout wrapper for fetch
+function fetchWithTimeout(url: string, options: any = {}, timeout = FETCH_TIMEOUT) {
+    return Promise.race([
+        fetch(url, options),
+        new Promise<Response>((_, reject) =>
+            setTimeout(() => reject(new Error('Request timeout')), timeout)
+        )
+    ]);
+}
 
 export async function getExternalToken(userId: number) {
     const config = await getWebminConfig(userId);
@@ -23,7 +34,7 @@ export async function getExternalToken(userId: number) {
 
     try {
         // 1. Login
-        const loginRes = await fetch(`${BASE}/secure/auth_validate_login`, {
+        const loginRes = await fetchWithTimeout(`${BASE}/secure/auth_validate_login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ login: USER, pwd: PASS }),
@@ -37,7 +48,7 @@ export async function getExternalToken(userId: number) {
         const setCookie = loginRes.headers.get('set-cookie');
 
         // 2. Get JWT
-        const verifyRes = await fetch(`${BASE}/secure/verify`, {
+        const verifyRes = await fetchWithTimeout(`${BASE}/secure/verify`, {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
