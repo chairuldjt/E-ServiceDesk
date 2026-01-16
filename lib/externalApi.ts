@@ -102,3 +102,51 @@ export async function getExternalUsers(userId: number) {
     const data = await res.json();
     return data.result || [];
 }
+
+export async function getExternalOrdersByStatus(userId: number, status: number) {
+    const { jwt } = await getExternalToken(userId);
+    const res = await fetch(`${BASE}/order/order_list_by_status/${status}`, {
+        headers: {
+            'Authorization': `Bearer ${jwt}`,
+            'Accept': 'application/json',
+        },
+    });
+
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.result || [];
+}
+
+export async function getExternalOrderDetail(userId: number, orderId: number) {
+    const { jwt } = await getExternalToken(userId);
+    const res = await fetch(`${BASE}/order/order_detail_by_id/${orderId}`, {
+        headers: {
+            'Authorization': `Bearer ${jwt}`,
+            'Accept': 'application/json',
+        },
+    });
+
+    if (!res.ok) throw new Error('Order detail not found');
+    const data = await res.json();
+    return data.result;
+}
+
+export async function postExternalVerify(userId: number, data: any) {
+    const { jwt } = await getExternalToken(userId);
+    const res = await fetch(`${BASE}/order/order_verified`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${jwt}`,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    });
+
+    if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`External API Error: ${errorText}`);
+    }
+
+    return await res.json();
+}
