@@ -216,7 +216,7 @@ function VerifyOrderContent() {
                             <tr className="bg-slate-50/50">
                                 <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">No Order</th>
                                 <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Waktu</th>
-                                <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Pelapor & Lokasi</th>
+                                <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nama dan Lokasi</th>
                                 <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Catatan Keluhan</th>
                                 <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Teknisi</th>
                                 <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Aksi</th>
@@ -348,12 +348,8 @@ function VerifyOrderContent() {
                                             </h4>
                                             <div className="space-y-4">
                                                 <div>
-                                                    <p className="text-[10px] font-bold text-slate-400 uppercase">Pelapor</p>
-                                                    <p className="font-bold text-slate-700">{selectedOrder.order_by || 'Unknown'}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-[10px] font-bold text-slate-400 uppercase">Lokasi</p>
-                                                    <p className="font-bold text-slate-700">{selectedOrder.location_desc}</p>
+                                                    <p className="text-[10px] font-bold text-slate-400 uppercase">Nama dan Lokasi</p>
+                                                    <p className="font-bold text-slate-700">{selectedOrder.order_by || 'Unknown'} - {selectedOrder.location_desc}</p>
                                                 </div>
                                                 <div>
                                                     <p className="text-[10px] font-bold text-slate-400 uppercase">Isi Keluhan</p>

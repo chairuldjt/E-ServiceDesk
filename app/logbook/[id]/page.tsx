@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useUI } from '@/context/UIContext';
+import { PageHeader, PremiumCard, PremiumButton, PremiumInput, PremiumTextarea, PremiumBadge } from '@/components/ui/PremiumComponents';
 
 interface LogbookEntry {
   id: number;
@@ -127,120 +128,127 @@ function DetailLogbookContent() {
   }
 
   return (
-    <div className="p-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
-            {isEditing ? '✏️ Edit Logbook' : '📋 Detail Logbook'}
-          </h1>
-          <Link href="/logbook" className="text-blue-600 hover:text-blue-700 font-semibold">
-            ← Kembali
+    <div className="min-h-screen p-4 md:p-8 space-y-8 animate-in fade-in duration-700">
+      <PageHeader
+        icon={isEditing ? '✏️' : '📋'}
+        title={isEditing ? 'Edit Logbook' : 'Detail Logbook'}
+        subtitle={isEditing ? 'Update informasi logbook' : 'Informasi lengkap logbook'}
+        actions={
+          <Link href="/logbook">
+            <PremiumButton variant="secondary">
+              ← Kembali
+            </PremiumButton>
           </Link>
-        </div>
+        }
+      />
 
+      <div className="max-w-4xl mx-auto">
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
-            {error}
+          <div className="bg-red-50 border-2 border-red-200 text-red-700 px-6 py-4 rounded-2xl mb-6 font-semibold flex items-center gap-3">
+            <span className="text-2xl">⚠️</span>
+            <span>{error}</span>
           </div>
         )}
 
         {logbook && (
-          <div className="bg-white rounded-lg shadow p-8">
+          <PremiumCard className="p-8">
             {!isEditing ? (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-gray-500 text-sm font-medium">Extensi</label>
-                    <p className="text-lg text-gray-900 font-semibold">{logbook.extensi}</p>
+                    <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-2">Extensi</label>
+                    <p className="text-xl text-slate-900 font-bold">{logbook.extensi}</p>
                   </div>
 
                   <div>
-                    <label className="block text-gray-500 text-sm font-medium">Status</label>
-                    <span
-                      className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${logbook.status === 'completed'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-yellow-100 text-yellow-800'
-                        }`}
+                    <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-2">Status</label>
+                    <PremiumBadge
+                      variant={logbook.status === 'completed' ? 'emerald' : 'amber'}
+                      size="md"
                     >
                       {logbook.status === 'completed' ? '✅ Selesai' : '📝 Draft'}
-                    </span>
+                    </PremiumBadge>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-gray-500 text-sm font-medium">Nama</label>
-                  <p className="text-lg text-gray-900">{logbook.nama}</p>
+                  <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-2">Nama</label>
+                  <p className="text-lg text-slate-900 font-semibold">{logbook.nama}</p>
                 </div>
 
                 <div>
-                  <label className="block text-gray-500 text-sm font-medium">Lokasi</label>
-                  <p className="text-lg text-gray-900">{logbook.lokasi}</p>
+                  <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-2">Lokasi</label>
+                  <p className="text-lg text-slate-900 font-semibold">{logbook.lokasi}</p>
                 </div>
 
-                <div>
-                  <label className="block text-gray-500 text-sm font-medium">Catatan</label>
-                  <p className="text-gray-900 whitespace-pre-wrap">{logbook.catatan || '-'}</p>
+                <div className="bg-slate-50 p-6 rounded-2xl border-2 border-slate-100">
+                  <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-3">Catatan</label>
+                  <p className="text-slate-700 whitespace-pre-wrap leading-relaxed">{logbook.catatan || '-'}</p>
                 </div>
 
-                <div>
-                  <label className="block text-gray-500 text-sm font-medium">Solusi</label>
-                  <p className="text-gray-900 whitespace-pre-wrap">{logbook.solusi || '-'}</p>
+                <div className="bg-blue-50 p-6 rounded-2xl border-2 border-blue-100">
+                  <label className="block text-xs font-black text-blue-600 uppercase tracking-wider mb-3">Solusi</label>
+                  <p className="text-slate-700 whitespace-pre-wrap leading-relaxed">{logbook.solusi || '-'}</p>
                 </div>
 
-                <div>
-                  <label className="block text-gray-500 text-sm font-medium">Penyelesaian</label>
-                  <p className="text-gray-900 whitespace-pre-wrap">{logbook.penyelesaian || '-'}</p>
+                <div className="bg-emerald-50 p-6 rounded-2xl border-2 border-emerald-100">
+                  <label className="block text-xs font-black text-emerald-600 uppercase tracking-wider mb-3">Penyelesaian</label>
+                  <p className="text-slate-700 whitespace-pre-wrap leading-relaxed">{logbook.penyelesaian || '-'}</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t-2 border-slate-100">
                   <div>
-                    <label className="block text-gray-500 text-sm font-medium">Dibuat</label>
-                    <p className="text-sm text-gray-900">
-                      {new Date(logbook.created_at).toLocaleString('id-ID')}
+                    <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-2">Dibuat</label>
+                    <p className="text-sm text-slate-700 font-semibold">
+                      {new Date(logbook.created_at).toLocaleString('id-ID', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
                     </p>
                   </div>
 
                   <div>
-                    <label className="block text-gray-500 text-sm font-medium">Diupdate</label>
-                    <p className="text-sm text-gray-900">
-                      {new Date(logbook.updated_at).toLocaleString('id-ID')}
+                    <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-2">Diupdate</label>
+                    <p className="text-sm text-slate-700 font-semibold">
+                      {new Date(logbook.updated_at).toLocaleString('id-ID', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
                     </p>
                   </div>
                 </div>
 
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-700 transition"
-                >
-                  ✏️ Edit
-                </button>
+                <div className="pt-6">
+                  <PremiumButton onClick={() => setIsEditing(true)}>
+                    ✏️ Edit Logbook
+                  </PremiumButton>
+                </div>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-gray-700 font-semibold mb-2">
-                      Extensi <span className="text-red-600">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="extensi"
-                      value={formData.extensi}
-                      onChange={handleChange}
-                      required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
-                    />
-                  </div>
+                  <PremiumInput
+                    label="Extensi"
+                    type="text"
+                    name="extensi"
+                    value={formData.extensi}
+                    onChange={handleChange}
+                    required
+                  />
 
                   <div>
-                    <label className="block text-gray-700 font-semibold mb-2">
-                      Status
-                    </label>
+                    <label className="block text-sm font-black text-slate-700 mb-2 uppercase tracking-wider">Status</label>
                     <select
                       name="status"
                       value={formData.status}
                       onChange={handleChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+                      className="w-full px-4 py-3 border-2 border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium"
                     >
                       <option value="draft">Draft</option>
                       <option value="completed">Selesai</option>
@@ -248,93 +256,78 @@ function DetailLogbookContent() {
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-gray-700 font-semibold mb-2">
-                    Nama <span className="text-red-600">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="nama"
-                    value={formData.nama}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
-                  />
-                </div>
+                <PremiumInput
+                  label="Nama"
+                  type="text"
+                  name="nama"
+                  value={formData.nama}
+                  onChange={handleChange}
+                  required
+                />
 
-                <div>
-                  <label className="block text-gray-700 font-semibold mb-2">
-                    Lokasi <span className="text-red-600">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="lokasi"
-                    value={formData.lokasi}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
-                  />
-                </div>
+                <PremiumInput
+                  label="Lokasi"
+                  type="text"
+                  name="lokasi"
+                  value={formData.lokasi}
+                  onChange={handleChange}
+                  required
+                />
 
-                <div>
-                  <label className="block text-gray-700 font-semibold mb-2">
-                    Catatan
-                  </label>
-                  <textarea
-                    name="catatan"
-                    value={formData.catatan}
-                    onChange={handleChange}
-                    rows={3}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
-                  />
-                </div>
+                <PremiumTextarea
+                  label="Catatan"
+                  name="catatan"
+                  value={formData.catatan}
+                  onChange={handleChange}
+                  rows={3}
+                />
 
-                <div>
-                  <label className="block text-gray-700 font-semibold mb-2">
-                    Solusi
-                  </label>
-                  <textarea
-                    name="solusi"
-                    value={formData.solusi}
-                    onChange={handleChange}
-                    rows={3}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
-                  />
-                </div>
+                <PremiumTextarea
+                  label="Solusi"
+                  name="solusi"
+                  value={formData.solusi}
+                  onChange={handleChange}
+                  rows={3}
+                />
 
-                <div>
-                  <label className="block text-gray-700 font-semibold mb-2">
-                    Penyelesaian
-                  </label>
-                  <textarea
-                    name="penyelesaian"
-                    value={formData.penyelesaian}
-                    onChange={handleChange}
-                    rows={3}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
-                  />
-                </div>
+                <PremiumTextarea
+                  label="Penyelesaian"
+                  name="penyelesaian"
+                  value={formData.penyelesaian}
+                  onChange={handleChange}
+                  rows={3}
+                />
 
-                <div className="flex gap-4">
-                  <button
-                    type="submit"
-                    disabled={saving}
-                    className="bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {saving ? 'Sedang menyimpan...' : '💾 Simpan'}
-                  </button>
-
-                  <button
+                <div className="flex gap-4 pt-6 border-t-2 border-slate-100">
+                  <PremiumButton
                     type="button"
+                    variant="secondary"
                     onClick={() => setIsEditing(false)}
-                    className="bg-gray-400 text-white font-semibold py-2 px-6 rounded-lg hover:bg-gray-500 transition"
+                    className="flex-1"
                   >
                     Batal
-                  </button>
+                  </PremiumButton>
+                  <PremiumButton
+                    type="submit"
+                    disabled={saving}
+                    className="flex-1"
+                  >
+                    {saving ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                        Menyimpan...
+                      </>
+                    ) : (
+                      <>💾 Simpan</>
+                    )}
+                  </PremiumButton>
                 </div>
               </form>
             )}
-          </div>
+          </PremiumCard>
         )}
       </div>
     </div>
