@@ -63,6 +63,7 @@ export async function POST(request: NextRequest) {
           username: user.username,
           email: user.email,
           role: user.role,
+          profile_image: user.profile_image,
         },
       },
       { status: 200 }

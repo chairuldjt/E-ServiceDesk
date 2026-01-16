@@ -49,6 +49,7 @@ async function initDatabase() {
                 password_hash VARCHAR(255) NOT NULL,
                 role ENUM('user', 'admin') DEFAULT 'user',
                 is_active TINYINT(1) DEFAULT 1,
+                profile_image VARCHAR(255) DEFAULT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         `);
@@ -97,6 +98,14 @@ async function initDatabase() {
             console.log('   - Adding missing "is_public" column to "notes" table...');
             await connection.query('ALTER TABLE notes ADD COLUMN is_public TINYINT(1) DEFAULT 0 AFTER color');
             console.log('   - Column "is_public" added successfully');
+        }
+
+        const [userColumns]: any = await connection.query('SHOW COLUMNS FROM users');
+        const hasProfileImage = userColumns.some((col: any) => col.Field === 'profile_image');
+        if (!hasProfileImage) {
+            console.log('   - Adding missing "profile_image" column to "users" table...');
+            await connection.query('ALTER TABLE users ADD COLUMN profile_image VARCHAR(255) DEFAULT NULL AFTER is_active');
+            console.log('   - Column "profile_image" added successfully');
         }
 
         // Step 4: Seed Admin User

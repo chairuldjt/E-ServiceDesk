@@ -8,6 +8,7 @@ export interface User {
     username: string;
     email: string;
     role: 'user' | 'admin';
+    profile_image?: string | null;
 }
 
 interface AuthContextType {
@@ -15,6 +16,7 @@ interface AuthContextType {
     isLoading: boolean;
     login: (token: string, userData: User) => void;
     logout: () => void;
+    refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -58,8 +60,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         router.push('/login');
     };
 
+    const refreshUser = async () => {
+        try {
+            const response = await fetch('/api/user/profile');
+            const result = await response.json();
+            if (response.ok) {
+                const updatedUser = result.data;
+                localStorage.setItem('user', JSON.stringify(updatedUser));
+                setUser(updatedUser);
+            }
+        } catch (error) {
+            console.error('Refresh user error:', error);
+        }
+    };
+
     return (
-        <AuthContext.Provider value={{ user, isLoading, login, logout }}>
+        <AuthContext.Provider value={{ user, isLoading, login, logout, refreshUser }}>
             {children}
         </AuthContext.Provider>
     );

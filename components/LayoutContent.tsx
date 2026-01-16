@@ -61,9 +61,13 @@ export function LayoutContent({ children }: { children: React.ReactNode }) {
                         <div className="relative" ref={dropdownRef}>
                             <button
                                 onClick={() => setIsProfileOpen(!isProfileOpen)}
-                                className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 transition flex items-center justify-center text-white font-bold shadow-md shadow-blue-200"
+                                className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 transition flex items-center justify-center text-white font-bold shadow-md shadow-blue-200 overflow-hidden"
                             >
-                                {user.username.charAt(0).toUpperCase()}
+                                {user.profile_image ? (
+                                    <img src={user.profile_image} alt="Profile" className="w-full h-full object-cover" />
+                                ) : (
+                                    user.username.charAt(0).toUpperCase()
+                                )}
                             </button>
 
                             {isProfileOpen && (
