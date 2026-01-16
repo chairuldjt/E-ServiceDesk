@@ -108,6 +108,13 @@ async function initDatabase() {
             console.log('   - Column "profile_image" added successfully');
         }
 
+        const hasImages = columns.some((col: any) => col.Field === 'images');
+        if (!hasImages) {
+            console.log('   - Adding missing "images" column to "notes" table...');
+            await connection.query('ALTER TABLE notes ADD COLUMN images TEXT DEFAULT NULL AFTER content');
+            console.log('   - Column "images" added successfully');
+        }
+
         // Step 4: Seed Admin User
         console.log('Seeding admin user...');
         const [adminExists]: any = await connection.query('SELECT id FROM users WHERE username = "admin" OR email = "admin@logbook.com"');
