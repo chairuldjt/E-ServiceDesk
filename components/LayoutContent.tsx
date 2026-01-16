@@ -1,42 +1,114 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Sidebar } from '@/components/Sidebar';
 import { useAuth } from '@/hooks/useAuth';
+import Link from 'next/link';
 
 export function LayoutContent({ children }: { children: React.ReactNode }) {
-    const { user } = useAuth();
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const { user, logout } = useAuth();
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    // Default sidebar state based on screen size
+    useEffect(() => {
+        if (window.innerWidth < 1024) {
+            setIsSidebarOpen(false);
+        }
+    }, []);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsProfileOpen(false);
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     if (!user) {
         return <main className="min-h-screen">{children}</main>;
     }
 
     return (
-        <div className="flex min-h-screen relative bg-slate-50">
-            {/* Mobile Header / Toggle */}
-            <div className="lg:hidden fixed top-0 left-0 right-0 z-30 bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between shadow-sm">
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => setIsSidebarOpen(true)}
-                        className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-                    >
-                        <span className="text-xl">☰</span>
-                    </button>
-                    <h1 className="font-bold text-slate-800 tracking-tight">E-ServiceDesk</h1>
-                </div>
-                <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold">
-                    {user.username.charAt(0).toUpperCase()}
-                </div>
-            </div>
-
+        <div className="flex h-screen overflow-hidden bg-slate-50">
             <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
-            <main className="flex-1 w-full min-w-0 overflow-auto">
-                <div className="lg:p-0 pt-[60px] lg:pt-0">
-                    {children}
-                </div>
-            </main>
+            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+                {/* Persistent Top Header */}
+                <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 z-30 shadow-sm shrink-0">
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                            className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-600"
+                            title={isSidebarOpen ? "Hide Sidebar" : "Show Sidebar"}
+                        >
+                            <span className="text-xl">☰</span>
+                        </button>
+                        <h1 className="font-bold text-slate-800 tracking-tight text-lg hidden sm:block">E-ServiceDesk</h1>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                        <div className="text-right hidden sm:block mr-2">
+                            <p className="text-sm font-semibold text-slate-900">{user.username}</p>
+                            <p className="text-xs text-slate-500 capitalize">{user.role}</p>
+                        </div>
+
+                        {/* User Profile Dropdown */}
+                        <div className="relative" ref={dropdownRef}>
+                            <button
+                                onClick={() => setIsProfileOpen(!isProfileOpen)}
+                                className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 transition flex items-center justify-center text-white font-bold shadow-md shadow-blue-200"
+                            >
+                                {user.username.charAt(0).toUpperCase()}
+                            </button>
+
+                            {isProfileOpen && (
+                                <div className="absolute right-0 mt-3 w-56 bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-50 animate-fade-in-up">
+                                    <div className="px-4 py-3 border-b border-slate-50 lg:hidden">
+                                        <p className="text-sm font-bold text-slate-900">{user.username}</p>
+                                        <p className="text-xs text-slate-500 capitalize">{user.role}</p>
+                                    </div>
+
+                                    <Link
+                                        href="/profile"
+                                        className="flex items-center gap-3 px-4 py-3 text-sm text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition"
+                                        onClick={() => setIsProfileOpen(false)}
+                                    >
+                                        <span>👤</span> Detail Account
+                                    </Link>
+                                    <Link
+                                        href="/settings"
+                                        className="flex items-center gap-3 px-4 py-3 text-sm text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition"
+                                        onClick={() => setIsProfileOpen(false)}
+                                    >
+                                        <span>⚙️</span> Account Setting
+                                    </Link>
+                                    <hr className="my-1 border-slate-50" />
+                                    <button
+                                        onClick={() => {
+                                            setIsProfileOpen(false);
+                                            logout();
+                                        }}
+                                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-50 transition"
+                                    >
+                                        <span>🚪</span> Logout
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </header>
+
+                <main className="flex-1 overflow-auto bg-slate-50">
+                    <div className="p-0">
+                        {children}
+                    </div>
+                </main>
+            </div>
         </div>
     );
 }
