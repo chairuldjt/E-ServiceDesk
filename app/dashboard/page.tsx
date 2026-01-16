@@ -137,9 +137,9 @@ function DashboardContent() {
   return (
     <div className="space-y-6">
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-12">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
             👋 Selamat datang, {user?.username}!
           </h1>
           <div className="flex gap-4">

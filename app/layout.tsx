@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Sidebar } from "@/components/Sidebar";
+import { LayoutContent } from "@/components/LayoutContent";
 import { AuthProvider } from "@/context/AuthContext";
 import { UIProvider } from "@/context/UIContext";
 
@@ -32,12 +32,9 @@ export default function RootLayout({
       >
         <AuthProvider>
           <UIProvider>
-            <div className="flex min-h-screen">
-              <Sidebar />
-              <main className="flex-1 overflow-auto">
-                {children}
-              </main>
-            </div>
+            <LayoutContent>
+              {children}
+            </LayoutContent>
           </UIProvider>
         </AuthProvider>
       </body>

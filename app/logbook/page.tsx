@@ -171,10 +171,10 @@ function LogbookListContent() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 md:mb-8 gap-4">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
             📚 Daftar Logbook
           </h1>
           <Link
@@ -186,7 +186,7 @@ function LogbookListContent() {
         </div>
 
         {/* Filter and Search */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <div className="bg-white rounded-lg shadow p-4 md:p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input
               type="text"
