@@ -4,7 +4,8 @@ import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { useState, useEffect } from 'react';
 import { useUI } from '@/context/UIContext';
 import { useAuth } from '@/hooks/useAuth';
-import { PageHeader, PremiumCard, PremiumButton, PremiumModal, PremiumInput, PremiumTextarea, PremiumBadge } from '@/components/ui/PremiumComponents';
+import { PageHeader, PremiumCard, PremiumButton, PremiumModal, PremiumInput, PremiumBadge } from '@/components/ui/PremiumComponents';
+import { PremiumRichEditor } from '@/components/ui/PremiumRichEditor';
 
 interface Note {
     id: number;
@@ -14,17 +15,18 @@ interface Note {
     content: string;
     color: string;
     is_public: number;
+    is_pinned: number;
     images?: string | null;
     updated_at: string;
 }
 
 const COLORS = [
-    { name: 'white', value: 'bg-white', border: 'border-gray-200' },
-    { name: 'yellow', value: 'bg-yellow-100', border: 'border-yellow-200' },
-    { name: 'green', value: 'bg-green-100', border: 'border-green-200' },
-    { name: 'blue', value: 'bg-blue-100', border: 'border-blue-200' },
-    { name: 'red', value: 'bg-red-100', border: 'border-red-200' },
-    { name: 'purple', value: 'bg-purple-100', border: 'border-purple-200' },
+    { name: 'white', value: 'bg-white', border: 'border-slate-200' },
+    { name: 'yellow', value: 'bg-amber-50', border: 'border-amber-100' },
+    { name: 'green', value: 'bg-emerald-50', border: 'border-emerald-100' },
+    { name: 'blue', value: 'bg-blue-50', border: 'border-blue-100' },
+    { name: 'red', value: 'bg-rose-50', border: 'border-rose-100' },
+    { name: 'purple', value: 'bg-violet-50', border: 'border-violet-100' },
 ];
 
 export default function NotepadPage() {
@@ -42,6 +44,7 @@ function NotepadContent() {
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingNote, setEditingNote] = useState<Note | null>(null);
+    const [viewMode, setViewMode] = useState(true);
 
     // Form state
     const [formData, setFormData] = useState({
@@ -49,6 +52,7 @@ function NotepadContent() {
         content: '',
         color: 'white',
         is_public: false,
+        is_pinned: false,
     });
 
     useEffect(() => {
@@ -70,23 +74,52 @@ function NotepadContent() {
 
     const handleCreate = () => {
         setEditingNote(null);
-        setFormData({ title: '', content: '', color: 'white', is_public: false });
+        setViewMode(false);
+        setFormData({ title: '', content: '', color: 'white', is_public: false, is_pinned: false });
         setIsModalOpen(true);
     };
 
-    const handleEdit = (note: Note) => {
+    const handleOpenNote = (note: Note) => {
         setEditingNote(note);
+        setViewMode(true);
         setFormData({
             title: note.title,
             content: note.content,
             color: note.color,
             is_public: note.is_public === 1,
+            is_pinned: note.is_pinned === 1,
         });
         setIsModalOpen(true);
     };
 
+    const togglePin = async (note: Note, e?: React.MouseEvent) => {
+        if (e) e.stopPropagation();
+
+        try {
+            const newPinnedStatus = note.is_pinned === 1 ? 0 : 1;
+            const response = await fetch(`/api/notes/${note.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...note,
+                    is_pinned: newPinnedStatus,
+                    is_public: note.is_public === 1 // Ensure this is boolean for the API
+                }),
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                setNotes(notes.map(n => n.id === note.id ? result.data : n));
+                showToast(newPinnedStatus ? 'Catatan dipin' : 'Catatan dilepas', 'success');
+            }
+        } catch (error) {
+            console.error('Error toggling pin:', error);
+            showToast('Gagal mengubah status pin', 'error');
+        }
+    };
+
     const handleDelete = (id: number, e?: React.MouseEvent) => {
-        e?.stopPropagation();
+        if (e) e.stopPropagation();
         confirm('Hapus Catatan?', 'Apakah Anda yakin ingin menghapus catatan ini?', async () => {
             try {
                 const response = await fetch(`/api/notes/${id}`, {
@@ -96,6 +129,7 @@ function NotepadContent() {
                 if (response.ok) {
                     setNotes(notes.filter((n) => n.id !== id));
                     showToast('Catatan berhasil dihapus', 'success');
+                    if (isModalOpen) setIsModalOpen(false);
                 } else {
                     showToast('Gagal menghapus catatan', 'error');
                 }
@@ -106,8 +140,8 @@ function NotepadContent() {
         });
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
 
         try {
             const url = editingNote ? `/api/notes/${editingNote.id}` : '/api/notes';
@@ -138,6 +172,12 @@ function NotepadContent() {
         }
     };
 
+    // Sort notes: Pinned first, then by updated_at (though the API already does it, we double check here)
+    const sortedNotes = [...notes].sort((a, b) => {
+        if (a.is_pinned !== b.is_pinned) return b.is_pinned - a.is_pinned;
+        return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+    });
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
@@ -151,7 +191,7 @@ function NotepadContent() {
             <PageHeader
                 icon="📝"
                 title="Notepad"
-                subtitle="Kelola catatan dan ide Anda"
+                subtitle="Kelola catatan dengan format teks kaya dan gambar"
                 actions={
                     <PremiumButton onClick={handleCreate}>
                         <span className="text-lg">➕</span> Buat Catatan
@@ -159,7 +199,7 @@ function NotepadContent() {
                 }
             />
 
-            {notes.length === 0 ? (
+            {sortedNotes.length === 0 ? (
                 <PremiumCard className="p-16">
                     <div className="text-center flex flex-col items-center">
                         <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center text-5xl mx-auto mb-6">
@@ -173,47 +213,65 @@ function NotepadContent() {
                 </PremiumCard>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {notes.map((note) => {
+                    {sortedNotes.map((note) => {
                         const colorObj = COLORS.find((c) => c.name === note.color) || COLORS[0];
                         return (
                             <div
                                 key={note.id}
-                                onClick={() => handleEdit(note)}
-                                className={`${colorObj.value} border-2 ${colorObj.border} rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all cursor-pointer group flex flex-col h-full hover:scale-105 transform duration-200`}
+                                onClick={() => handleOpenNote(note)}
+                                className={`${colorObj.value} border-2 ${colorObj.border} rounded-[2rem] p-6 shadow-lg hover:shadow-2xl transition-all cursor-pointer group flex flex-col h-full hover:scale-105 transform duration-300 relative overflow-hidden`}
                             >
-                                <div className="flex justify-between items-start mb-3 gap-2">
-                                    <h3 className="font-black text-slate-900 truncate flex-1 text-lg">
-                                        {note.title}
-                                    </h3>
-                                    <div className="flex gap-2 items-center">
-                                        {note.is_public === 1 && (
-                                            <PremiumBadge variant="blue" size="sm">
-                                                Publik
-                                            </PremiumBadge>
-                                        )}
-                                        {(note.user_id === user?.id || user?.role === 'admin') && (
+                                <div className="absolute top-0 right-0 p-4 flex gap-2 items-center z-10 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                                    {(note.user_id === user?.id || user?.role === 'admin') && (
+                                        <>
+                                            <button
+                                                onClick={(e) => togglePin(note, e)}
+                                                className={`p-2.5 rounded-xl shadow-lg transition-all active:scale-95 border ${note.is_pinned ? 'bg-blue-600 text-white border-blue-500' : 'bg-white/90 text-slate-400 hover:text-blue-600 border-slate-100'}`}
+                                                title={note.is_pinned ? 'Lepas Pin' : 'Pin Catatan'}
+                                            >
+                                                📌
+                                            </button>
                                             <button
                                                 onClick={(e) => handleDelete(note.id, e)}
-                                                className="text-red-500 hover:text-red-700 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition p-1.5 hover:bg-red-50 rounded-lg"
+                                                className="bg-white/90 backdrop-blur-sm text-red-500 hover:text-red-700 p-2.5 rounded-xl shadow-lg transition-all active:scale-95 border border-red-100"
                                                 title="Hapus"
                                             >
                                                 🗑️
                                             </button>
-                                        )}
-                                    </div>
+                                        </>
+                                    )}
                                 </div>
-                                <p className="text-slate-700 text-sm whitespace-pre-wrap line-clamp-6 flex-1 mb-4 leading-relaxed">
-                                    {note.content}
-                                </p>
-                                <div className="flex justify-between items-end text-[10px] text-slate-500 border-t border-black/5 pt-3">
+
+                                {note.is_pinned === 1 && (
+                                    <div className="absolute top-4 left-4 text-blue-600 md:group-hover:opacity-0 transition-opacity">
+                                        <span className="text-xl">📌</span>
+                                    </div>
+                                )}
+
+                                <div className={`flex justify-between items-start mb-4 gap-2 pr-8 ${note.is_pinned ? 'pl-8 md:pl-0' : ''}`}>
+                                    <h3 className="font-black text-slate-800 line-clamp-2 flex-1 text-lg">
+                                        {note.title}
+                                    </h3>
+                                    {note.is_public === 1 && (
+                                        <PremiumBadge variant="blue" size="sm">
+                                            Publik
+                                        </PremiumBadge>
+                                    )}
+                                </div>
+                                <div
+                                    className="text-slate-600 text-sm line-clamp-6 flex-1 mb-4 leading-relaxed prose prose-sm max-w-none prose-slate"
+                                    dangerouslySetInnerHTML={{ __html: note.content }}
+                                />
+                                <div className="flex justify-between items-end text-[10px] text-slate-500 border-t border-slate-200/50 pt-4">
                                     <div className="flex flex-col">
-                                        <span className="font-bold text-slate-700 text-xs">
+                                        <span className="font-black text-slate-700 text-xs uppercase tracking-wider">
                                             {note.user_id === user?.id ? 'Saya' : note.username}
                                         </span>
-                                        <span className="font-medium">
+                                        <span className="font-medium mt-0.5 opacity-60">
                                             {new Date(note.updated_at).toLocaleDateString('id-ID', {
                                                 day: 'numeric',
                                                 month: 'short',
+                                                year: 'numeric',
                                                 hour: '2-digit',
                                                 minute: '2-digit',
                                             })}
@@ -231,80 +289,112 @@ function NotepadContent() {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 title={editingNote
-                    ? (editingNote.user_id === user?.id || user?.role === 'admin' ? 'Edit Catatan' : 'Detail Catatan')
-                    : 'Catatan Baru'}
-                size="lg"
+                    ? (viewMode ? '📋 Detail Catatan' : '✏️ Edit Catatan')
+                    : '➕ Catatan Baru'}
+                size="xl"
             >
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <PremiumInput
-                        label="Judul"
-                        value={formData.title}
-                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                        placeholder="Masukkan judul catatan"
-                        required
-                        disabled={!!(editingNote && editingNote.user_id !== user?.id && user?.role !== 'admin')}
-                    />
-
-                    <PremiumTextarea
-                        label="Isi Catatan"
-                        value={formData.content}
-                        onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                        placeholder="Tulis sesuatu..."
-                        rows={10}
-                        disabled={!!(editingNote && editingNote.user_id !== user?.id && user?.role !== 'admin')}
-                    />
-
-                    {(!editingNote || editingNote.user_id === user?.id || user?.role === 'admin') && (
+                <div className="space-y-6">
+                    {viewMode ? (
+                        <div className="space-y-6">
+                            <div className="border-b border-slate-100 pb-4 flex justify-between items-start gap-4">
+                                <div className="flex-1">
+                                    <h2 className="text-3xl font-black text-slate-800">{formData.title}</h2>
+                                    <div className="flex gap-2 mt-3 flex-wrap">
+                                        {formData.is_pinned && <PremiumBadge variant="blue">📌 Disematkan</PremiumBadge>}
+                                        {formData.is_public && <PremiumBadge variant="purple">🌍 Publik</PremiumBadge>}
+                                        <PremiumBadge variant="emerald" size="sm">
+                                            🎨 Warna: {formData.color}
+                                        </PremiumBadge>
+                                    </div>
+                                </div>
+                            </div>
+                            <div
+                                className="prose prose-slate max-w-none min-h-[300px] text-slate-700"
+                                dangerouslySetInnerHTML={{ __html: formData.content }}
+                            />
+                        </div>
+                    ) : (
                         <>
-                            <div>
-                                <label className="block text-sm font-black text-slate-700 mb-3 uppercase tracking-wider">
-                                    Warna
-                                </label>
-                                <div className="flex gap-3 flex-wrap">
-                                    {COLORS.map((c) => (
-                                        <button
-                                            key={c.name}
-                                            type="button"
-                                            onClick={() => setFormData({ ...formData, color: c.name })}
-                                            className={`w-12 h-12 rounded-2xl border-2 ${c.border} ${c.value} transition transform hover:scale-110 ${formData.color === c.name
-                                                ? 'ring-4 ring-blue-500 ring-offset-2 scale-110'
-                                                : ''
-                                                }`}
-                                            title={c.name}
-                                        />
-                                    ))}
+                            <div className="flex gap-4 items-end">
+                                <div className="flex-1">
+                                    <PremiumInput
+                                        label="Judul"
+                                        value={formData.title}
+                                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                                        placeholder="Masukkan judul catatan..."
+                                        required
+                                    />
+                                </div>
+                                <div className="mb-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, is_pinned: !formData.is_pinned })}
+                                        className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all border-2 ${formData.is_pinned ? 'bg-blue-600 border-blue-500 text-white shadow-lg' : 'bg-slate-50 border-slate-200 text-slate-400 hover:border-blue-400 hover:text-blue-500'}`}
+                                        title={formData.is_pinned ? 'Lepas Pin' : 'Pin Catatan'}
+                                    >
+                                        <span className="text-xl">📌</span>
+                                    </button>
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl">
-                                <label className="flex items-center cursor-pointer gap-4 flex-1">
-                                    <div className="relative">
-                                        <input
-                                            type="checkbox"
-                                            className="sr-only"
-                                            checked={formData.is_public}
-                                            onChange={(e) => setFormData({ ...formData, is_public: e.target.checked })}
-                                        />
-                                        <div className={`w-12 h-7 rounded-full transition-colors ${formData.is_public ? 'bg-blue-600' : 'bg-slate-300'}`}></div>
-                                        <div className={`absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition-transform ${formData.is_public ? 'translate-x-5' : ''}`}></div>
-                                    </div>
-                                    <span className="text-sm font-bold text-slate-700">
-                                        Tampilkan ke semua user lain (Publik)
-                                    </span>
+                            <div>
+                                <label className="block text-sm font-black text-slate-700 mb-3 uppercase tracking-wider">
+                                    Isi Catatan
                                 </label>
+                                <PremiumRichEditor
+                                    value={formData.content}
+                                    onChange={(content) => setFormData({ ...formData, content })}
+                                    placeholder="Tulis ide, daftar periksa, atau tempel gambar di sini..."
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-sm font-black text-slate-700 mb-3 uppercase tracking-wider">
+                                        Warna Kartu
+                                    </label>
+                                    <div className="flex gap-3 flex-wrap">
+                                        {COLORS.map((c) => (
+                                            <button
+                                                key={c.name}
+                                                type="button"
+                                                onClick={() => setFormData({ ...formData, color: c.name })}
+                                                className={`w-10 h-10 rounded-xl border-2 ${c.border} ${c.value} transition transform hover:scale-110 active:scale-95 ${formData.color === c.name
+                                                    ? 'ring-4 ring-blue-500 ring-offset-2 scale-110'
+                                                    : ''
+                                                    }`}
+                                                title={c.name}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col gap-3">
+                                    <label className="block text-sm font-black text-slate-700 uppercase tracking-wider">Opsi Publik</label>
+                                    <label className="flex items-center cursor-pointer gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-slate-100 transition-colors">
+                                        <div className="relative">
+                                            <input
+                                                type="checkbox"
+                                                className="sr-only peer"
+                                                checked={formData.is_public}
+                                                onChange={(e) => setFormData({ ...formData, is_public: e.target.checked })}
+                                            />
+                                            <div className="w-12 h-7 bg-slate-200 peer-checked:bg-blue-600 rounded-full transition-all"></div>
+                                            <div className="absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition-transform peer-checked:translate-x-5 shadow-sm"></div>
+                                        </div>
+                                        <span className="text-sm font-bold text-slate-700">Tampilkan ke user lain</span>
+                                    </label>
+                                </div>
                             </div>
                         </>
                     )}
 
-                    <div className="flex gap-4 pt-4">
+                    <div className="flex gap-4 pt-6 border-t border-slate-100">
                         {editingNote && (editingNote.user_id === user?.id || user?.role === 'admin') && (
                             <PremiumButton
                                 type="button"
                                 variant="danger"
-                                onClick={() => {
-                                    setIsModalOpen(false);
-                                    handleDelete(editingNote.id);
-                                }}
+                                onClick={() => handleDelete(editingNote.id)}
                             >
                                 🗑️ Hapus
                             </PremiumButton>
@@ -315,16 +405,56 @@ function NotepadContent() {
                             variant="secondary"
                             onClick={() => setIsModalOpen(false)}
                         >
-                            {(!editingNote || editingNote.user_id === user?.id || user?.role === 'admin') ? 'Batal' : 'Tutup'}
+                            Tutup
                         </PremiumButton>
-                        {(!editingNote || editingNote.user_id === user?.id || user?.role === 'admin') && (
-                            <PremiumButton type="submit">
-                                💾 Simpan
+
+                        {viewMode ? (
+                            (editingNote?.user_id === user?.id || user?.role === 'admin') && (
+                                <PremiumButton
+                                    type="button"
+                                    onClick={() => setViewMode(false)}
+                                >
+                                    ✏️ Edit Catatan
+                                </PremiumButton>
+                            )
+                        ) : (
+                            <PremiumButton
+                                type="button"
+                                onClick={() => handleSubmit()}
+                            >
+                                💾 Simpan Catatan
                             </PremiumButton>
                         )}
                     </div>
-                </form>
+                </div>
             </PremiumModal>
+
+            <style jsx global>{`
+                .prose strong { color: inherit; font-weight: 800; }
+                .prose em { color: inherit; }
+                .prose ul[data-type="taskList"] {
+                    list-style: none;
+                    padding-left: 0;
+                }
+                .prose ul[data-type="taskList"] li {
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 0.5rem;
+                }
+                .prose ul[data-type="taskList"] input[type="checkbox"] {
+                    margin-top: 0.3rem;
+                    pointer-events: none;
+                }
+                .prose img {
+                    border-radius: 1rem;
+                    margin: 1rem 0;
+                    border: 1px solid rgba(0,0,0,0.1);
+                    max-width: 100%;
+                    height: auto;
+                }
+            `}</style>
         </div>
     );
 }
+
+

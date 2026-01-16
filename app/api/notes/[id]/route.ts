@@ -18,7 +18,7 @@ export async function PUT(
         }
 
         const { id } = await params;
-        const { title, content, color, is_public } = await request.json();
+        const { title, content, color, is_public, is_pinned } = await request.json();
 
         const connection = await pool.getConnection();
         const [existingNote]: any = await connection.execute( // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -46,8 +46,8 @@ export async function PUT(
         }
 
         await connection.execute(
-            'UPDATE notes SET title = ?, content = ?, color = ?, is_public = ? WHERE id = ?',
-            [title, content, color, is_public ? 1 : 0, id]
+            'UPDATE notes SET title = ?, content = ?, color = ?, is_public = ?, is_pinned = ? WHERE id = ?',
+            [title, content, color, is_public ? 1 : 0, is_pinned ? 1 : 0, id]
         );
 
         const [updated]: any = await connection.execute( // eslint-disable-line @typescript-eslint/no-explicit-any

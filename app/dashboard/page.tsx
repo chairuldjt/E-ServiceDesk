@@ -25,12 +25,12 @@ interface Note {
 }
 
 const NOTE_COLORS = [
-  { name: 'white', value: 'bg-white', border: 'border-gray-200' },
-  { name: 'yellow', value: 'bg-yellow-100', border: 'border-yellow-200' },
-  { name: 'green', value: 'bg-green-100', border: 'border-green-200' },
-  { name: 'blue', value: 'bg-blue-100', border: 'border-blue-200' },
-  { name: 'red', value: 'bg-red-100', border: 'border-red-200' },
-  { name: 'purple', value: 'bg-purple-100', border: 'border-purple-200' },
+  { name: 'white', value: 'bg-white', border: 'border-slate-200' },
+  { name: 'yellow', value: 'bg-amber-50', border: 'border-amber-100' },
+  { name: 'green', value: 'bg-emerald-50', border: 'border-emerald-100' },
+  { name: 'blue', value: 'bg-blue-50', border: 'border-blue-100' },
+  { name: 'red', value: 'bg-rose-50', border: 'border-rose-100' },
+  { name: 'purple', value: 'bg-violet-50', border: 'border-violet-100' },
 ];
 
 export default function DashboardPage() {
@@ -51,6 +51,12 @@ function DashboardContent() {
   const [exportPassword, setExportPassword] = useState('');
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState('');
+
+  // Helper to strip HTML tags for preview
+  const stripHtml = (html: string) => {
+    if (!html) return '';
+    return html.replace(/<[^>]*>?/gm, ' ');
+  };
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -383,13 +389,13 @@ function DashboardContent() {
                   <Link
                     key={note.id}
                     href="/notepad"
-                    className={`${colorObj.value} border-2 ${colorObj.border} rounded-2xl p-6 shadow-md hover:shadow-xl transition-all group flex flex-col h-full hover:scale-105 transform duration-200`}
+                    className={`${colorObj.value} border-2 ${colorObj.border} rounded-[2rem] p-6 shadow-md hover:shadow-xl transition-all group flex flex-col h-full hover:scale-105 transform duration-300`}
                   >
-                    <h3 className="font-black text-slate-900 mb-3 truncate text-base">
+                    <h3 className="font-black text-slate-800 mb-3 truncate text-base">
                       {note.title}
                     </h3>
-                    <p className="text-slate-700 text-sm whitespace-pre-wrap line-clamp-4 flex-1 mb-4 leading-relaxed">
-                      {note.content}
+                    <p className="text-slate-600 text-sm whitespace-pre-wrap line-clamp-4 flex-1 mb-4 leading-relaxed">
+                      {stripHtml(note.content)}
                     </p>
                     <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider border-t border-slate-200/50 pt-3">
                       {new Date(note.updated_at).toLocaleDateString('id-ID', {
