@@ -1,7 +1,19 @@
 import * as dotenv from 'dotenv';
-dotenv.config({ path: '.env.local' });
+import fs from 'fs';
+import path from 'path';
+
+// Robust environment loading
+const envPath = fs.existsSync('.env.local') ? '.env.local' : '.env';
+console.log(`Loading environment from: ${envPath}`);
+dotenv.config({ path: envPath });
 
 async function updateSchema() {
+    console.log('Connecting to database with:');
+    console.log(` - Host: ${process.env.MYSQL_HOST}`);
+    console.log(` - User: ${process.env.MYSQL_USER}`);
+    console.log(` - Database: ${process.env.MYSQL_DATABASE}`);
+    console.log(` - Password set: ${process.env.MYSQL_PASSWORD ? 'YES' : 'NO'}`);
+
     try {
         const pool = (await import('./lib/db')).default;
         const connection = await pool.getConnection();
