@@ -85,8 +85,8 @@ function NotepadContent() {
         setIsModalOpen(true);
     };
 
-    const handleDelete = (id: number, e: React.MouseEvent) => {
-        e.stopPropagation();
+    const handleDelete = (id: number, e?: React.MouseEvent) => {
+        e?.stopPropagation();
         confirm('Hapus Catatan?', 'Apakah Anda yakin ingin menghapus catatan ini?', async () => {
             try {
                 const response = await fetch(`/api/notes/${id}`, {
@@ -301,9 +301,9 @@ function NotepadContent() {
                             <PremiumButton
                                 type="button"
                                 variant="danger"
-                                onClick={(e) => {
+                                onClick={() => {
                                     setIsModalOpen(false);
-                                    handleDelete(editingNote.id, e as any);
+                                    handleDelete(editingNote.id);
                                 }}
                             >
                                 🗑️ Hapus
