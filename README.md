@@ -1,36 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 📔 E-ServiceDesk
 
-## Getting Started
+Sistem Manajemen Logbook Internal yang modern, responsif, dan mudah digunakan. Dibangun dengan Next.js, MySQL, dan Tailwind CSS.
 
-First, run the development server:
+## ✨ Fitur Utama
+- **📚 Logbook Management**: Pencatatan kegiatan, keluhan, dan solusi secara terstruktur.
+- **📝 Notepad Interactive**: Catatan tempel digital untuk catatan cepat.
+- **🛡️ Admin Dashboard**: Manajemen user (Add, Edit, Activate/Deactivate, Reset Password) dan monitoring sistem.
+- **📥 Export Excel**: Kemudahan laporan dengan satu klik.
+- **🔒 Secure Auth**: Autentikasi menggunakan JWT dan enkripsi password Bcrypt.
+- **🎨 Modern UI**: Antarmuka bersih dengan dukungan backdrop-blur dan micro-animations.
 
+## 🚀 Persiapan (Prerequisites)
+Sebelum memulai, pastikan Anda sudah menginstal:
+- [Node.js](https://nodejs.org/) (Versi terbaru disarankan)
+- [XAMPP](https://www.apachefriends.org/) atau MySQL Server lokal
+
+## 🛠️ Langkah Instalasi
+
+### 1. Clone Repository
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/chairuldjt/E-ServiceDesk.git
+cd E-ServiceDesk
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Install Dependensi
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Konfigurasi Environment (`.env.local`)
+Buat file bernama `.env.local` di root folder dan isi dengan konfigurasi berikut:
+```env
+# Database Configuration
+MYSQL_HOST=localhost
+MYSQL_USER=root
+MYSQL_PASSWORD=
+MYSQL_DATABASE=logbook_db
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Security
+JWT_SECRET=rahasia_anda_yang_sangat_kuat_123!
+JWT_EXPIRES_IN=7d
+```
 
-## Learn More
+### 4. Setup Database
+1. Buka **phpMyAdmin** (http://localhost/phpmyadmin).
+2. Buat database baru dengan nama `logbook_db`.
+3. Buat tabel `users` dan `logbook` menggunakan skema standar (atau jalankan script inisialisasi di bawah).
 
-To learn more about Next.js, take a look at the following resources:
+### 5. Jalankan Script Inisialisasi
+Jalankan perintah berikut untuk menyiapkan tabel dan user admin default:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+# Tambah kolom is_active dan update schema user
+npx tsx update-users-schema.ts
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Inisialisasi Tabel Notepad
+npx tsx setup-notepad.ts
 
-## Deploy on Vercel
+# Seed Admin User Default
+npx tsx seed-admin.ts
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🏃 Menjalankan Aplikasi
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Jalankan server pengembangan:
+```bash
+npm run dev
+```
+Buka [http://localhost:3000](http://localhost:3000) di browser Anda.
+
+## 🔐 Akun Login Default
+Gunakan akun ini untuk masuk pertama kali sebagai Admin:
+- **Email**: `admin@logbook.com`
+- **Password**: `admin123`
+
+## 📁 Struktur Dokumen
+- [QUICKSTART.md](QUICKSTART.md) - Panduan cepat 5 menit.
+- [PANDUAN.md](PANDUAN.md) - Dokumentasi fitur lengkap.
+- [DEPLOYMENT.md](DEPLOYMENT.md) - Cara deploy ke production.
+
+## 📄 Lisensi
+[MIT License](LICENSE)
