@@ -4,6 +4,7 @@ import { ProtectedRoute } from '@/components/ProtectedRoute';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useUI } from '@/context/UIContext';
+import { EXTERNAL_CATALOGS, EXTERNAL_USERS } from '@/lib/constants';
 
 interface LogbookEntry {
   id: number;
@@ -16,16 +17,6 @@ interface LogbookEntry {
   penyelesaian?: string;
   created_at: string;
   updated_at: string;
-}
-
-interface ExternalCatalog {
-  service_catalog_id: number;
-  service_catalog_name: string;
-}
-
-interface ExternalUser {
-  user_id: number;
-  full_name: string;
 }
 
 export default function LogbookListPage() {
@@ -42,11 +33,6 @@ function LogbookListContent() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-
-  // External Data
-  const [catalogs, setCatalogs] = useState<ExternalCatalog[]>([]);
-  const [externalUsers, setExternalUsers] = useState<ExternalUser[]>([]);
-  const [isLoadingExternal, setIsLoadingExternal] = useState(false);
 
   // Edit Modal State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -65,8 +51,8 @@ function LogbookListContent() {
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<LogbookEntry | null>(null);
   const [orderFormData, setOrderFormData] = useState({
-    service_catalog_id: '',
-    order_by: ''
+    service_catalog_id: '11',
+    order_by: '33'
   });
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
 
@@ -106,38 +92,10 @@ function LogbookListContent() {
     }
   };
 
-  const fetchExternalData = async () => {
-    setIsLoadingExternal(true);
-    try {
-      const response = await fetch('/api/monitoring/external-data');
-      const data = await response.json();
-      if (response.ok) {
-        setCatalogs(data.catalogs || []);
-        setExternalUsers(data.users || []);
-
-        // Set default values
-        if (data.catalogs?.length > 0) {
-          setOrderFormData(prev => ({ ...prev, service_catalog_id: data.catalogs[0].service_catalog_id.toString() }));
-        }
-        if (data.users?.length > 0) {
-          setOrderFormData(prev => ({ ...prev, order_by: data.users[0].user_id.toString() }));
-        }
-      } else {
-        showToast(data.error || 'Gagal mengambil data katalog/user external', 'error');
-      }
-    } catch (error) {
-      console.error('Error fetching external data:', error);
-      showToast('Terjadi kesalahan saat menghubungi server external', 'error');
-    } finally {
-      setIsLoadingExternal(false);
-    }
-  };
-
   const handleSaveSetting = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSavingSetting(true);
     try {
-      // Base URL taken from env via API route
       const response = await fetch('/api/settings/webmin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -246,7 +204,6 @@ function LogbookListContent() {
   const handleOrderClick = (entry: LogbookEntry) => {
     setSelectedEntry(entry);
     setIsOrderModalOpen(true);
-    fetchExternalData(); // Fetch dynamic lists when opening modal
   };
 
   const handleCreateOrder = async (e: React.FormEvent) => {
@@ -580,61 +537,46 @@ function LogbookListContent() {
                 </div>
               </div>
 
-              {isLoadingExternal ? (
-                <div className="py-10 flex flex-col items-center justify-center gap-3">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
-                  <p className="text-xs text-slate-500 animate-pulse text-center">Mengambil data katalog & user<br />dari system external...</p>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
+                    📁 Service Catalog
+                  </label>
+                  <select
+                    value={orderFormData.service_catalog_id}
+                    onChange={e => setOrderFormData({ ...orderFormData, service_catalog_id: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all font-medium"
+                  >
+                    {EXTERNAL_CATALOGS.map(cat => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
-                      📁 Service Catalog
-                    </label>
-                    <select
-                      value={orderFormData.service_catalog_id}
-                      onChange={e => setOrderFormData({ ...orderFormData, service_catalog_id: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all font-medium"
-                    >
-                      {catalogs.length > 0 ? (
-                        catalogs.map(cat => (
-                          <option key={cat.service_catalog_id} value={cat.service_catalog_id}>
-                            {cat.service_catalog_name} (ID: {cat.service_catalog_id})
-                          </option>
-                        ))
-                      ) : (
-                        <option value="">Tidak ada katalog tersedia</option>
-                      )}
-                    </select>
-                  </div>
 
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
-                      👤 Order By (User)
-                    </label>
-                    <select
-                      value={orderFormData.order_by}
-                      onChange={e => setOrderFormData({ ...orderFormData, order_by: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all font-medium"
-                    >
-                      {externalUsers.length > 0 ? (
-                        externalUsers.map(u => (
-                          <option key={u.user_id} value={u.user_id}>
-                            {u.full_name} (ID: {u.user_id})
-                          </option>
-                        ))
-                      ) : (
-                        <option value="">Tidak ada user tersedia</option>
-                      )}
-                    </select>
-                  </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
+                    👤 Order By (User)
+                  </label>
+                  <select
+                    value={orderFormData.order_by}
+                    onChange={e => setOrderFormData({ ...orderFormData, order_by: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all font-medium"
+                  >
+                    {EXTERNAL_USERS.map(u => (
+                      <option key={u.id} value={u.id}>
+                        {u.name} (ID: {u.id})
+                      </option>
+                    ))}
+                  </select>
                 </div>
-              )}
+              </div>
 
               <div className="flex flex-col gap-3 pt-4">
                 <button
                   type="submit"
-                  disabled={isSubmittingOrder || isLoadingExternal}
+                  disabled={isSubmittingOrder}
                   className="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-200 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {isSubmittingOrder ? (
