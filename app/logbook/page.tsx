@@ -51,8 +51,7 @@ function LogbookListContent() {
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<LogbookEntry | null>(null);
   const [orderFormData, setOrderFormData] = useState({
-    service_catalog_id: '11',
-    order_by: '33'
+    service_catalog_id: '11'
   });
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
 
@@ -219,8 +218,7 @@ function LogbookListContent() {
           catatan: selectedEntry.catatan || selectedEntry.nama,
           ext_phone: selectedEntry.extensi,
           location_desc: selectedEntry.lokasi,
-          service_catalog_id: orderFormData.service_catalog_id,
-          order_by: orderFormData.order_by
+          service_catalog_id: orderFormData.service_catalog_id
         }),
       });
 
@@ -550,23 +548,6 @@ function LogbookListContent() {
                     {EXTERNAL_CATALOGS.map(cat => (
                       <option key={cat.id} value={cat.id}>
                         {cat.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
-                    👤 Order By (User)
-                  </label>
-                  <select
-                    value={orderFormData.order_by}
-                    onChange={e => setOrderFormData({ ...orderFormData, order_by: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all font-medium"
-                  >
-                    {EXTERNAL_USERS.map(u => (
-                      <option key={u.id} value={u.id}>
-                        {u.name} (ID: {u.id})
                       </option>
                     ))}
                   </select>
