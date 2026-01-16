@@ -14,6 +14,8 @@ interface UnverifiedOrder {
     order_by: string;
     status_desc: string;
     teknisi: string;
+    detail?: OrderDetail;
+    history?: OrderHistory[];
 }
 
 interface OrderDetail {
@@ -35,6 +37,14 @@ interface OrderDetail {
     order_by?: string;
 }
 
+interface OrderHistory {
+    status_date: string;
+    create_date: string;
+    status_desc: string;
+    nama_petugas: string;
+    status_note: string;
+}
+
 export default function VerifyOrderPage() {
     return (
         <ProtectedRoute>
@@ -51,6 +61,7 @@ function VerifyOrderContent() {
 
     // Detail Modal State
     const [selectedOrder, setSelectedOrder] = useState<OrderDetail | null>(null);
+    const [orderHistory, setOrderHistory] = useState<OrderHistory[]>([]);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [fetchingDetail, setFetchingDetail] = useState(false);
 
@@ -80,6 +91,17 @@ function VerifyOrderContent() {
     };
 
     const handleViewDetail = async (orderId: number) => {
+        const preloaded = orders.find(o => o.order_id === orderId);
+
+        if (preloaded?.detail) {
+            setSelectedOrder(preloaded.detail);
+            setOrderHistory(preloaded.history || []);
+            setIsDetailModalOpen(true);
+            setVerifyNote('');
+            return;
+        }
+
+        // Fallback if not preloaded
         setFetchingDetail(true);
         setIsDetailModalOpen(true);
         setVerifyNote('');
@@ -88,6 +110,7 @@ function VerifyOrderContent() {
             const data = await response.json();
             if (response.ok) {
                 setSelectedOrder(data.result);
+                setOrderHistory(data.history || []);
             } else {
                 showToast(data.error || 'Gagal mengambil detail order', 'error');
                 setIsDetailModalOpen(false);
@@ -364,6 +387,36 @@ function VerifyOrderContent() {
                                                     </p>
                                                 </div>
                                             </div>
+                                        </div>
+                                    </div>
+
+                                    {/* History/Log Section */}
+                                    <div className="md:col-span-2 bg-slate-50 p-6 rounded-3xl border border-slate-100">
+                                        <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
+                                            📜 Riwayat Status / Log Tiket
+                                        </h4>
+                                        <div className="relative space-y-8 before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
+                                            {orderHistory.length > 0 ? orderHistory.map((log, idx) => (
+                                                <div key={idx} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                                                    <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-100 group-[.is-active]:bg-blue-600 text-slate-300 group-[.is-active]:text-emerald-50 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 transition-colors duration-500">
+                                                        <div className={`w-2 h-2 rounded-full ${idx === 0 ? 'bg-white animate-pulse' : 'bg-slate-400'}`}></div>
+                                                    </div>
+                                                    <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white p-4 rounded-2xl border border-slate-100 shadow-sm transition-all hover:shadow-md">
+                                                        <div className="flex items-center justify-between space-x-2 mb-1">
+                                                            <div className="font-bold text-slate-800">{log.status_desc}</div>
+                                                            <time className="font-medium text-xs text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full">{log.status_date}</time>
+                                                        </div>
+                                                        <div className="text-slate-500 text-xs mb-2">Oleh: <span className="font-bold text-slate-600">{log.nama_petugas || 'System'}</span></div>
+                                                        {log.status_note && (
+                                                            <div className="text-sm text-slate-600 bg-slate-50/50 p-3 rounded-xl border border-slate-100/50 italic">
+                                                                "{log.status_note}"
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )) : (
+                                                <p className="text-center text-slate-400 text-sm italic">Belum ada riwayat status.</p>
+                                            )}
                                         </div>
                                     </div>
 

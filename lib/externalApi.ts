@@ -150,3 +150,17 @@ export async function postExternalVerify(userId: number, data: any) {
 
     return await res.json();
 }
+
+export async function getExternalOrderHistory(userId: number, orderId: number) {
+    const { jwt } = await getExternalToken(userId);
+    const res = await fetch(`${BASE}/order/order_history_by_id/${orderId}`, {
+        headers: {
+            'Authorization': `Bearer ${jwt}`,
+            'Accept': 'application/json',
+        },
+    });
+
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.result || [];
+}

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getExternalOrdersByStatus, postExternalVerify } from '@/lib/externalApi';
+import { getExternalOrdersByStatus, postExternalVerify, getExternalOrderDetail, getExternalOrderHistory } from '@/lib/externalApi';
 import { getPayloadFromCookie } from '@/lib/jwt';
 import { getWebminConfig } from '@/lib/settings';
 import { EXTERNAL_USERS } from '@/lib/constants';
@@ -11,9 +11,27 @@ export async function GET() {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // List orders with status 15 (DONE) which need verification
-        const data = await getExternalOrdersByStatus(payload.id, 15);
-        return NextResponse.json({ result: data });
+        // 1. Get List of Orders
+        const list = await getExternalOrdersByStatus(payload.id, 15);
+
+        // 2. Pre-fetch details and history for each (Parallel)
+        // Note: We limit to top 20 to avoid external API timeout, 
+        // usually unverified orders are few.
+        const enrichedOrders = await Promise.all(
+            list.slice(0, 20).map(async (order: any) => {
+                try {
+                    const [detail, history] = await Promise.all([
+                        getExternalOrderDetail(payload.id, order.order_id),
+                        getExternalOrderHistory(payload.id, order.order_id)
+                    ]);
+                    return { ...order, detail, history };
+                } catch (e) {
+                    return { ...order, detail: null, history: [] };
+                }
+            })
+        );
+
+        return NextResponse.json({ result: enrichedOrders });
     } catch (error: any) {
         console.error('Verify List API Error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });

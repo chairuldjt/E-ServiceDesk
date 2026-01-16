@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getExternalOrderDetail } from '@/lib/externalApi';
+import { getExternalOrderDetail, getExternalOrderHistory } from '@/lib/externalApi';
 import { getPayloadFromCookie } from '@/lib/jwt';
 
 export async function GET(
@@ -13,8 +13,15 @@ export async function GET(
         }
 
         const { id } = await params;
-        const data = await getExternalOrderDetail(payload.id, parseInt(id));
-        return NextResponse.json({ result: data });
+        const [detail, history] = await Promise.all([
+            getExternalOrderDetail(payload.id, parseInt(id)),
+            getExternalOrderHistory(payload.id, parseInt(id))
+        ]);
+
+        return NextResponse.json({
+            result: detail,
+            history: history
+        });
     } catch (error: any) {
         console.error('Order Detail API Error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });

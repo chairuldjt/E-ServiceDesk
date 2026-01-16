@@ -15,7 +15,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   if (!user) return null;
 
-  const isActive = (path: string) => pathname?.startsWith(path);
+  const isActive = (path: string) => {
+    if (path === '/dashboard') return pathname === '/dashboard';
+    return pathname === path || (path !== '/' && pathname?.startsWith(path + '/'));
+  };
 
   const menuItems = [
     { name: 'Dashboard', path: '/dashboard', icon: '📊' },
