@@ -340,6 +340,14 @@ Error: connect ECONNREFUSED 127.0.0.1:3306
 3. Check firewall settings
 4. Verify MySQL port (default 3306)
 
+### Issue: Lupa Password Admin / Gagal Login Admin
+**Solution**:
+Jalankan script reset admin untuk mengembalikan kredensial ke default:
+```bash
+npx tsx reset-admin.ts
+```
+Default: `admin` / `admin123`.
+
 ### Issue: Port 3000 Already in Use
 ```
 Error: listen EADDRINUSE: address already in use :::3000

@@ -127,7 +127,7 @@ Access: /admin dashboard
 |-------|----------|
 | "Can't connect to MySQL" | Check XAMPP MySQL running |
 | "Port 3000 in use" | Kill process or use different port |
-| "Login failed" | Check credentials (admin / admin@logbook.com / admin123) |
+| "Login failed" | Check credentials or run `npx tsx reset-admin.ts` |
 | "Can't see logbook" | Make sure you created one & you're logged in |
 | "Export not working" | Check xlsx package installed |
 

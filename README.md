@@ -55,6 +55,13 @@ Script ini akan:
 2. Membuat semua tabel (`users`, `logbook`, `notes`).
 3. Menyiapkan user admin default.
 
+### 5. Utility: Reset Admin Password
+Jika Anda lupa password admin atau ingin mereset akun admin ke default:
+```bash
+npx tsx reset-admin.ts
+```
+Akun akan direset menjadi: `admin` / `admin123`.
+
 ## 🏃 Menjalankan Aplikasi
 
 Jalankan server pengembangan:
