@@ -489,7 +489,7 @@ const WhatsAppContent = () => {
                                         <div className="aspect-video w-full rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 relative group">
                                             <img
                                                 key={`auto-image-${imageKey}`}
-                                                src={`/uploads/auto_image.png?v=${imageKey}`}
+                                                src={`/api/uploads/auto_image.png?v=${imageKey}`}
                                                 alt="Auto Image"
                                                 className="w-full h-full object-contain"
                                                 onError={(e) => {
