@@ -34,13 +34,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     { name: 'Dashboard', path: '/dashboard', icon: '📊' },
     { name: 'Logbook', path: '/logbook', icon: '📔' },
     { name: 'Monitoring', path: '/monitoring', icon: '📡' },
-    { name: 'Order', path: '/monitoring/verify', icon: '🎫' },
+    { name: 'Order', path: '/order', icon: '🎫' },
     { name: 'Notepad', path: '/notepad', icon: '📝' },
   ];
 
   // Menu WhatsApp Bot (Admin & Super Only)
   if (user.role === 'admin' || user.role === 'super') {
-    menuItems.push({ name: 'WhatsApp Bot', path: '/settings/whatsapp', icon: '📱' });
+    menuItems.push({ name: 'WhatsApp Bot', path: '/whatsapp', icon: '📱' });
   }
 
   // Menu Admin Panel (Admin Only)
