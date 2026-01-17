@@ -20,6 +20,7 @@ const WhatsAppContent = () => {
 
     // Saved Groups State
     const [savedGroups, setSavedGroups] = useState<SavedGroup[]>([]);
+    const [imageKey, setImageKey] = useState(Date.now()); // For forcing image refresh
     const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
     const [groupForm, setGroupForm] = useState({ alias: '', id: '' });
 
@@ -487,9 +488,16 @@ const WhatsAppContent = () => {
                                         </div>
                                         <div className="aspect-video w-full rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 relative group">
                                             <img
-                                                src={`/uploads/auto_image.png?v=${Date.now()}`}
+                                                key={`auto-image-${imageKey}`}
+                                                src={`/uploads/auto_image.png?v=${imageKey}`}
                                                 alt="Auto Image"
                                                 className="w-full h-full object-contain"
+                                                onError={(e) => {
+                                                    // Fallback if image fails to load
+                                                    e.currentTarget.style.display = 'none';
+                                                    e.currentTarget.parentElement?.classList.add('bg-rose-50');
+                                                    e.currentTarget.parentElement?.insertAdjacentHTML('beforeend', '<div class="absolute inset-0 flex items-center justify-center text-rose-500 font-bold text-xs p-4 text-center">Gagal memuat preview gambar.<br/>Coba refresh halaman.</div>');
+                                                }}
                                             />
                                             <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                                 <p className="text-white font-bold text-xs uppercase tracking-widest">Preview Mode</p>
@@ -597,6 +605,7 @@ const WhatsAppContent = () => {
 
                                                 fetchStatus();
                                                 setIsChangingImage(false);
+                                                setImageKey(Date.now()); // Force refresh image
                                                 showToast('Jadwal & Mode Gambar berhasil disimpan', 'success');
                                             } catch (e: any) {
                                                 showToast(e.message || 'Error saving automation', 'error');

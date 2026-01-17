@@ -45,6 +45,10 @@ export async function POST(req: Request) {
 
         await writeFile(finalPath, buffer);
 
+        // Ensure file is readable by web server (644)
+        const { chmod } = await import('fs/promises');
+        await chmod(finalPath, 0o644);
+
         console.log(`File saved to: ${finalPath} (Auto: ${saveAsAuto})`);
 
         if (!skipSend) {

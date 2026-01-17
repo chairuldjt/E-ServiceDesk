@@ -52,80 +52,110 @@ const bot = global.whatsappBot;
 
 export const getBotState = () => bot.state;
 
-export const initBot = () => {
-    if (bot.client) return;
+export const initBot = async () => {
+    // If client exists but is stuck in a bad state, clean it up
+    if (bot.client) {
+        if (bot.state.status === 'CONNECTING' || bot.state.status === 'LOADING') {
+            console.log('Bot stuck in initializing state, restarting...');
+            try {
+                await bot.client.destroy();
+            } catch (e) {
+                console.error('Error destroying stuck client:', e);
+            }
+            bot.client = null;
+        } else {
+            console.log('Bot already initialized');
+            return;
+        }
+    }
 
     bot.state.status = 'CONNECTING';
 
-    bot.client = new Client({
-        authStrategy: new LocalAuth({
-            dataPath: path.join(process.cwd(), '.wwebjs_auth')
-        }),
-        puppeteer: {
-            headless: true, // Use headless for stability
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',
-                '--disable-accelerated-2d-canvas',
-                '--no-first-run',
-                '--no-zygote',
-                '--disable-gpu',
-                '--disable-web-security',
-                '--disable-features=VizDisplayCompositor'
-            ],
-            executablePath: process.env.CHROME_PATH || undefined,
-        },
-        // Using a stable web version to avoid the "markedUnread" error in latest WA Web
-        webVersionCache: {
-            type: 'remote',
-            remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html',
-        }
-    });
+    try {
+        bot.client = new Client({
+            authStrategy: new LocalAuth({
+                dataPath: path.join(process.cwd(), '.wwebjs_auth')
+            }),
+            puppeteer: {
+                headless: true, // Use headless for stability
+                args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--disable-accelerated-2d-canvas',
+                    '--no-first-run',
+                    '--no-zygote',
+                    '--disable-gpu',
+                    '--disable-web-security',
+                    '--disable-features=VizDisplayCompositor'
+                ],
+                executablePath: process.env.CHROME_PATH || undefined,
+            },
+            // Using a stable web version to avoid the "markedUnread" error in latest WA Web
+            webVersionCache: {
+                type: 'remote',
+                remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html',
+            }
+        });
 
-    bot.client.on('qr', async (qr: string) => {
-        bot.state.status = 'QR_CODE';
-        try {
-            bot.state.qrCode = await qrcode.toDataURL(qr);
-        } catch (err) {
-            console.error('Failed to generate QR code data URL', err);
-        }
-    });
+        bot.client.on('qr', async (qr: string) => {
+            bot.state.status = 'QR_CODE';
+            try {
+                bot.state.qrCode = await qrcode.toDataURL(qr);
+            } catch (err) {
+                console.error('Failed to generate QR code data URL', err);
+            }
+        });
 
-    bot.client.on('ready', () => {
-        bot.state.status = 'READY';
-        bot.state.qrCode = null;
-        console.log('WhatsApp Bot is ready!');
-        setupCron();
-    });
+        bot.client.on('ready', () => {
+            bot.state.status = 'READY';
+            bot.state.qrCode = null;
+            console.log('WhatsApp Bot is ready!');
+            setupCron();
+        });
 
-    bot.client.on('authenticated', () => {
-        bot.state.status = 'LOADING';
-        console.log('WhatsApp Bot authenticated');
-    });
+        bot.client.on('authenticated', () => {
+            bot.state.status = 'LOADING';
+            console.log('WhatsApp Bot authenticated');
+        });
 
-    bot.client.on('auth_failure', (msg: string) => {
-        bot.state.status = 'DISCONNECTED';
-        bot.state.error = `Auth failure: ${msg}`;
-        console.error('WhatsApp Bot auth failure', msg);
-    });
+        bot.client.on('auth_failure', (msg: string) => {
+            bot.state.status = 'DISCONNECTED';
+            bot.state.error = `Auth failure: ${msg}`;
+            console.error('WhatsApp Bot auth failure', msg);
+        });
 
-    bot.client.on('disconnected', (reason: string) => {
-        bot.state.status = 'DISCONNECTED';
-        console.log('WhatsApp Bot disconnected', reason);
-        bot.state.cronSchedule = 'STOP';
-        bot.state.nextRun = null;
-        if (bot.job) {
-            bot.job.stop();
-            bot.job = null;
-        }
-    });
+        bot.client.on('disconnected', (reason: string) => {
+            bot.state.status = 'DISCONNECTED';
+            console.log('WhatsApp Bot disconnected', reason);
+            bot.state.cronSchedule = 'STOP';
+            bot.state.nextRun = null;
+            if (bot.job) {
+                bot.job.stop();
+                bot.job = null;
+            }
+            // Clear client instance on disconnect
+            bot.client = null;
+        });
 
-    bot.client.initialize().catch(err => {
+        await bot.client.initialize();
+
+        // Timeout watchdog: If not ready or QR within 40s, force reset
+        setTimeout(() => {
+            if (bot.client && (bot.state.status === 'CONNECTING' || bot.state.status === 'LOADING')) {
+                console.warn('Bot initialization timed out, forcing reset...');
+                stopBot(); // This destroys the client
+                bot.state.status = 'DISCONNECTED';
+                bot.state.error = 'Initialization timed out. Please try again.';
+            }
+        }, 40000);
+
+    } catch (err: any) {
         bot.state.status = 'DISCONNECTED';
         bot.state.error = err.message;
         console.error('WhatsApp Bot initialization error', err);
-    });
+        bot.client = null;
+    }
 };
 
 export const logoutBot = async () => {
