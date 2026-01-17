@@ -48,13 +48,15 @@ interface OrderHistory {
 }
 
 const STATUS_LEVELS = [
-    { code: 11, label: 'Follow Up', icon: '📞', color: 'indigo' },
     { code: 10, label: 'Open', icon: '🆕', color: 'blue' },
+    { code: 11, label: 'Follow Up', icon: '📞', color: 'indigo' },
     { code: 12, label: 'Running', icon: '⚡', color: 'emerald' },
     { code: 13, label: 'Pending', icon: '⏳', color: 'amber' },
     { code: 15, label: 'Done', icon: '✅', color: 'purple' },
     { code: 30, label: 'Verified', icon: '🛡️', color: 'slate' },
 ];
+
+const ITEMS_PER_PAGE = 100;
 
 export default function VerifyOrderPage() {
     return (
@@ -71,6 +73,7 @@ function VerifyOrderContent() {
     const [searchTerm, setSearchTerm] = useState('');
     const [configError, setConfigError] = useState<string | null>(null);
     const [currentStatus, setCurrentStatus] = useState(11); // Default Follow Up
+    const [currentPage, setCurrentPage] = useState(1);
 
     // Detail Modal State
     const [selectedOrder, setSelectedOrder] = useState<OrderDetail | null>(null);
@@ -83,8 +86,13 @@ function VerifyOrderContent() {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
+        setCurrentPage(1);
         fetchOrders(currentStatus);
     }, [currentStatus]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm]);
 
     const fetchOrders = async (status: number) => {
         setLoading(true);
@@ -178,6 +186,12 @@ function VerifyOrderContent() {
         o.catatan.toLowerCase().includes(searchTerm.toLowerCase()) ||
         o.location_desc.toLowerCase().includes(searchTerm.toLowerCase()) ||
         o.order_by.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const totalPages = Math.ceil(filteredOrders.length / ITEMS_PER_PAGE);
+    const paginatedOrders = filteredOrders.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
     );
 
     return (
@@ -294,8 +308,8 @@ function VerifyOrderContent() {
                                         </td>
                                     </tr>
                                 ))
-                            ) : filteredOrders.length > 0 ? (
-                                filteredOrders.map((order) => (
+                            ) : paginatedOrders.length > 0 ? (
+                                paginatedOrders.map((order) => (
                                     <tr key={order.order_id} className="hover:bg-blue-50/30 transition-colors group">
                                         <td className="px-8 py-5">
                                             <span className="font-black text-slate-800 bg-slate-100 px-3 py-1.5 rounded-lg text-sm border border-slate-200">
@@ -353,6 +367,52 @@ function VerifyOrderContent() {
                         </tbody>
                     </table>
                 </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                    <div className="p-6 bg-slate-50 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
+                        <p className="text-sm text-slate-500 font-medium">
+                            Showing <span className="text-slate-900 font-bold">{Math.min(filteredOrders.length, (currentPage - 1) * ITEMS_PER_PAGE + 1)}-{Math.min(filteredOrders.length, currentPage * ITEMS_PER_PAGE)}</span> of <span className="text-slate-900 font-bold">{filteredOrders.length}</span> tickets
+                        </p>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                disabled={currentPage === 1}
+                                className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 disabled:opacity-50 transition-all"
+                            >
+                                Previous
+                            </button>
+                            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                // Simple pagination logic for first 5 pages or surrounding current page
+                                let pageNum = i + 1;
+                                if (totalPages > 5 && currentPage > 3) {
+                                    pageNum = Math.min(totalPages - 2, currentPage - 2) + i;
+                                }
+                                if (pageNum > totalPages) return null;
+
+                                return (
+                                    <button
+                                        key={pageNum}
+                                        onClick={() => setCurrentPage(pageNum)}
+                                        className={`w-10 h-10 rounded-xl font-bold transition-all ${currentPage === pageNum
+                                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-100'
+                                            : 'bg-white border border-slate-200 text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+                                            }`}
+                                    >
+                                        {pageNum}
+                                    </button>
+                                );
+                            })}
+                            <button
+                                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                disabled={currentPage === totalPages}
+                                className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 disabled:opacity-50 transition-all"
+                            >
+                                Next
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Detail Modal */}
