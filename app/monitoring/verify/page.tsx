@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { useUI } from '@/context/UIContext';
-import { PremiumAlert, PremiumButton } from '@/components/ui/PremiumComponents';
+import { PremiumAlert, PremiumButton, PremiumModal, PremiumInput, PremiumTextarea } from '@/components/ui/PremiumComponents';
 import Link from 'next/link';
+import { EXTERNAL_CATALOGS } from '@/lib/constants';
 
 interface UnverifiedOrder {
     order_id: number;
@@ -53,7 +54,7 @@ const STATUS_LEVELS = [
     { code: 12, label: 'Running', icon: '⚡', color: 'emerald', key: 'running', gradient: 'from-emerald-500 to-emerald-700', shadow: 'shadow-emerald-200', text: 'text-emerald-100', glow: 'bg-emerald-600' },
     { code: 13, label: 'Pending', icon: '⏳', color: 'amber', key: 'pending', gradient: 'from-amber-400 to-orange-600', shadow: 'shadow-amber-200', text: 'text-amber-100', glow: 'bg-amber-600' },
     { code: 15, label: 'Done', icon: '✅', color: 'purple', key: 'done', gradient: 'from-purple-600 to-fuchsia-800', shadow: 'shadow-purple-200', text: 'text-purple-100', glow: 'bg-purple-600' },
-    { code: 30, label: 'Verified', icon: '🛡️', color: 'slate', key: 'verified', gradient: 'from-slate-600 to-slate-800', shadow: 'shadow-slate-200', text: 'text-slate-100', glow: 'bg-slate-600' },
+    { code: 30, label: 'Verified', icon: '✅', color: 'slate', key: 'verified', gradient: 'from-slate-600 to-slate-800', shadow: 'shadow-slate-200', text: 'text-slate-100', glow: 'bg-slate-600' },
 ];
 
 const ITEMS_PER_PAGE = 100;
@@ -95,6 +96,16 @@ function VerifyOrderContent() {
     // Verify Form State
     const [verifyNote, setVerifyNote] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Edit Order State
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editFormData, setEditFormData] = useState<any>(null);
+
+    // Delegasi State
+    const [isDelegasiModalOpen, setIsDelegasiModalOpen] = useState(false);
+    const [assignList, setAssignList] = useState<any[]>([]);
+    const [loadingAssign, setLoadingAssign] = useState(false);
+    const [selectedTeknisi, setSelectedTeknisi] = useState<any>(null);
 
     useEffect(() => {
         fetchOrders(currentStatus);
@@ -214,11 +225,111 @@ function VerifyOrderContent() {
         }
     };
 
+    const handleCancelOrder = async () => {
+        if (!selectedOrder) return;
+        confirm('Delete Order?', 'Apakah Anda yakin ingin membatalkan/menghapus order ini?', async () => {
+            try {
+                const response = await fetch('/api/monitoring/cancel-order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ order_id: selectedOrder.order_id })
+                });
+
+                if (response.ok) {
+                    showToast('Order berhasil dibatalkan', 'success');
+                    setIsDetailModalOpen(false);
+                    fetchOrders(currentStatus);
+                    fetchSummary();
+                } else {
+                    const data = await response.json();
+                    showToast(data.error || 'Gagal membatalkan order', 'error');
+                }
+            } catch (err) {
+                showToast('Gagal membatalkan order', 'error');
+            }
+        });
+    };
+
+    const handleEditOrder = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        try {
+            const response = await fetch('/api/monitoring/edit-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(editFormData)
+            });
+
+            if (response.ok) {
+                showToast('Order berhasil dperbarui', 'success');
+                setIsEditModalOpen(false);
+                setIsDetailModalOpen(false);
+                fetchOrders(currentStatus);
+            } else {
+                const data = await response.json();
+                showToast(data.error || 'Gagal memperbarui order', 'error');
+            }
+        } catch (err) {
+            showToast('Terjadi kesalahan koneksi', 'error');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const fetchAssignList = async () => {
+        if (!selectedOrder) return;
+        setLoadingAssign(true);
+        try {
+            const res = await fetch(`/api/monitoring/assign-list?orderId=${selectedOrder.order_id}`);
+            const data = await res.json();
+            if (res.ok) {
+                setAssignList(data.result || []);
+            }
+        } catch (err) {
+            showToast('Gagal mengambil daftar teknisi', 'error');
+        } finally {
+            setLoadingAssign(false);
+        }
+    };
+
+    const handleAssignTeknisi = async () => {
+        if (!selectedTeknisi || !selectedOrder) return;
+        setIsSubmitting(true);
+        try {
+            const response = await fetch('/api/monitoring/assign-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    order_id: selectedOrder.order_id,
+                    teknisi_id: selectedTeknisi.teknisi_id,
+                    nama_lengkap: selectedTeknisi.nama_lengkap
+                })
+            });
+
+            if (response.ok) {
+                showToast(`Tiket berhasil didelegasikan ke ${selectedTeknisi.nama_lengkap}`, 'success');
+                setIsDelegasiModalOpen(false);
+                setIsDetailModalOpen(false);
+                fetchOrders(currentStatus);
+            } else {
+                const data = await response.json();
+                showToast(data.error || 'Gagal mendelegasikan order', 'error');
+            }
+        } catch (err) {
+            showToast('Terjadi kesalahan koneksi', 'error');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     const filteredOrders = orders.filter(o =>
-        o.order_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        o.catatan.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        o.location_desc.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        o.order_by.toLowerCase().includes(searchTerm.toLowerCase())
+        (o.order_no || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (o.catatan || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (o.location_desc || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (o.order_by || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (o.teknisi || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (o.create_date || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (o.ext_phone || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const totalPages = Math.ceil(filteredOrders.length / ITEMS_PER_PAGE);
@@ -233,7 +344,7 @@ function VerifyOrderContent() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white/40 backdrop-blur-md p-8 rounded-[2rem] border border-white/20 shadow-xl">
                 <div className="flex items-center gap-5">
                     <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg shadow-blue-200">
-                        🛡️
+                        🛠️
                     </div>
                     <div>
                         <h1 className="text-3xl font-black text-slate-800">Order Management</h1>
@@ -652,7 +763,7 @@ function VerifyOrderContent() {
                                                     <div className="md:col-span-2 pt-10 border-t border-slate-100">
                                                         <form onSubmit={handleVerifySubmit} className="space-y-6">
                                                             <div className="flex items-center gap-4 mb-2">
-                                                                <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center font-bold text-xl">🛡️</div>
+                                                                <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center font-bold text-xl">✅</div>
                                                                 <label className="text-sm font-black text-slate-800 uppercase tracking-[0.2em]">
                                                                     Final Verification
                                                                 </label>
@@ -686,6 +797,39 @@ function VerifyOrderContent() {
                                                             </div>
                                                         </form>
                                                     </div>
+                                                ) : (currentStatus === 10 || currentStatus === 11 || currentStatus === 12) ? (
+                                                    <div className="md:col-span-2 pt-10 border-t border-slate-100 flex flex-wrap gap-4 justify-end">
+                                                        <PremiumButton
+                                                            onClick={() => {
+                                                                setEditFormData({ ...selectedOrder });
+                                                                setIsEditModalOpen(true);
+                                                            }}
+                                                            className="px-8 py-4 bg-amber-500 hover:bg-amber-600 text-white font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-amber-100 transition-all active:scale-95 text-xs"
+                                                        >
+                                                            ✏️ Edit Order
+                                                        </PremiumButton>
+                                                        <PremiumButton
+                                                            onClick={() => {
+                                                                setIsDelegasiModalOpen(true);
+                                                                fetchAssignList();
+                                                            }}
+                                                            className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-blue-100 transition-all active:scale-95 text-xs"
+                                                        >
+                                                            👥 Delegasi
+                                                        </PremiumButton>
+                                                        <PremiumButton
+                                                            onClick={handleCancelOrder}
+                                                            className="px-8 py-4 bg-red-600 hover:bg-red-700 text-white font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-red-100 transition-all active:scale-95 text-xs"
+                                                        >
+                                                            🗑️ Delete Order
+                                                        </PremiumButton>
+                                                        <button
+                                                            onClick={() => setIsDetailModalOpen(false)}
+                                                            className="px-8 py-4 bg-slate-100 text-slate-600 font-black uppercase tracking-widest rounded-2xl hover:bg-slate-200 transition active:scale-95 shadow-lg border border-slate-200 text-xs"
+                                                        >
+                                                            Close
+                                                        </button>
+                                                    </div>
                                                 ) : (
                                                     <div className="md:col-span-2 pt-10 border-t border-slate-100 text-right">
                                                         <button
@@ -705,6 +849,130 @@ function VerifyOrderContent() {
                     </div>
                 </div>
             )}
+
+            {/* Edit Modal */}
+            <PremiumModal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                title="✏️ Edit External Order"
+                size="md"
+            >
+                {editFormData && (
+                    <form onSubmit={handleEditOrder} className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <PremiumInput
+                                label="Nomor Extensi"
+                                value={editFormData.ext_phone}
+                                onChange={e => setEditFormData({ ...editFormData, ext_phone: e.target.value })}
+                                required
+                            />
+                            <div>
+                                <label className="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">Service Catalog</label>
+                                <select
+                                    value={editFormData.service_catalog_id}
+                                    onChange={e => setEditFormData({ ...editFormData, service_catalog_id: parseInt(e.target.value), service_name: EXTERNAL_CATALOGS.find(c => c.id === parseInt(e.target.value))?.name || '' })}
+                                    className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-5 py-3.5 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-bold text-slate-700 appearance-none shadow-sm"
+                                >
+                                    {EXTERNAL_CATALOGS.map(cat => (
+                                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+                        <PremiumInput
+                            label="Lokasi / Deskripsi Lokasi"
+                            value={editFormData.location_desc}
+                            onChange={e => setEditFormData({ ...editFormData, location_desc: e.target.value })}
+                            required
+                        />
+                        <PremiumTextarea
+                            label="Catatan Keluhan"
+                            value={editFormData.catatan}
+                            onChange={e => setEditFormData({ ...editFormData, catatan: e.target.value })}
+                            required
+                            rows={4}
+                        />
+                        <div className="flex gap-4 pt-4">
+                            <PremiumButton
+                                type="button"
+                                variant="secondary"
+                                onClick={() => setIsEditModalOpen(false)}
+                                className="flex-1 py-4 uppercase font-black text-xs tracking-widest"
+                            >
+                                Batal
+                            </PremiumButton>
+                            <PremiumButton
+                                type="submit"
+                                disabled={isSubmitting}
+                                className="flex-2 py-4 shadow-xl shadow-blue-100 uppercase font-black text-xs tracking-widest"
+                            >
+                                {isSubmitting ? 'Saving...' : '💾 Simpan Perubahan'}
+                            </PremiumButton>
+                        </div>
+                    </form>
+                )}
+            </PremiumModal>
+
+            {/* Delegasi Modal */}
+            <PremiumModal
+                isOpen={isDelegasiModalOpen}
+                onClose={() => setIsDelegasiModalOpen(false)}
+                title="👥 Delegasi Tugas (Assign)"
+                size="sm"
+            >
+                <div className="space-y-6">
+                    {loadingAssign ? (
+                        <div className="py-20 flex flex-col items-center justify-center gap-4">
+                            <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Fetching Technicians...</p>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="space-y-2 max-h-[400px] overflow-y-auto px-1 custom-scrollbar">
+                                {assignList.map(tek => (
+                                    <button
+                                        key={tek.teknisi_id}
+                                        onClick={() => setSelectedTeknisi(tek)}
+                                        className={`w-full p-5 rounded-2xl border-2 transition-all flex items-center justify-between group ${selectedTeknisi?.teknisi_id === tek.teknisi_id
+                                            ? 'border-blue-600 bg-blue-50/50 shadow-md'
+                                            : 'border-slate-100 hover:border-blue-200'
+                                            }`}
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl flex items-center justify-center font-black text-slate-400 group-hover:from-blue-500 group-hover:to-indigo-600 group-hover:text-white transition-all">
+                                                {tek.nama_lengkap.charAt(0)}
+                                            </div>
+                                            <div className="text-left">
+                                                <p className="font-black text-slate-800 text-sm">{tek.nama_lengkap}</p>
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{tek.nama_bidang}</p>
+                                            </div>
+                                        </div>
+                                        {selectedTeknisi?.teknisi_id === tek.teknisi_id && (
+                                            <span className="text-blue-600 text-xl">✅</span>
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <div className="flex flex-col gap-3 pt-4">
+                                <PremiumButton
+                                    onClick={handleAssignTeknisi}
+                                    disabled={!selectedTeknisi || isSubmitting}
+                                    className="py-5 shadow-2xl shadow-blue-100 font-black uppercase text-xs tracking-widest"
+                                >
+                                    {isSubmitting ? 'Assigning...' : '🤝 Konfirmasi Delegasi'}
+                                </PremiumButton>
+                                <button
+                                    onClick={() => setIsDelegasiModalOpen(false)}
+                                    className="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-600 py-2 transition"
+                                >
+                                    Tutup
+                                </button>
+                            </div>
+                        </>
+                    )}
+                </div>
+            </PremiumModal>
 
             <style jsx global>{`
                 .custom-scrollbar::-webkit-scrollbar {

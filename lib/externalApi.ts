@@ -90,6 +90,7 @@ export async function postExternalOrder(userId: number, data: any) {
         method: 'POST',
         headers: {
             'Authorization': `Bearer ${jwt}`,
+            'access-token': jwt,
             'Accept': 'application/json',
             'Content-Type': 'application/json',
         },
@@ -196,15 +197,77 @@ export async function getExternalOrderHistory(userId: number, orderId: number) {
 
 export async function getExternalOrderSummary(userId: number) {
     const { jwt, BASE } = await getExternalToken(userId);
-    const res = await fetchWithTimeout(`${BASE}/redis/get_summary_order`, {
+    try {
+        const res = await fetchWithTimeout(`${BASE}/redis/get_summary_order`, {
+            headers: {
+                'Authorization': `Bearer ${jwt}`,
+                'access-token': jwt,
+                'Accept': 'application/json',
+            },
+        });
+
+        if (!res.ok) return null;
+        const data = await res.json();
+        return data.result;
+    } catch (error) {
+        console.error('Error fetching external summary:', error);
+        return null;
+    }
+}
+
+export async function postExternalOrderCancel(userId: number, data: any) {
+    const { jwt, BASE } = await getExternalToken(userId);
+    const res = await fetch(`${BASE}/order/order_cancel`, {
+        method: 'POST',
         headers: {
             'Authorization': `Bearer ${jwt}`,
-            'access-token': jwt, // Also include this as seen in user's working snippet
+            'access-token': jwt,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    });
+
+    if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`External API Error: ${errorText}`);
+    }
+
+    return await res.json();
+}
+
+export async function getExternalOrderAssignList(userId: number, orderId: number) {
+    const { jwt, BASE } = await getExternalToken(userId);
+    const res = await fetch(`${BASE}/order/order_assign_list/${orderId}`, {
+        headers: {
+            'Authorization': `Bearer ${jwt}`,
+            'access-token': jwt,
             'Accept': 'application/json',
         },
     });
 
-    if (!res.ok) return null;
+    if (!res.ok) throw new Error('Failed to fetch assign list');
     const data = await res.json();
-    return data.result;
+    return data.result || [];
+}
+
+export async function postExternalAssignOrderSave(userId: number, data: any) {
+    const { jwt, BASE } = await getExternalToken(userId);
+    const res = await fetch(`${BASE}/order/assign_order_save`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${jwt}`,
+            'access-token': jwt,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    });
+
+    if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`External API Error: ${errorText}`);
+    }
+
+    return await res.json();
 }
