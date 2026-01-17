@@ -435,11 +435,13 @@ function AdminContent() {
                         <button
                           onClick={() => handleChangeRole(u.id, u.role)}
                           className={`px-3 py-1.5 rounded-xl text-xs font-black border-2 transition-all hover:scale-105 uppercase tracking-wider ${u.role === 'admin'
-                            ? 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100'
-                            : 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
+                              ? 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100'
+                              : u.role === 'super'
+                                ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+                                : 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
                             }`}
                         >
-                          {u.role === 'admin' ? '🔐 Admin' : '👤 User'}
+                          {u.role === 'admin' ? '🔐 Admin' : u.role === 'super' ? '⚡ Super' : '👤 User'}
                         </button>
                       </td>
                       <td className="px-6 py-4">

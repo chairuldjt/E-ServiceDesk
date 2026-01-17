@@ -47,7 +47,7 @@ async function initDatabase() {
                 username VARCHAR(100) NOT NULL UNIQUE,
                 email VARCHAR(100) NOT NULL UNIQUE,
                 password_hash VARCHAR(255) NOT NULL,
-                role ENUM('user', 'admin') DEFAULT 'user',
+                role ENUM('user', 'admin', 'super') DEFAULT 'user',
                 is_active TINYINT(1) DEFAULT 1,
                 profile_image VARCHAR(255) DEFAULT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -135,6 +135,15 @@ async function initDatabase() {
             console.log('   - Adding missing "images" column to "notes" table...');
             await connection.query('ALTER TABLE notes ADD COLUMN images TEXT DEFAULT NULL AFTER content');
             console.log('   - Column "images" added successfully');
+        }
+
+        // Update role enum to include 'super'
+        console.log('   - Updating "users" role ENUM to include "super"...');
+        try {
+            await connection.query("ALTER TABLE users MODIFY COLUMN role ENUM('user', 'admin', 'super') DEFAULT 'user'");
+            console.log('   - Role ENUM updated successfully');
+        } catch (e: any) {
+            console.log('   - Skipping role ENUM update (maybe already updated)');
         }
 
         // Step 4: Seed Admin User
