@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
+import { writeFile, mkdir, chmod } from 'fs/promises';
 import { join } from 'path';
 import pool from '@/lib/db';
 import { getPayloadFromCookie } from '@/lib/jwt';
@@ -28,10 +28,16 @@ export async function POST(request: NextRequest) {
         const uploadDir = join(process.cwd(), 'public', 'uploads', 'profile');
         if (!fs.existsSync(uploadDir)) {
             await mkdir(uploadDir, { recursive: true });
+            // Set directory permissions to 755 (drwxr-xr-x)
+            await chmod(uploadDir, 0o755);
         }
 
         const path = join(uploadDir, fileName);
         await writeFile(path, buffer);
+
+        // Explicitly set file permissions to 644 (rw-r--r--)
+        // This ensures the web server can read the file regardless of umask
+        await chmod(path, 0o644);
 
         const imageUrl = `/uploads/profile/${fileName}`;
 
