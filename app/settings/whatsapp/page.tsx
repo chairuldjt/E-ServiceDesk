@@ -173,8 +173,9 @@ const WhatsAppContent = () => {
                     <div className={`flex items-center gap-3 px-5 py-3 rounded-full text-xs font-black uppercase tracking-wider transition-all shadow-lg
                         ${state?.status === 'READY' ? 'bg-gradient-to-r from-emerald-400 to-teal-500 text-white shadow-emerald-200 ring-2 ring-emerald-200/50' :
                             state?.status === 'QR_CODE' ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-amber-200 ring-2 ring-amber-200/50' :
-                                state?.status === 'LOADING' || state?.status === 'CONNECTING' ? 'bg-gradient-to-r from-blue-400 to-indigo-500 text-white shadow-blue-200 ring-2 ring-blue-200/50 animate-pulse' :
-                                    'bg-gradient-to-r from-rose-400 to-pink-500 text-white shadow-rose-200 ring-2 ring-rose-200/50'}`}>
+                                ['LOADING', 'CONNECTING'].includes(state?.status || '') ? 'bg-gradient-to-r from-blue-400 to-indigo-500 text-white shadow-blue-200 ring-2 ring-blue-200/50 animate-pulse' :
+                                    ['DISCONNECTED', 'OFFLINE', 'UNKNOWN'].includes(state?.status || 'OFFLINE') ? 'bg-gradient-to-r from-slate-500 to-slate-600 text-white shadow-slate-200 ring-2 ring-slate-200/50' :
+                                        'bg-gradient-to-r from-rose-400 to-pink-500 text-white shadow-rose-200 ring-2 ring-rose-200/50'}`}>
                         <div className={`w-2.5 h-2.5 rounded-full bg-white ${state?.status === 'READY' ? 'animate-pulse' : ''}`}></div>
                         {state?.status || 'OFFLINE'}
                     </div>
