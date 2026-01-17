@@ -36,6 +36,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     { name: 'Monitoring', path: '/monitoring', icon: '📡' },
     { name: 'Order', path: '/monitoring/verify', icon: '🎫' },
     { name: 'Notepad', path: '/notepad', icon: '📝' },
+    { name: 'WhatsApp Bot', path: '/settings/whatsapp', icon: '📱' },
   ];
 
   if (user.role === 'admin') {

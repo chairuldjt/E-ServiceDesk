@@ -1,4 +1,6 @@
 import React from 'react';
+export { CustomDropdown } from './CustomDropdown';
+
 
 interface PremiumCardProps {
     children: React.ReactNode;
@@ -66,7 +68,7 @@ export function PremiumButton({
             type={type}
             onClick={onClick}
             disabled={disabled}
-            className={`${buttonVariants[variant]} ${buttonSizes[size]} text-white rounded-2xl hover:shadow-xl transition-all font-bold flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
+            className={`${buttonVariants[variant]} ${buttonSizes[size]} text-white rounded-full hover:shadow-xl transition-all font-bold flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
         >
             {children}
         </button>
@@ -111,7 +113,7 @@ export function PremiumInput({
                 placeholder={placeholder}
                 required={required}
                 disabled={disabled}
-                className="w-full px-4 py-3 border-2 border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium disabled:bg-slate-50 disabled:cursor-not-allowed"
+                className="w-full px-6 py-3.5 border-2 border-slate-200 rounded-full focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium disabled:bg-slate-50 disabled:cursor-not-allowed shadow-sm"
             />
         </div>
     );
@@ -155,8 +157,54 @@ export function PremiumTextarea({
                 required={required}
                 disabled={disabled}
                 rows={rows}
-                className="w-full px-4 py-3 border-2 border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium resize-none disabled:bg-slate-50 disabled:cursor-not-allowed"
+                className="w-full px-8 py-6 border-2 border-slate-200 rounded-[2rem] focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium resize-none disabled:bg-slate-50 disabled:cursor-not-allowed shadow-sm"
             />
+        </div>
+    );
+}
+
+interface PremiumSelectProps {
+    label?: string;
+    value: string | number;
+    onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+    children: React.ReactNode;
+    className?: string;
+    disabled?: boolean;
+    required?: boolean;
+}
+
+export function PremiumSelect({
+    label,
+    value,
+    onChange,
+    children,
+    className = '',
+    disabled = false,
+    required = false,
+}: PremiumSelectProps) {
+    return (
+        <div className={className}>
+            {label && (
+                <label className="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest pl-1">
+                    {label}
+                </label>
+            )}
+            <div className="relative group/select">
+                <select
+                    value={value}
+                    onChange={onChange}
+                    disabled={disabled}
+                    required={required}
+                    className="w-full px-6 py-3.5 bg-white border-2 border-slate-200 rounded-full focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-bold text-slate-700 appearance-none cursor-pointer hover:bg-slate-50 shadow-sm relative z-10 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    {children}
+                </select>
+                <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 group-focus-within/select:text-blue-500 transition-colors z-20">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z" />
+                    </svg>
+                </div>
+            </div>
         </div>
     );
 }
@@ -285,7 +333,7 @@ export function SearchBar({ value, onChange, placeholder = 'Cari...', className 
                 placeholder={placeholder}
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
-                className="w-full bg-white border-2 border-slate-200 rounded-2xl py-3.5 pl-12 pr-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all shadow-sm font-medium"
+                className="w-full bg-white border-2 border-slate-200 rounded-full py-4 pl-12 pr-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all shadow-sm font-medium"
             />
         </div>
     );

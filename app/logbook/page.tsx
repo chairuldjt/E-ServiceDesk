@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useUI } from '@/context/UIContext';
 import { EXTERNAL_CATALOGS, EXTERNAL_USERS } from '@/lib/constants';
-import { PageHeader, PremiumCard, PremiumButton, PremiumModal, PremiumInput, PremiumTextarea, PremiumBadge, SearchBar } from '@/components/ui/PremiumComponents';
+import { PageHeader, PremiumCard, PremiumButton, PremiumModal, PremiumInput, PremiumTextarea, PremiumBadge, SearchBar, CustomDropdown } from '@/components/ui/PremiumComponents';
 
 interface LogbookEntry {
   id: number;
@@ -220,16 +220,16 @@ function LogbookListContent() {
             onChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
             placeholder="Cari extensi, lokasi, atau catatan..."
           />
-          <select
+          <CustomDropdown
             value={statusFilter}
-            onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-            className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-3.5 px-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-bold text-slate-700"
-          >
-            <option value="all">Semua Status</option>
-            <option value="pending_order">Belum Diorderkan</option>
-            <option value="ordered">Sudah Diorderkan</option>
-            <option value="completed">Selesai</option>
-          </select>
+            onChange={(val) => { setStatusFilter(val); setCurrentPage(1); }}
+            options={[
+              { value: 'all', label: 'Semua Status' },
+              { value: 'pending_order', label: 'Belum Diorderkan' },
+              { value: 'ordered', label: 'Sudah Diorderkan' },
+              { value: 'completed', label: 'Selesai' },
+            ]}
+          />
         </div>
 
         <div className="w-full md:w-auto">
@@ -405,23 +405,15 @@ function LogbookListContent() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest px-1">
-                Pilih Service Catalog
-              </label>
-              <select
-                value={orderFormData.service_catalog_id}
-                onChange={e => setOrderFormData({ ...orderFormData, service_catalog_id: e.target.value })}
-                className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-5 py-4 focus:ring-4 focus:ring-emerald-100 focus:border-emerald-600 outline-none transition-all font-bold text-slate-700 appearance-none shadow-sm"
-                style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%23cbd5e1\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\' /%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1.2rem center', backgroundSize: '1.2em' }}
-              >
-                {EXTERNAL_CATALOGS.map(cat => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <CustomDropdown
+              label="Pilih Service Catalog"
+              value={orderFormData.service_catalog_id}
+              onChange={val => setOrderFormData({ ...orderFormData, service_catalog_id: val })}
+              options={EXTERNAL_CATALOGS.map(cat => ({
+                value: cat.id.toString(),
+                label: cat.name
+              }))}
+            />
 
             <div className="flex flex-col gap-3 pt-6">
               <PremiumButton

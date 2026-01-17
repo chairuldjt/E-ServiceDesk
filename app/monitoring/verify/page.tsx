@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { useUI } from '@/context/UIContext';
-import { PremiumAlert, PremiumButton, PremiumModal, PremiumInput, PremiumTextarea } from '@/components/ui/PremiumComponents';
+import { PremiumAlert, PremiumButton, PremiumModal, PremiumInput, PremiumTextarea, CustomDropdown } from '@/components/ui/PremiumComponents';
 import Link from 'next/link';
 import { EXTERNAL_CATALOGS } from '@/lib/constants';
 
@@ -390,9 +390,9 @@ function VerifyOrderContent() {
     );
 
     return (
-        <div className="p-4 md:p-8 space-y-8 animate-in fade-in duration-500">
+        <div className="p-4 md:p-8 space-y-8 animate-in fade-in duration-500 overflow-visible">
             {/* Header Section */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white/40 backdrop-blur-md p-8 rounded-[2rem] border border-white/20 shadow-xl">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white/40 backdrop-blur-md p-8 rounded-[2rem] border border-white/20 shadow-xl overflow-visible">
                 <div className="flex items-center gap-5">
                     <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg shadow-blue-200">
                         🎫
@@ -403,7 +403,7 @@ function VerifyOrderContent() {
                     </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
+                <div className="flex flex-wrap items-center gap-4 w-full md:w-auto relative z-50">
                     <div className="text-[10px] bg-slate-100 text-slate-400 px-3 py-1.5 rounded-full font-bold uppercase tracking-widest animate-pulse flex items-center gap-2">
                         <span className="relative flex h-2 w-2">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -411,23 +411,22 @@ function VerifyOrderContent() {
                         </span>
                         Live Summary (5s)
                     </div>
-                    <div className="flex flex-col md:flex-row items-end gap-3 w-full md:w-auto">
-                        <div className="flex flex-col gap-1.5 w-full md:w-48">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Filter Berdasarkan:</label>
-                            <select
-                                value={searchBy}
-                                onChange={(e) => setSearchBy(e.target.value)}
-                                className="bg-white border border-slate-200 rounded-2xl py-3 px-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all shadow-sm font-bold text-slate-700 text-xs"
-                            >
-                                <option value="all">🔍 Semua Kolom</option>
-                                <option value="order_no">No Order</option>
-                                <option value="order_by">Nama Pelapor</option>
-                                <option value="teknisi">Nama Teknisi</option>
-                                <option value="location_desc">Lokasi Ruangan</option>
-                                <option value="ext_phone">Nomor Extensi</option>
-                                <option value="catatan">Catatan Keluhan</option>
-                            </select>
-                        </div>
+                    <div className="flex flex-col md:flex-row items-start md:items-end gap-3 w-full md:w-auto">
+                        <CustomDropdown
+                            label="Filter Berdasarkan:"
+                            value={searchBy}
+                            onChange={(val) => setSearchBy(val)}
+                            options={[
+                                { value: 'all', label: '🔍 Semua Kolom' },
+                                { value: 'order_no', label: 'No Order' },
+                                { value: 'order_by', label: 'Nama Pelapor' },
+                                { value: 'teknisi', label: 'Nama Teknisi' },
+                                { value: 'location_desc', label: 'Lokasi Ruangan' },
+                                { value: 'ext_phone', label: 'Nomor Extensi' },
+                                { value: 'catatan', label: 'Catatan Keluhan' },
+                            ]}
+                            className="w-full md:w-48"
+                        />
                         <div className="flex flex-col gap-1.5 w-full md:w-80">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Kata Kunci:</label>
                             <div className="relative group">
@@ -441,7 +440,7 @@ function VerifyOrderContent() {
                                     placeholder={`Cari ${searchBy === 'all' ? 'semua...' : searchBy.replace('_', ' ')}`}
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full bg-white border border-slate-200 rounded-2xl py-3 pl-12 pr-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all shadow-sm font-medium text-sm"
+                                    className="w-full bg-white border border-slate-200 rounded-full py-3.5 pl-12 pr-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all shadow-sm font-medium text-sm"
                                 />
                             </div>
                         </div>
@@ -951,18 +950,15 @@ function VerifyOrderContent() {
                                 onChange={e => setEditFormData({ ...editFormData, ext_phone: e.target.value })}
                                 required
                             />
-                            <div>
-                                <label className="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">Service Catalog</label>
-                                <select
-                                    value={editFormData.service_catalog_id}
-                                    onChange={e => setEditFormData({ ...editFormData, service_catalog_id: parseInt(e.target.value), service_name: EXTERNAL_CATALOGS.find(c => c.id === parseInt(e.target.value))?.name || '' })}
-                                    className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-5 py-3.5 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-bold text-slate-700 appearance-none shadow-sm"
-                                >
-                                    {EXTERNAL_CATALOGS.map(cat => (
-                                        <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                    ))}
-                                </select>
-                            </div>
+                            <CustomDropdown
+                                label="Service Catalog"
+                                value={editFormData.service_catalog_id}
+                                onChange={val => setEditFormData({ ...editFormData, service_catalog_id: parseInt(val), service_name: EXTERNAL_CATALOGS.find(c => c.id === parseInt(val))?.name || '' })}
+                                options={EXTERNAL_CATALOGS.map(cat => ({
+                                    value: cat.id.toString(),
+                                    label: cat.name
+                                }))}
+                            />
                         </div>
                         <PremiumInput
                             label="Lokasi / Deskripsi Lokasi"
@@ -1027,7 +1023,7 @@ function VerifyOrderContent() {
                             placeholder="Cari nama teknisi..."
                             value={teknisiSearch}
                             onChange={(e) => setTeknisiSearch(e.target.value)}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-10 pr-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium text-sm"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-full py-3.5 pl-10 pr-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium text-sm shadow-sm"
                         />
                     </div>
                     {loadingAssign ? (
