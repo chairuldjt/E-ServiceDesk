@@ -90,6 +90,82 @@ const WhatsAppContent = () => {
         return () => clearInterval(interval);
     }, []);
 
+    const handleClientScreenshot = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getDisplayMedia({
+                video: true,
+                audio: false
+            });
+
+            const video = document.createElement('video');
+            video.srcObject = stream;
+            video.play();
+
+            // Wait for video to be ready and play a bit to avoid black frames
+            await new Promise<void>((resolve) => {
+                video.onloadeddata = () => {
+                    resolve();
+                };
+            });
+            await new Promise(r => setTimeout(r, 500));
+
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+
+            if (ctx) {
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                canvas.toBlob(async (blob) => {
+                    // Stop sharing immediately after capture
+                    stream.getTracks().forEach(track => track.stop());
+
+                    if (!blob) {
+                        showToast('Gagal memproses gambar screenshot', 'error');
+                        return;
+                    }
+
+                    const formData = new FormData();
+                    formData.append('image', blob, 'screenshot.png');
+                    if (useCustomCaption) formData.append('caption', realtimeCaption);
+
+                    setActionLoading(true);
+                    try {
+                        const res = await fetch('/api/whatsapp/send-image', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        const data = await res.json();
+                        if (res.ok) {
+                            showToast('Screenshot berhasil dikirim!', 'success');
+                            // Update last screenshot time locally for immediate feedback
+                            setState((prev: any) => ({
+                                ...prev,
+                                lastScreenshot: new Date().toISOString()
+                            }));
+                        } else {
+                            showToast(data.error || 'Gagal mengirim screenshot', 'error');
+                        }
+                    } catch (e: any) {
+                        showToast(e.message, 'error');
+                    } finally {
+                        setActionLoading(false);
+                    }
+                }, 'image/png');
+            } else {
+                stream.getTracks().forEach(track => track.stop());
+            }
+
+        } catch (err) {
+            console.error('Screen capture error:', err);
+            // Don't show toast if user cancelled (NotAllowedError)
+            if (err instanceof Error && err.name !== 'NotAllowedError') {
+                showToast('Gagal mengambil screenshot device', 'error');
+            }
+        }
+    };
+
     const handleAction = async (action: string, extraData: any = {}) => {
         setActionLoading(true);
         try {
@@ -423,7 +499,7 @@ const WhatsAppContent = () => {
                                                 <span className="text-xl group-hover:scale-110 transition-transform">🛑</span> Stop Automation
                                             </button>
                                             <button
-                                                onClick={() => handleAction('SEND_MANUAL', { caption: useCustomCaption ? realtimeCaption : undefined })}
+                                                onClick={handleClientScreenshot}
                                                 disabled={actionLoading || state?.status !== 'READY'}
                                                 className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-6 py-4 rounded-2xl font-bold hover:shadow-xl hover:shadow-emerald-200 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 group"
                                             >
