@@ -230,8 +230,8 @@ function AdminContent() {
           <button
             onClick={() => setActiveTab('overview')}
             className={`flex-1 py-3 px-4 font-bold text-sm rounded-xl transition-all ${activeTab === 'overview'
-                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
-                : 'text-slate-600 hover:bg-slate-50'
+              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+              : 'text-slate-600 hover:bg-slate-50'
               }`}
           >
             📊 Overview
@@ -239,8 +239,8 @@ function AdminContent() {
           <button
             onClick={() => setActiveTab('logbook')}
             className={`flex-1 py-3 px-4 font-bold text-sm rounded-xl transition-all ${activeTab === 'logbook'
-                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
-                : 'text-slate-600 hover:bg-slate-50'
+              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+              : 'text-slate-600 hover:bg-slate-50'
               }`}
           >
             📚 Logbook
@@ -248,8 +248,8 @@ function AdminContent() {
           <button
             onClick={() => setActiveTab('users')}
             className={`flex-1 py-3 px-4 font-bold text-sm rounded-xl transition-all ${activeTab === 'users'
-                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
-                : 'text-slate-600 hover:bg-slate-50'
+              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+              : 'text-slate-600 hover:bg-slate-50'
               }`}
           >
             👥 Users
@@ -265,41 +265,38 @@ function AdminContent() {
               📚 Statistik Logbook
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <PremiumCard gradient="blue" className="p-6 hover:scale-105 transition-transform">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-slate-600 text-sm font-bold uppercase tracking-wider">Total Logbook</p>
-                    <p className="text-4xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mt-2">{stats.total}</p>
-                  </div>
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg">
-                    📚
-                  </div>
+              {/* Total Logbook */}
+              <div className="p-8 rounded-[2.5rem] border bg-gradient-to-br from-blue-600 to-indigo-800 text-white shadow-2xl shadow-blue-200 relative overflow-hidden group hover:scale-105 transition-all duration-300">
+                <div className="absolute -top-4 -right-4 w-32 h-32 rounded-full blur-3xl opacity-20 bg-white group-hover:opacity-40 transition-opacity"></div>
+                <div className="flex flex-col items-center text-center relative z-10">
+                  <span className="text-3xl mb-4 group-hover:scale-110 transition-transform">📚</span>
+                  <span className="text-5xl font-black mb-2 antialiased tabular-nums">{stats.total}</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-100 opacity-80">Total Logbook</span>
+                  <div className="mt-4 w-8 h-1 bg-white/30 rounded-full"></div>
                 </div>
-              </PremiumCard>
+              </div>
 
-              <PremiumCard gradient="emerald" className="p-6 hover:scale-105 transition-transform">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-emerald-700 text-sm font-bold uppercase tracking-wider">Selesai</p>
-                    <p className="text-4xl font-black text-emerald-600 mt-2">{stats.completed}</p>
-                  </div>
-                  <div className="w-16 h-16 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg">
-                    ✅
-                  </div>
+              {/* Completed */}
+              <div className="p-8 rounded-[2.5rem] border bg-gradient-to-br from-emerald-500 to-teal-700 text-white shadow-2xl shadow-emerald-200 relative overflow-hidden group hover:scale-105 transition-all duration-300">
+                <div className="absolute -top-4 -right-4 w-32 h-32 rounded-full blur-3xl opacity-20 bg-white group-hover:opacity-40 transition-opacity"></div>
+                <div className="flex flex-col items-center text-center relative z-10">
+                  <span className="text-3xl mb-4 group-hover:scale-110 transition-transform">✅</span>
+                  <span className="text-5xl font-black mb-2 antialiased tabular-nums">{stats.completed}</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-100 opacity-80">Logbook Selesai</span>
+                  <div className="mt-4 w-8 h-1 bg-white/30 rounded-full"></div>
                 </div>
-              </PremiumCard>
+              </div>
 
-              <PremiumCard gradient="amber" className="p-6 hover:scale-105 transition-transform">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-amber-700 text-sm font-bold uppercase tracking-wider">Draft</p>
-                    <p className="text-4xl font-black text-amber-600 mt-2">{stats.draft}</p>
-                  </div>
-                  <div className="w-16 h-16 bg-gradient-to-br from-amber-600 to-yellow-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg">
-                    📝
-                  </div>
+              {/* Draft */}
+              <div className="p-8 rounded-[2.5rem] border bg-gradient-to-br from-amber-400 to-orange-600 text-white shadow-2xl shadow-amber-200 relative overflow-hidden group hover:scale-105 transition-all duration-300">
+                <div className="absolute -top-4 -right-4 w-32 h-32 rounded-full blur-3xl opacity-20 bg-white group-hover:opacity-40 transition-opacity"></div>
+                <div className="flex flex-col items-center text-center relative z-10">
+                  <span className="text-3xl mb-4 group-hover:scale-110 transition-transform">📝</span>
+                  <span className="text-5xl font-black mb-2 antialiased tabular-nums">{stats.draft}</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-100 opacity-80">Logbook Draft</span>
+                  <div className="mt-4 w-8 h-1 bg-white/30 rounded-full"></div>
                 </div>
-              </PremiumCard>
+              </div>
             </div>
           </div>
 
@@ -309,41 +306,38 @@ function AdminContent() {
               👥 Statistik Users
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <PremiumCard gradient="purple" className="p-6 hover:scale-105 transition-transform">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-purple-700 text-sm font-bold uppercase tracking-wider">Total Users</p>
-                    <p className="text-4xl font-black text-purple-600 mt-2">{stats.totalUsers}</p>
-                  </div>
-                  <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg">
-                    👥
-                  </div>
+              {/* Total Users */}
+              <div className="p-8 rounded-[2.5rem] border bg-gradient-to-br from-purple-600 to-fuchsia-800 text-white shadow-2xl shadow-purple-200 relative overflow-hidden group hover:scale-105 transition-all duration-300">
+                <div className="absolute -top-4 -right-4 w-32 h-32 rounded-full blur-3xl opacity-20 bg-white group-hover:opacity-40 transition-opacity"></div>
+                <div className="flex flex-col items-center text-center relative z-10">
+                  <span className="text-3xl mb-4 group-hover:scale-110 transition-transform">👥</span>
+                  <span className="text-5xl font-black mb-2 antialiased tabular-nums">{stats.totalUsers}</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-100 opacity-80">Total Pengguna</span>
+                  <div className="mt-4 w-8 h-1 bg-white/30 rounded-full"></div>
                 </div>
-              </PremiumCard>
+              </div>
 
-              <PremiumCard gradient="slate" className="p-6 hover:scale-105 transition-transform">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-slate-700 text-sm font-bold uppercase tracking-wider">Admin</p>
-                    <p className="text-4xl font-black text-slate-600 mt-2">{stats.adminUsers}</p>
-                  </div>
-                  <div className="w-16 h-16 bg-gradient-to-br from-slate-600 to-gray-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg">
-                    🛡️
-                  </div>
+              {/* Admin */}
+              <div className="p-8 rounded-[2.5rem] border bg-gradient-to-br from-slate-600 to-slate-800 text-white shadow-2xl shadow-slate-200 relative overflow-hidden group hover:scale-105 transition-all duration-300">
+                <div className="absolute -top-4 -right-4 w-32 h-32 rounded-full blur-3xl opacity-20 bg-white group-hover:opacity-40 transition-opacity"></div>
+                <div className="flex flex-col items-center text-center relative z-10">
+                  <span className="text-3xl mb-4 group-hover:scale-110 transition-transform">🛡️</span>
+                  <span className="text-5xl font-black mb-2 antialiased tabular-nums">{stats.adminUsers}</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-100 opacity-80">Administrator</span>
+                  <div className="mt-4 w-8 h-1 bg-white/30 rounded-full"></div>
                 </div>
-              </PremiumCard>
+              </div>
 
-              <PremiumCard gradient="blue" className="p-6 hover:scale-105 transition-transform">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-indigo-700 text-sm font-bold uppercase tracking-wider">User</p>
-                    <p className="text-4xl font-black text-indigo-600 mt-2">{stats.userUsers}</p>
-                  </div>
-                  <div className="w-16 h-16 bg-gradient-to-br from-indigo-600 to-blue-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg">
-                    👤
-                  </div>
+              {/* User */}
+              <div className="p-8 rounded-[2.5rem] border bg-gradient-to-br from-indigo-500 to-blue-700 text-white shadow-2xl shadow-blue-200 relative overflow-hidden group hover:scale-105 transition-all duration-300">
+                <div className="absolute -top-4 -right-4 w-32 h-32 rounded-full blur-3xl opacity-20 bg-white group-hover:opacity-40 transition-opacity"></div>
+                <div className="flex flex-col items-center text-center relative z-10">
+                  <span className="text-3xl mb-4 group-hover:scale-110 transition-transform">👤</span>
+                  <span className="text-5xl font-black mb-2 antialiased tabular-nums">{stats.userUsers}</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-100 opacity-80">Regular User</span>
+                  <div className="mt-4 w-8 h-1 bg-white/30 rounded-full"></div>
                 </div>
-              </PremiumCard>
+              </div>
             </div>
           </div>
         </div>
@@ -441,8 +435,8 @@ function AdminContent() {
                         <button
                           onClick={() => handleChangeRole(u.id, u.role)}
                           className={`px-3 py-1.5 rounded-xl text-xs font-black border-2 transition-all hover:scale-105 uppercase tracking-wider ${u.role === 'admin'
-                              ? 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100'
-                              : 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
+                            ? 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100'
+                            : 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
                             }`}
                         >
                           {u.role === 'admin' ? '🛡️ Admin' : '👤 User'}
@@ -452,8 +446,8 @@ function AdminContent() {
                         <button
                           onClick={() => handleUpdateStatus(u.id, u.is_active)}
                           className={`px-3 py-1.5 rounded-xl text-xs font-black border-2 transition-all hover:scale-105 uppercase tracking-wider ${u.is_active
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                              : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                            : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
                             }`}
                         >
                           {u.is_active ? '✅ Aktif' : '❌ Nonaktif'}

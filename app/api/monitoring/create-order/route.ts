@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
 
         // Validate required fields
-        const { catatan, ext_phone, location_desc, service_catalog_id } = body;
+        const { catatan, ext_phone, location_desc, service_catalog_id, logbookId } = body;
 
         if (!catatan || !ext_phone || !location_desc || !service_catalog_id) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -42,6 +42,20 @@ export async function POST(request: NextRequest) {
         };
 
         const result = await postExternalOrder(payload.id, externalPayload);
+
+        // Update logbook status to 'ordered' if logbookId is provided
+        if (logbookId) {
+            try {
+                const pool = (await import('@/lib/db')).default;
+                await pool.execute(
+                    'UPDATE logbook SET status = ? WHERE id = ?',
+                    ['ordered', logbookId]
+                );
+            } catch (dbError) {
+                console.error('Failed to update logbook status after order creation:', dbError);
+                // We don't return error here because the order was successfully created
+            }
+        }
 
         return NextResponse.json(result);
     } catch (error: any) {

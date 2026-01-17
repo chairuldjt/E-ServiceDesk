@@ -66,7 +66,7 @@ async function initDatabase() {
                 catatan TEXT,
                 solusi TEXT,
                 penyelesaian TEXT,
-                status ENUM('draft', 'completed') DEFAULT 'draft',
+                status ENUM('draft', 'pending_order', 'ordered', 'completed') DEFAULT 'draft',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -93,6 +93,15 @@ async function initDatabase() {
 
         // Step 3.5: Migration - Check for missing columns
         console.log('Checking for schema updates...');
+
+        // Update logbook status enum
+        console.log('   - Updating "logbook" status ENUM...');
+        try {
+            await connection.query("ALTER TABLE logbook MODIFY COLUMN status ENUM('draft', 'pending_order', 'ordered', 'completed') DEFAULT 'draft'");
+            console.log('   - Status ENUM updated successfully');
+        } catch (e: any) {
+            console.log('   - Skipping status ENUM update (maybe already updated)');
+        }
 
         // Update content to LONGTEXT if it's still TEXT
         console.log('   - Ensuring "content" in "notes" is LONGTEXT...');

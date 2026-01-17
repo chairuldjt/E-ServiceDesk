@@ -21,25 +21,44 @@ export const Toast: React.FC<ToastProps> = ({ toast, onClose }) => {
         return () => clearTimeout(timer);
     }, [toast.id, onClose]);
 
-    const bgColors = {
-        success: 'bg-green-500',
-        error: 'bg-red-500',
-        info: 'bg-blue-500',
-        warning: 'bg-yellow-500',
+    const variants = {
+        success: {
+            bg: 'from-emerald-600 to-teal-600',
+            icon: '✅',
+            title: 'Success'
+        },
+        error: {
+            bg: 'from-red-600 to-rose-600',
+            icon: '❌',
+            title: 'Error'
+        },
+        info: {
+            bg: 'from-blue-600 to-indigo-600',
+            icon: 'ℹ️',
+            title: 'Information'
+        },
+        warning: {
+            bg: 'from-amber-500 to-orange-600',
+            icon: '⚠️',
+            title: 'Warning'
+        },
     };
 
-    const icons = {
-        success: '✅',
-        error: '❌',
-        info: 'ℹ️',
-        warning: '⚠️',
-    };
+    const variant = variants[toast.type];
 
     return (
-        <div className={`${bgColors[toast.type]} text-white px-6 py-3 rounded-lg shadow-lg mb-4 flex items-center gap-3 min-w-[300px] animate-fade-in-up transform transition-all duration-300`}>
-            <span className="text-xl">{icons[toast.type]}</span>
-            <p className="font-medium flex-1">{toast.message}</p>
-            <button onClick={() => onClose(toast.id)} className="text-white/80 hover:text-white font-bold ml-4">
+        <div className={`bg-gradient-to-r ${variant.bg} text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-4 border border-white/20 animate-in slide-in-from-bottom-10 fade-in duration-300 pointer-events-auto mb-4`}>
+            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-xl shrink-0">
+                {variant.icon}
+            </div>
+            <div className="flex-1">
+                <p className="font-black text-sm uppercase tracking-widest">{variant.title}</p>
+                <p className="text-white/90 text-xs font-bold">{toast.message}</p>
+            </div>
+            <button
+                onClick={() => onClose(toast.id)}
+                className="ml-2 text-white/60 hover:text-white text-2xl transition-colors shrink-0"
+            >
                 &times;
             </button>
         </div>

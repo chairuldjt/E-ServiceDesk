@@ -165,6 +165,7 @@ interface PremiumBadgeProps {
     children: React.ReactNode;
     variant?: 'blue' | 'emerald' | 'amber' | 'red' | 'purple' | 'slate';
     size?: 'sm' | 'md' | 'lg';
+    className?: string;
 }
 
 const badgeVariants = {
@@ -182,10 +183,10 @@ const badgeSizes = {
     lg: 'px-4 py-2 text-sm',
 };
 
-export function PremiumBadge({ children, variant = 'blue', size = 'md' }: PremiumBadgeProps) {
+export function PremiumBadge({ children, variant = 'blue', size = 'md', className = '' }: PremiumBadgeProps) {
     return (
         <span
-            className={`${badgeVariants[variant]} ${badgeSizes[size]} rounded-xl font-black uppercase tracking-widest border-2 inline-block`}
+            className={`${badgeVariants[variant]} ${badgeSizes[size]} rounded-xl font-black uppercase tracking-widest border-2 inline-block ${className}`}
         >
             {children}
         </span>

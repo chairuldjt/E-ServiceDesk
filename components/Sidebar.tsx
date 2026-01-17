@@ -32,8 +32,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   const menuItems = [
     { name: 'Dashboard', path: '/dashboard', icon: '📊' },
-    { name: 'Monitoring', path: '/monitoring', icon: '📡' },
     { name: 'Logbook', path: '/logbook', icon: '📔' },
+    { name: 'Monitoring', path: '/monitoring', icon: '📡' },
     { name: 'Order', path: '/monitoring/verify', icon: '🛡️' },
     { name: 'Notepad', path: '/notepad', icon: '📝' },
   ];
@@ -56,14 +56,17 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white flex flex-col shadow-2xl transition-all duration-300 ease-in-out lg:relative ${isOpen ? 'translate-x-0 ml-0 shadow-xl' : '-translate-x-full lg:-ml-64 shadow-none'
         }`}>
         {/* Logo Section */}
-        <div className="h-16 flex items-center justify-between px-6 border-b border-slate-700/50 shrink-0 bg-gradient-to-r from-blue-600/10 to-indigo-600/10">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center text-lg shadow-lg">
-              🏢
+        <div className="h-20 flex items-center justify-between px-6 border-b border-slate-700/50 shrink-0 bg-gradient-to-r from-blue-600/10 to-indigo-600/10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 rounded-xl flex items-center justify-center text-xl shadow-lg shadow-blue-500/20 border border-white/10 group">
+              <span className="group-hover:rotate-12 transition-transform duration-300">🛠️</span>
             </div>
-            <h1 className="text-xl font-black bg-gradient-to-r from-blue-400 to-teal-400 bg-clip-text text-transparent">
-              E-ServiceDesk
-            </h1>
+            <div className="flex flex-col">
+              <h1 className="text-lg font-black bg-gradient-to-r from-white via-blue-200 to-teal-200 bg-clip-text text-transparent leading-none">
+                E-ServiceDesk
+              </h1>
+              <span className="text-[8px] font-bold text-slate-500 uppercase tracking-[0.3em] mt-1">Internal Hub</span>
+            </div>
           </div>
           <button
             onClick={onClose}

@@ -20,6 +20,19 @@ interface LogbookEntry {
   updated_at: string;
 }
 
+const getStatusBadge = (status: string) => {
+  switch (status) {
+    case 'ordered':
+      return { label: 'Sudah Diorderkan', variant: 'emerald' as const };
+    case 'completed':
+      return { label: 'Selesai', variant: 'emerald' as const };
+    case 'pending_order':
+    case 'draft':
+    default:
+      return { label: 'Belum Diorderkan', variant: 'blue' as const };
+  }
+};
+
 export default function LogbookListPage() {
   return (
     <ProtectedRoute>
@@ -35,18 +48,9 @@ function LogbookListContent() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
-  // Edit Modal State
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingEntry, setEditingEntry] = useState<LogbookEntry | null>(null);
-  const [formData, setFormData] = useState({
-    extensi: '',
-    nama: '',
-    lokasi: '',
-    catatan: '',
-    solusi: '',
-    penyelesaian: '',
-    status: 'draft'
-  });
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // Order Modal State
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
@@ -95,62 +99,25 @@ function LogbookListContent() {
     });
   };
 
-  const handleEditClick = (entry: LogbookEntry) => {
-    setEditingEntry(entry);
-    setFormData({
-      extensi: entry.extensi,
-      nama: entry.nama,
-      lokasi: entry.lokasi,
-      catatan: entry.catatan || '',
-      solusi: entry.solusi || '',
-      penyelesaian: entry.penyelesaian || '',
-      status: entry.status
-    });
-    setIsEditModalOpen(true);
-  };
-
-  const handleUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingEntry) return;
-
-    try {
-      const response = await fetch(`/api/logbook/${editingEntry.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-
-      if (response.ok) {
-        const updatedEntry = (await response.json()).data;
-        setLogbookEntries(logbookEntries.map(entry => entry.id === editingEntry.id ? updatedEntry : entry));
-        setIsEditModalOpen(false);
-        setEditingEntry(null);
-        showToast('Logbook berhasil diupdate', 'success');
-      } else {
-        showToast('Gagal update logbook', 'error');
-      }
-    } catch (error) {
-      console.error('Error updating logbook:', error);
-      showToast('Terjadi kesalahan saat update', 'error');
-    }
-  };
-
   const toggleStatus = (entry: LogbookEntry) => {
-    const newStatus = entry.status === 'completed' ? 'draft' : 'completed';
-    const action = newStatus === 'completed' ? 'Selesaikan' : 'Batalkan selesai';
+    const newStatus = entry.status === 'ordered' || entry.status === 'completed' ? 'pending_order' : 'completed';
 
-    confirm(`${action} Logbook?`, `Apakah Anda yakin ingin mengubah status menjadi ${newStatus}?`, async () => {
+    confirm(`Ubah Status?`, `Ubah status logbook ke ${getStatusBadge(newStatus).label}?`, async () => {
       try {
         const response = await fetch(`/api/logbook/${entry.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...entry, status: newStatus }),
+          body: JSON.stringify({
+            ...entry,
+            status: newStatus,
+            nama: entry.lokasi
+          }),
         });
 
         if (response.ok) {
           const updatedEntry = (await response.json()).data;
           setLogbookEntries(logbookEntries.map(e => e.id === entry.id ? updatedEntry : e));
-          showToast(`Status berhasil diubah ke ${newStatus}`, 'success');
+          showToast(`Status berhasil diubah`, 'success');
         } else {
           showToast('Gagal mengubah status', 'error');
         }
@@ -179,14 +146,16 @@ function LogbookListContent() {
           catatan: selectedEntry.catatan || selectedEntry.nama,
           ext_phone: selectedEntry.extensi,
           location_desc: selectedEntry.lokasi,
-          service_catalog_id: orderFormData.service_catalog_id
+          service_catalog_id: orderFormData.service_catalog_id,
+          logbookId: selectedEntry.id
         }),
       });
 
       const result = await response.json();
       if (response.ok) {
-        showToast('Order berhasil dikirim ke system external', 'success');
+        showToast('Order berhasil dikirim dan status logbook diupdate', 'success');
         setIsOrderModalOpen(false);
+        fetchLogbook();
       } else {
         showToast(`Gagal: ${result.error}`, 'error');
       }
@@ -200,14 +169,24 @@ function LogbookListContent() {
 
   const filteredEntries = logbookEntries.filter((entry) => {
     const matchSearch =
-      entry.nama.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      entry.extensi.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      entry.lokasi.toLowerCase().includes(searchTerm.toLowerCase());
+      (entry.nama || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (entry.extensi || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (entry.lokasi || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (entry.catatan || '').toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchStatus = statusFilter === 'all' || entry.status === statusFilter;
 
     return matchSearch && matchStatus;
   });
+
+  // Pagination Logic
+  const totalPages = Math.ceil(filteredEntries.length / itemsPerPage);
+  const currentItems = filteredEntries.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   if (loading) {
     return (
@@ -218,11 +197,11 @@ function LogbookListContent() {
   }
 
   return (
-    <div className="min-h-screen p-4 md:p-8 space-y-8 animate-in fade-in duration-700">
+    <div className="min-h-screen p-4 md:p-8 space-y-6 animate-in fade-in duration-700">
       <PageHeader
         icon="📚"
         title="Logbook"
-        subtitle="Kelola catatan pekerjaan dan service"
+        subtitle="Kelola catatan pekerjaan dan service desk"
         actions={
           <div className="flex gap-3">
             <Link href="/logbook/create">
@@ -234,241 +213,207 @@ function LogbookListContent() {
         }
       />
 
-      {/* Filter and Search */}
-      <PremiumCard className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="md:col-span-2">
-            <SearchBar
-              value={searchTerm}
-              onChange={setSearchTerm}
-              placeholder="Cari nama, extensi, atau lokasi..."
-            />
-          </div>
-          <div>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full bg-white border-2 border-slate-200 rounded-2xl py-3.5 px-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all shadow-sm font-medium"
-            >
-              <option value="all">Semua Status</option>
-              <option value="draft">Draft</option>
-              <option value="completed">Selesai</option>
-            </select>
-          </div>
+      <div className="flex flex-col md:flex-row justify-between items-end gap-6 bg-white p-6 rounded-3xl border-2 border-slate-100 shadow-sm">
+        <div className="w-full md:w-2/3 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <SearchBar
+            value={searchTerm}
+            onChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
+            placeholder="Cari extensi, lokasi, atau catatan..."
+          />
+          <select
+            value={statusFilter}
+            onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
+            className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-3.5 px-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-bold text-slate-700"
+          >
+            <option value="all">Semua Status</option>
+            <option value="pending_order">Belum Diorderkan</option>
+            <option value="ordered">Sudah Diorderkan</option>
+            <option value="completed">Selesai</option>
+          </select>
         </div>
-      </PremiumCard>
+
+        <div className="w-full md:w-auto">
+          <a
+            href="/api/logbook/export"
+            download
+            className="block"
+            onClick={() => showToast('Mengekspor data ke Excel...', 'success')}
+          >
+            <PremiumButton variant="success" className="w-full md:w-auto px-10 py-4 shadow-xl shadow-emerald-100 uppercase tracking-widest text-xs font-black">
+              📥 Export Excel
+            </PremiumButton>
+          </a>
+        </div>
+      </div>
 
       {/* Logbook Table */}
-      <PremiumCard className="overflow-hidden">
+      <PremiumCard className="overflow-hidden border-none shadow-2xl shadow-slate-200/50">
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gradient-to-r from-slate-50 to-gray-50 border-b-2 border-slate-200">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50/50 border-b-2 border-slate-100">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-black text-slate-700 uppercase tracking-wider">No</th>
-                <th className="px-6 py-4 text-left text-xs font-black text-slate-700 uppercase tracking-wider">Extensi</th>
-                <th className="px-6 py-4 text-left text-xs font-black text-slate-700 uppercase tracking-wider">Nama</th>
-                <th className="px-6 py-4 text-left text-xs font-black text-slate-700 uppercase tracking-wider">Lokasi</th>
-                <th className="px-6 py-4 text-left text-xs font-black text-slate-700 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-left text-xs font-black text-slate-700 uppercase tracking-wider">Dibuat</th>
-                <th className="px-6 py-4 text-left text-xs font-black text-slate-700 uppercase tracking-wider">Aksi</th>
+                <th className="px-6 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">No</th>
+                <th className="px-6 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Ext</th>
+                <th className="px-6 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest w-[18%]">Nama / Lokasi</th>
+                <th className="px-6 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest w-[28%]">Catatan</th>
+                <th className="px-6 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                <th className="px-6 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Aksi Manajemen</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredEntries.length === 0 ? (
+            <tbody className="divide-y divide-slate-50">
+              {currentItems.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center">
+                  <td colSpan={6} className="px-6 py-20 text-center">
                     <div className="flex flex-col items-center">
-                      <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-3xl mb-3">
-                        📚
-                      </div>
-                      <p className="text-slate-400 font-medium">Tidak ada data logbook</p>
+                      <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center text-4xl mb-4">📚</div>
+                      <p className="text-slate-400 font-bold">Data logbook tidak ditemukan</p>
                     </div>
                   </td>
                 </tr>
               ) : (
-                filteredEntries.map((entry, index) => (
-                  <tr key={entry.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-6 py-4 text-sm font-bold text-slate-600">{index + 1}</td>
-                    <td className="px-6 py-4 text-sm font-semibold text-slate-900">{entry.extensi}</td>
-                    <td className="px-6 py-4 text-sm font-semibold text-slate-900">{entry.nama}</td>
-                    <td className="px-6 py-4 text-sm text-slate-700">{entry.lokasi}</td>
-                    <td className="px-6 py-4 text-sm">
-                      <button
-                        onClick={() => toggleStatus(entry)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all hover:scale-105 border-2 ${entry.status === 'completed'
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                          : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
-                          }`}
-                        title={entry.status === 'completed' ? 'Klik untuk ubah ke Draft' : 'Klik untuk ubah ke Selesai'}
-                      >
-                        {entry.status === 'completed' ? '✅ Selesai' : '📝 Draft'}
-                      </button>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-slate-500 font-medium">
-                      {new Date(entry.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
-                    </td>
-                    <td className="px-6 py-4 text-sm">
-                      <div className="flex gap-2">
+                currentItems.map((entry, index) => {
+                  const statusInfo = getStatusBadge(entry.status);
+                  const entryIndex = (currentPage - 1) * itemsPerPage + index + 1;
+                  return (
+                    <tr key={entry.id} className="hover:bg-blue-50/30 transition-colors">
+                      <td className="px-6 py-6 font-bold text-slate-300 text-center">{entryIndex}</td>
+                      <td className="px-6 py-6 font-black text-slate-800 text-center">{entry.extensi}</td>
+                      <td className="px-6 py-6 text-center">
+                        <p className="font-bold text-slate-800 break-words leading-tight">{entry.lokasi}</p>
+                      </td>
+                      <td className="px-6 py-6 text-center">
+                        <p className="text-slate-500 text-xs italic line-clamp-2 leading-relaxed max-w-xs mx-auto" title={entry.catatan}>
+                          {entry.catatan || '-'}
+                        </p>
+                      </td>
+                      <td className="px-6 py-6 text-center">
                         <button
-                          onClick={() => handleOrderClick(entry)}
-                          className="text-emerald-600 hover:text-emerald-700 font-bold flex items-center gap-1 hover:bg-emerald-50 px-3 py-1.5 rounded-lg transition"
-                          title="Kirim ke Order System"
+                          onClick={() => toggleStatus(entry)}
+                          className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all border-2 w-full max-w-[150px] mx-auto text-center ${(entry.status === 'ordered' || entry.status === 'completed')
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            : 'bg-blue-50 text-blue-700 border-blue-200'
+                            }`}
                         >
-                          🛒 Order
+                          {statusInfo.label}
                         </button>
-                        <button
-                          onClick={() => handleEditClick(entry)}
-                          className="text-blue-600 hover:text-blue-700 font-bold flex items-center gap-1 hover:bg-blue-50 px-3 py-1.5 rounded-lg transition"
-                          title="Edit"
-                        >
-                          ✏️ Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(entry.id)}
-                          className="text-red-600 hover:text-red-700 font-bold flex items-center gap-1 hover:bg-red-50 px-3 py-1.5 rounded-lg transition"
-                          title="Hapus"
-                        >
-                          🗑️ Hapus
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td className="px-6 py-6">
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => handleOrderClick(entry)}
+                            className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${entry.status === 'ordered'
+                              ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                              : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-100'
+                              }`}
+                            disabled={entry.status === 'ordered'}
+                          >
+                            <span>🚀</span>
+                            <span className="hidden xl:inline">Order</span>
+                          </button>
+
+                          <Link
+                            href={`/logbook/${entry.id}`}
+                            className="flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-100 text-[9px] font-black uppercase tracking-widest"
+                          >
+                            <span>✏️</span>
+                            <span className="hidden xl:inline">Details</span>
+                          </Link>
+
+                          <button
+                            onClick={() => handleDelete(entry.id)}
+                            className="flex items-center gap-2 bg-red-50 text-red-600 px-3 py-2 rounded-xl hover:bg-red-100 transition text-[9px] font-black uppercase tracking-widest border border-red-100"
+                          >
+                            <span>🗑️</span>
+                            <span className="hidden xl:inline">Hapus</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="bg-slate-50/50 px-6 py-4 flex items-center justify-between border-t border-slate-100">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              Halaman {currentPage} dari {totalPages}
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => goToPage(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="px-4 py-2 bg-white border-2 border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition"
+              >
+                Sebelumnya
+              </button>
+              <div className="flex gap-1">
+                {[...Array(totalPages)].map((_, i) => (
+                  <button
+                    key={i + 1}
+                    onClick={() => goToPage(i + 1)}
+                    className={`w-10 h-10 rounded-xl text-[10px] font-black transition-all ${currentPage === i + 1
+                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-200'
+                      : 'bg-white text-slate-600 border-2 border-slate-100 hover:border-blue-200'
+                      }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => goToPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="px-4 py-2 bg-white border-2 border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition"
+              >
+                Selanjutnya
+              </button>
+            </div>
+          </div>
+        )}
       </PremiumCard>
-
-      {/* Export Button */}
-      <div>
-        <a
-          href="/api/logbook/export"
-          download
-          className="inline-block"
-        >
-          <PremiumButton variant="success">
-            <span className="text-lg">📥</span> Export ke Excel
-          </PremiumButton>
-        </a>
-      </div>
-
-      {/* Edit Modal */}
-      <PremiumModal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        title="Edit Logbook"
-        size="lg"
-      >
-        <form onSubmit={handleUpdate} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <PremiumInput
-              label="Extensi"
-              type="text"
-              required
-              value={formData.extensi}
-              onChange={e => setFormData({ ...formData, extensi: e.target.value })}
-            />
-            <PremiumInput
-              label="Lokasi"
-              type="text"
-              required
-              value={formData.lokasi}
-              onChange={e => setFormData({ ...formData, lokasi: e.target.value })}
-            />
-          </div>
-
-          <PremiumInput
-            label="Nama Lengkap"
-            type="text"
-            required
-            value={formData.nama}
-            onChange={e => setFormData({ ...formData, nama: e.target.value })}
-          />
-
-          <PremiumTextarea
-            label="Catatan/Keluhan"
-            required
-            rows={3}
-            value={formData.catatan}
-            onChange={e => setFormData({ ...formData, catatan: e.target.value })}
-          />
-
-          <PremiumTextarea
-            label="Solusi"
-            rows={3}
-            value={formData.solusi}
-            onChange={e => setFormData({ ...formData, solusi: e.target.value })}
-          />
-
-          <PremiumInput
-            label="Penyelesaian (Teknisi)"
-            type="text"
-            value={formData.penyelesaian}
-            onChange={e => setFormData({ ...formData, penyelesaian: e.target.value })}
-          />
-
-          <div>
-            <label className="block text-sm font-black text-slate-700 mb-2 uppercase tracking-wider">Status</label>
-            <select
-              value={formData.status}
-              onChange={e => setFormData({ ...formData, status: e.target.value })}
-              className="w-full px-4 py-3 border-2 border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium"
-            >
-              <option value="draft">Draft (Belum Selesai)</option>
-              <option value="completed">Completed (Selesai)</option>
-            </select>
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-            <PremiumButton type="button" variant="secondary" onClick={() => setIsEditModalOpen(false)}>
-              Batal
-            </PremiumButton>
-            <PremiumButton type="submit">
-              💾 Simpan Perubahan
-            </PremiumButton>
-          </div>
-        </form>
-      </PremiumModal>
-
 
       {/* Order Modal */}
       <PremiumModal
         isOpen={isOrderModalOpen}
         onClose={() => setIsOrderModalOpen(false)}
-        title="🚀 Buat Order Baru"
+        title="🚀 Create External Order"
         size="sm"
       >
         {selectedEntry && (
           <form onSubmit={handleCreateOrder} className="space-y-5">
-            <p className="text-emerald-600 text-sm font-bold">Kirim data logbook ke system external</p>
-
-            <div className="bg-emerald-50 p-4 rounded-2xl border-2 border-emerald-100 space-y-3">
-              <p className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Review Data Logbook</p>
-              <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="bg-emerald-50/50 p-6 rounded-[2rem] border-2 border-emerald-100/50 space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-2xl shadow-sm">🛒</div>
                 <div>
-                  <span className="text-slate-500 block text-[10px] uppercase font-bold">Extensi</span>
-                  <span className="font-bold text-slate-700">{selectedEntry.extensi}</span>
+                  <p className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">Eskalasi Job</p>
+                  <p className="text-sm font-bold text-slate-800">Detail Pengiriman Order</p>
                 </div>
-                <div>
-                  <span className="text-slate-500 block text-[10px] uppercase font-bold">Lokasi</span>
-                  <span className="font-bold text-slate-700">{selectedEntry.lokasi}</span>
+              </div>
+              <div className="space-y-3 pt-3 border-t border-emerald-100">
+                <div className="flex justify-between text-xs">
+                  <span className="text-emerald-600 font-bold uppercase tracking-tighter">Ext Phone</span>
+                  <span className="font-black text-slate-800 tracking-tight">{selectedEntry.extensi}</span>
                 </div>
-                <div className="col-span-2">
-                  <span className="text-slate-500 block text-[10px] uppercase font-bold">Catatan</span>
-                  <span className="font-bold text-slate-700 line-clamp-2">{selectedEntry.catatan || selectedEntry.nama}</span>
+                <div className="flex justify-between text-xs">
+                  <span className="text-emerald-600 font-bold uppercase tracking-tighter">Lokasi</span>
+                  <span className="font-black text-slate-800 text-right">{selectedEntry.lokasi}</span>
                 </div>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-black text-slate-700 mb-2 flex items-center gap-2 uppercase tracking-wider">
-                📁 Service Catalog
+              <label className="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest px-1">
+                Pilih Service Catalog
               </label>
               <select
                 value={orderFormData.service_catalog_id}
                 onChange={e => setOrderFormData({ ...orderFormData, service_catalog_id: e.target.value })}
-                className="w-full bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 outline-none transition-all font-medium"
+                className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-5 py-4 focus:ring-4 focus:ring-emerald-100 focus:border-emerald-600 outline-none transition-all font-bold text-slate-700 appearance-none shadow-sm"
+                style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%23cbd5e1\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\' /%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1.2rem center', backgroundSize: '1.2em' }}
               >
                 {EXTERNAL_CATALOGS.map(cat => (
                   <option key={cat.id} value={cat.id}>
@@ -478,30 +423,14 @@ function LogbookListContent() {
               </select>
             </div>
 
-            <div className="flex flex-col gap-3 pt-4">
+            <div className="flex flex-col gap-3 pt-6">
               <PremiumButton
                 type="submit"
                 variant="success"
                 disabled={isSubmittingOrder}
+                className="py-5 shadow-2xl shadow-emerald-100 text-xs font-black tracking-widest uppercase"
               >
-                {isSubmittingOrder ? (
-                  <>
-                    <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    Sedang Mengirim...
-                  </>
-                ) : (
-                  'Konfirmasi & Kirim Order'
-                )}
-              </PremiumButton>
-              <PremiumButton
-                type="button"
-                variant="secondary"
-                onClick={() => setIsOrderModalOpen(false)}
-              >
-                Batal
+                {isSubmittingOrder ? 'Memproses...' : 'Konfirmasi & Kirim Sekarang'}
               </PremiumButton>
             </div>
           </form>

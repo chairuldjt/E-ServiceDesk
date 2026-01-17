@@ -39,43 +39,61 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// CREATE new logbook entry
+// CREATE new logbook entry (Supports single or bulk)
 export async function POST(request: NextRequest) {
   try {
     const payload = await getPayloadFromCookie();
 
     if (!payload) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { extensi, nama, lokasi, catatan, solusi, penyelesaian } = await request.json();
+    const body = await request.json();
+    const isBulk = Array.isArray(body);
+    const logbooks = isBulk ? body : [body];
 
-    if (!extensi || !nama || !lokasi) {
+    const connection = await pool.getConnection();
+
+    try {
+      await connection.beginTransaction();
+
+      for (const logbook of logbooks) {
+        const { extensi, nama, lokasi, catatan, solusi, penyelesaian } = logbook;
+
+        if (!extensi || !nama || !lokasi) {
+          throw new Error('Extensi, nama, dan lokasi harus diisi');
+        }
+
+        await connection.execute(
+          'INSERT INTO logbook (user_id, extensi, nama, lokasi, catatan, solusi, penyelesaian, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+          [
+            payload.id,
+            extensi,
+            nama,
+            lokasi,
+            catatan || null,
+            solusi || 'belum ada',
+            penyelesaian || 'belum ada',
+            'pending_order' // Default is now 'Belum Diorderkan'
+          ]
+        );
+      }
+
+      await connection.commit();
+      connection.release();
+
       return NextResponse.json(
-        { error: 'Extensi, nama, dan lokasi harus diisi' },
+        { message: `${logbooks.length} Logbook berhasil dibuat` },
+        { status: 201 }
+      );
+    } catch (error: any) {
+      await connection.rollback();
+      connection.release();
+      return NextResponse.json(
+        { error: error.message || 'Gagal membuat logbook' },
         { status: 400 }
       );
     }
-
-    const connection = await pool.getConnection();
-    await connection.execute(
-      'INSERT INTO logbook (user_id, extensi, nama, lokasi, catatan, solusi, penyelesaian, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [payload.id, extensi, nama, lokasi, catatan || null, solusi || null, penyelesaian || null, 'draft']
-    );
-
-    const [result]: any = await connection.execute(
-      'SELECT * FROM logbook WHERE user_id = ? ORDER BY id DESC LIMIT 1',
-      [payload.id]
-    );
-    connection.release();
-
-    return NextResponse.json(
-      { message: 'Logbook berhasil dibuat', data: result[0] },
-      { status: 201 }
-    );
   } catch (error) {
     console.error('Create logbook error:', error);
     return NextResponse.json(

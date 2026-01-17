@@ -48,9 +48,14 @@ function DashboardContent() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ total: 0, completed: 0, draft: 0 });
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [exportUsername, setExportUsername] = useState('');
   const [exportPassword, setExportPassword] = useState('');
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState('');
+  const [toastMessage, setToastMessage] = useState('');
+  const [showToast, setShowToast] = useState(false);
+  const [piketData, setPiketData] = useState<{ serviceDesk: string; hariTanggal: string; jam: string } | null>(null);
+  const [piketLoading, setPiketLoading] = useState(true);
 
   // Helper to strip HTML tags for preview
   const stripHtml = (html: string) => {
@@ -61,7 +66,6 @@ function DashboardContent() {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // Fetch Logbooks
         const logbookRes = await fetch('/api/logbook');
         const logbookData = await logbookRes.json();
         setLogbookEntries(logbookData.data || []);
@@ -72,11 +76,9 @@ function DashboardContent() {
 
         setStats({ total, completed, draft });
 
-        // Fetch Notes
         const notesRes = await fetch('/api/notes');
         const notesData = await notesRes.json();
         setNotes(notesData.data || []);
-
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       } finally {
@@ -84,7 +86,22 @@ function DashboardContent() {
       }
     };
 
+    const fetchPiket = async () => {
+      try {
+        const res = await fetch('/api/piket');
+        if (res.ok) {
+          const data = await res.json();
+          setPiketData(data);
+        }
+      } catch (err) {
+        console.error('Error fetching piket:', err);
+      } finally {
+        setPiketLoading(false);
+      }
+    };
+
     fetchDashboardData();
+    fetchPiket();
   }, []);
 
   const handleExportCDR = async (e: React.FormEvent) => {
@@ -94,18 +111,16 @@ function DashboardContent() {
 
     try {
       const response = await axios.post('/api/cdr/export', {
-        username: user?.username,
+        username: exportUsername,
         password: exportPassword,
       }, {
         responseType: 'blob'
       });
 
-      // Create a link to download the file
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
 
-      // Format: CDRReport-2026Jan16.064931-[namauser].csv
       const now = new Date();
       const year = now.getFullYear();
       const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -115,7 +130,7 @@ function DashboardContent() {
         now.getMinutes().toString().padStart(2, '0') +
         now.getSeconds().toString().padStart(2, '0');
 
-      const fileName = `CDRReport-${year}${month}${day}.${time}-${user?.username}.csv`;
+      const fileName = `CDRReport-${year}${month}${day}.${time}-${exportUsername}.csv`;
 
       link.setAttribute('download', fileName);
       document.body.appendChild(link);
@@ -124,12 +139,33 @@ function DashboardContent() {
 
       setIsExportModalOpen(false);
       setExportPassword('');
+      setExportUsername('');
+
+      setToastMessage('Data CDR berhasil diekspor dan diunduh!');
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3000);
     } catch (error: any) {
       console.error('Export error:', error);
-      setExportError(error.response?.data?.error || 'Gagal mengekspor CDR. Pastikan password benar.');
+      setExportError(error.response?.data?.error || 'Gagal mengekspor CDR. Pastikan username dan password benar.');
     } finally {
       setIsExporting(false);
     }
+  };
+
+
+  const handleCopyLaporan = () => {
+    if (!piketData) return;
+    const text = `Laporan Jaga Service Desk
+Hari / Tanggal : ${piketData.hariTanggal || '-'}
+Jam : ${piketData.jam || '-'}
+
+Petugas : ${piketData.serviceDesk || 'Unknown'}
+Terima kasih`;
+
+    navigator.clipboard.writeText(text);
+    setToastMessage('Laporan berhasil disalin ke clipboard!');
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
   };
 
   if (loading) {
@@ -145,24 +181,18 @@ function DashboardContent() {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white/40 backdrop-blur-md p-8 rounded-[2rem] border border-white/20 shadow-xl">
         <div className="flex items-center gap-5">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg shadow-blue-200">
-            👋
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg shadow-blue-200 animate-bounce duration-[3s]">
+            ✨
           </div>
           <div>
-            <h1 className="text-3xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              Selamat Datang, {user?.username}!
+            <h1 className="text-3xl font-black text-slate-800">
+              Selamat Datang, <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">{user?.username}!</span>
             </h1>
-            <p className="text-slate-500 font-medium mt-1">Kelola logbook dan catatan Anda dengan mudah</p>
+            <p className="text-slate-500 font-medium mt-1 uppercase tracking-widest text-[10px] font-black opacity-60">Internal Service Desk Hub</p>
           </div>
         </div>
 
         <div className="flex gap-3">
-          <button
-            onClick={() => setIsExportModalOpen(true)}
-            className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-6 py-3 rounded-2xl hover:shadow-xl hover:shadow-emerald-200 transition-all font-bold flex items-center gap-2 active:scale-95"
-          >
-            <span className="text-lg">📊</span> Export CDR
-          </button>
           <Link
             href="/logbook/create"
             className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-2xl hover:shadow-xl hover:shadow-blue-200 transition-all font-bold flex items-center gap-2 active:scale-95"
@@ -178,18 +208,31 @@ function DashboardContent() {
           <div className="bg-white rounded-[2rem] shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-8 text-white">
               <h3 className="text-2xl font-black flex items-center gap-3">
-                📊 Konfirmasi Export CDR
+                📊 Export CDR Report
               </h3>
               <p className="text-emerald-100 text-sm mt-2">
-                Masukkan password akun <strong>{user?.username}</strong> Anda untuk mengakses data CDR.
+                Masukkan kredensial Anda untuk mengakses data CDR.
               </p>
             </div>
-            <form onSubmit={handleExportCDR} className="p-8 space-y-6">
+            <form onSubmit={handleExportCDR} className="p-8 space-y-5">
               {exportError && (
                 <div className="bg-red-50 text-red-600 p-4 rounded-2xl text-sm border border-red-100 font-medium">
                   ⚠️ {exportError}
                 </div>
               )}
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wider">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={exportUsername}
+                  onChange={(e) => setExportUsername(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-2xl focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 outline-none transition-all font-medium"
+                  placeholder="Masukkan username"
+                />
+              </div>
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wider">
                   Password
@@ -200,7 +243,7 @@ function DashboardContent() {
                   value={exportPassword}
                   onChange={(e) => setExportPassword(e.target.value)}
                   className="w-full px-4 py-3 border-2 border-slate-200 rounded-2xl focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 outline-none transition-all font-medium"
-                  placeholder="Masukkan password Anda"
+                  placeholder="Masukkan password"
                 />
               </div>
               <div className="flex gap-3 pt-2">
@@ -235,35 +278,75 @@ function DashboardContent() {
         </div>
       )}
 
+      {/* Laporan Jaga: Compact Version */}
+      <div className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-[2rem] p-6 text-white shadow-xl relative overflow-hidden border border-slate-700">
+        <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex flex-col md:flex-row items-center gap-6 flex-1">
+            <div className="w-12 h-12 bg-blue-600/20 rounded-xl flex items-center justify-center text-2xl border border-blue-500/30">
+              📋
+            </div>
+            <div className="space-y-1 text-center md:text-left">
+              <h2 className="text-lg font-black tracking-tight flex items-center gap-2 justify-center md:justify-start">
+                Laporan Jaga Service Desk
+                <span className="flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 text-[8px] px-2 py-0.5 rounded-full border border-emerald-500/20 uppercase tracking-widest font-black">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  Live
+                </span>
+              </h2>
+              <div className="flex flex-wrap justify-center md:justify-start gap-x-6 gap-y-1 text-xs font-medium text-slate-400">
+                <p>Hari / Tanggal : <span className="text-white font-bold">{piketLoading ? '...' : (piketData?.hariTanggal || '-')}</span></p>
+                <p>Jam : <span className="text-white font-bold">{piketLoading ? '...' : (piketData?.jam || '-')}</span></p>
+                <p>Petugas : <span className="text-blue-400 font-bold uppercase">{piketLoading ? '...' : (piketData?.serviceDesk || '-')}</span></p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-3 shrink-0">
+            <button
+              onClick={handleCopyLaporan}
+              className="bg-white/10 hover:bg-white/20 text-white px-5 py-2.5 rounded-xl border border-white/10 transition-all font-bold text-xs flex items-center gap-2 group active:scale-95"
+            >
+              <span className="group-hover:rotate-12 transition-transform">📄</span> Copy Text
+            </button>
+            <button
+              onClick={() => setIsExportModalOpen(true)}
+              className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-5 py-2.5 rounded-xl shadow-lg shadow-emerald-900/40 hover:scale-105 transition-all font-black text-xs flex items-center gap-2 active:scale-95"
+            >
+              📊 Export CDR
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-[2rem] p-8 border-2 border-blue-100 shadow-lg hover:shadow-xl transition-all group">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-blue-600 text-sm font-black uppercase tracking-widest mb-2">Total Logbook</p>
-              <p className="text-5xl font-black text-blue-700">{stats.total}</p>
-            </div>
-            <div className="text-6xl group-hover:scale-110 transform duration-300">📚</div>
+        <div className="p-8 rounded-[2.5rem] border bg-gradient-to-br from-blue-600 to-indigo-800 text-white shadow-2xl shadow-blue-200 relative overflow-hidden group hover:scale-105 transition-all duration-300">
+          <div className="absolute -top-4 -right-4 w-32 h-32 rounded-full blur-3xl opacity-20 bg-white group-hover:opacity-40 transition-opacity"></div>
+          <div className="flex flex-col items-center text-center relative z-10">
+            <span className="text-3xl mb-4 group-hover:scale-110 transition-transform">📚</span>
+            <span className="text-6xl font-black mb-2 antialiased tabular-nums">{stats.total}</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-100 opacity-80">Total Logbook</span>
+            <div className="mt-4 w-8 h-1 bg-white/30 rounded-full"></div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-[2rem] p-8 border-2 border-emerald-100 shadow-lg hover:shadow-xl transition-all group">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-emerald-600 text-sm font-black uppercase tracking-widest mb-2">Selesai</p>
-              <p className="text-5xl font-black text-emerald-700">{stats.completed}</p>
-            </div>
-            <div className="text-6xl group-hover:scale-110 transform duration-300">✅</div>
+        <div className="p-8 rounded-[2.5rem] border bg-gradient-to-br from-emerald-500 to-teal-700 text-white shadow-2xl shadow-emerald-200 relative overflow-hidden group hover:scale-105 transition-all duration-300">
+          <div className="absolute -top-4 -right-4 w-32 h-32 rounded-full blur-3xl opacity-20 bg-white group-hover:opacity-40 transition-opacity"></div>
+          <div className="flex flex-col items-center text-center relative z-10">
+            <span className="text-3xl mb-4 group-hover:scale-110 transition-transform">✅</span>
+            <span className="text-6xl font-black mb-2 antialiased tabular-nums">{stats.completed}</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-100 opacity-80">Selesai Dikerjakan</span>
+            <div className="mt-4 w-8 h-1 bg-white/30 rounded-full"></div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-[2rem] p-8 border-2 border-amber-100 shadow-lg hover:shadow-xl transition-all group">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-amber-600 text-sm font-black uppercase tracking-widest mb-2">Draft</p>
-              <p className="text-5xl font-black text-amber-700">{stats.draft}</p>
-            </div>
-            <div className="text-6xl group-hover:scale-110 transform duration-300">📝</div>
+        <div className="p-8 rounded-[2.5rem] border bg-gradient-to-br from-amber-400 to-orange-600 text-white shadow-2xl shadow-amber-200 relative overflow-hidden group hover:scale-105 transition-all duration-300">
+          <div className="absolute -top-4 -right-4 w-32 h-32 rounded-full blur-3xl opacity-20 bg-white group-hover:opacity-40 transition-opacity"></div>
+          <div className="flex flex-col items-center text-center relative z-10">
+            <span className="text-3xl mb-4 group-hover:scale-110 transition-transform">📝</span>
+            <span className="text-6xl font-black mb-2 antialiased tabular-nums">{stats.draft}</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-100 opacity-80">Masih Draft</span>
+            <div className="mt-4 w-8 h-1 bg-white/30 rounded-full"></div>
           </div>
         </div>
       </div>
@@ -330,24 +413,35 @@ function DashboardContent() {
                     <td className="px-8 py-5 text-sm font-medium text-slate-600">{entry.lokasi}</td>
                     <td className="px-8 py-5">
                       <span
-                        className={`px-3 py-1.5 rounded-xl text-[10px] uppercase tracking-widest font-black border-2 ${entry.status === 'completed'
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                          : 'bg-amber-50 text-amber-700 border-amber-200'
+                        className={`px-3 py-1.5 rounded-xl text-[9px] uppercase tracking-widest font-black border-2 ${entry.status === 'draft' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                            entry.status === 'pending_order' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                              'bg-emerald-50 text-emerald-700 border-emerald-200'
                           }`}
                       >
-                        {entry.status === 'completed' ? 'Selesai' : 'Draft'}
+                        {entry.status === 'draft' ? 'Draft' :
+                          entry.status === 'pending_order' ? 'Belum Diorderkan' :
+                            entry.status === 'ordered' ? 'Sudah Diorderkan' : 'Selesai'}
                       </span>
                     </td>
                     <td className="px-8 py-5 text-sm font-medium text-slate-500">
                       {new Date(entry.created_at).toLocaleDateString('id-ID')}
                     </td>
                     <td className="px-8 py-5">
-                      <Link
-                        href={`/logbook/${entry.id}`}
-                        className="text-blue-600 hover:text-blue-700 font-black text-sm hover:underline"
-                      >
-                        Detail →
-                      </Link>
+                      <div className="flex items-center gap-4">
+                        <Link
+                          href={`/monitoring/verify?logbookId=${entry.id}`}
+                          className="text-blue-600 hover:text-blue-800 font-black text-sm flex items-center gap-1 group/btn"
+                        >
+                          <span className="bg-blue-50 p-1.5 rounded-lg group-hover/btn:bg-blue-100 transition-colors">🛒</span>
+                          Create Order
+                        </Link>
+                        <Link
+                          href={`/logbook/${entry.id}`}
+                          className="text-slate-400 hover:text-slate-600 font-bold text-sm bg-slate-100 px-3 py-1.5 rounded-lg transition-all"
+                        >
+                          Detail
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -412,6 +506,26 @@ function DashboardContent() {
           )}
         </div>
       </div>
+      {/* Toast Notification */}
+      {showToast && (
+        <div className="fixed bottom-8 right-8 z-[100] animate-in slide-in-from-bottom-10 fade-in duration-300">
+          <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-4 border border-white/20">
+            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-xl">
+              ✅
+            </div>
+            <div>
+              <p className="font-black text-sm uppercase tracking-widest">Success</p>
+              <p className="text-emerald-50 text-xs font-bold">{toastMessage}</p>
+            </div>
+            <button
+              onClick={() => setShowToast(false)}
+              className="ml-4 text-white/60 hover:text-white text-xl"
+            >
+              &times;
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
