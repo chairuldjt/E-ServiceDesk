@@ -86,6 +86,7 @@ function VerifyOrderContent() {
     const [currentPage, setCurrentPage] = useState(1);
     const [orderSummary, setOrderSummary] = useState<OrderSummary | null>(null);
     const [refreshingSummary, setRefreshingSummary] = useState(false);
+    const [searchBy, setSearchBy] = useState('all');
 
     // Detail Modal State
     const [selectedOrder, setSelectedOrder] = useState<OrderDetail | null>(null);
@@ -322,15 +323,23 @@ function VerifyOrderContent() {
         }
     };
 
-    const filteredOrders = orders.filter(o =>
-        (o.order_no || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (o.catatan || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (o.location_desc || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (o.order_by || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (o.teknisi || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (o.create_date || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (o.ext_phone || '').toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredOrders = orders.filter(o => {
+        const term = searchTerm.toLowerCase();
+        if (!term) return true;
+
+        if (searchBy === 'all') {
+            return (o.order_no || '').toLowerCase().includes(term) ||
+                (o.catatan || '').toLowerCase().includes(term) ||
+                (o.location_desc || '').toLowerCase().includes(term) ||
+                (o.order_by || '').toLowerCase().includes(term) ||
+                (o.teknisi || '').toLowerCase().includes(term) ||
+                (o.create_date || '').toLowerCase().includes(term) ||
+                (o.ext_phone || '').toLowerCase().includes(term);
+        }
+
+        const value = (o as any)[searchBy] || '';
+        return value.toString().toLowerCase().includes(term);
+    });
 
     const totalPages = Math.ceil(filteredOrders.length / ITEMS_PER_PAGE);
     const paginatedOrders = filteredOrders.slice(
@@ -360,19 +369,40 @@ function VerifyOrderContent() {
                         </span>
                         Live Summary (5s)
                     </div>
-                    <div className="relative group w-full md:w-80">
-                        <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                            <svg className="w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
+                    <div className="flex flex-col md:flex-row items-end gap-3 w-full md:w-auto">
+                        <div className="flex flex-col gap-1.5 w-full md:w-48">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Filter Berdasarkan:</label>
+                            <select
+                                value={searchBy}
+                                onChange={(e) => setSearchBy(e.target.value)}
+                                className="bg-white border border-slate-200 rounded-2xl py-3 px-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all shadow-sm font-bold text-slate-700 text-xs"
+                            >
+                                <option value="all">🔍 Semua Kolom</option>
+                                <option value="order_no">No Order</option>
+                                <option value="order_by">Nama Pelapor</option>
+                                <option value="teknisi">Nama Teknisi</option>
+                                <option value="location_desc">Lokasi Ruangan</option>
+                                <option value="ext_phone">Nomor Extensi</option>
+                                <option value="catatan">Catatan Keluhan</option>
+                            </select>
                         </div>
-                        <input
-                            type="text"
-                            placeholder="Cari Order ID, No Order, atau Catatan..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full bg-white border border-slate-200 rounded-2xl py-3.5 pl-12 pr-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all shadow-sm font-medium"
-                        />
+                        <div className="flex flex-col gap-1.5 w-full md:w-80">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Kata Kunci:</label>
+                            <div className="relative group">
+                                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                                    <svg className="w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                </div>
+                                <input
+                                    type="text"
+                                    placeholder={`Cari ${searchBy === 'all' ? 'semua...' : searchBy.replace('_', ' ')}`}
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="w-full bg-white border border-slate-200 rounded-2xl py-3 pl-12 pr-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all shadow-sm font-medium text-sm"
+                                />
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -921,10 +951,30 @@ function VerifyOrderContent() {
                 size="sm"
             >
                 <div className="space-y-6">
+                    <div className="flex justify-between items-center">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pilih Teknisi</p>
+                        <button
+                            onClick={fetchAssignList}
+                            className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:underline"
+                        >
+                            🔄 Refresh
+                        </button>
+                    </div>
                     {loadingAssign ? (
                         <div className="py-20 flex flex-col items-center justify-center gap-4">
                             <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Fetching Technicians...</p>
+                        </div>
+                    ) : assignList.length === 0 ? (
+                        <div className="py-20 flex flex-col items-center justify-center gap-4 text-center">
+                            <div className="text-4xl">🔍</div>
+                            <div>
+                                <p className="font-black text-slate-400 text-sm">Daftar Teknisi Kosong</p>
+                                <p className="text-[10px] text-slate-300 font-bold mt-1">Gagal mengambil data atau memang tidak ada teknisi tersedia.</p>
+                            </div>
+                            <PremiumButton size="sm" variant="secondary" onClick={fetchAssignList}>
+                                Coba Lagi
+                            </PremiumButton>
                         </div>
                     ) : (
                         <>
@@ -940,11 +990,11 @@ function VerifyOrderContent() {
                                     >
                                         <div className="flex items-center gap-4">
                                             <div className="w-10 h-10 bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl flex items-center justify-center font-black text-slate-400 group-hover:from-blue-500 group-hover:to-indigo-600 group-hover:text-white transition-all">
-                                                {tek.nama_lengkap.charAt(0)}
+                                                {(tek.nama_lengkap || 'T').charAt(0)}
                                             </div>
                                             <div className="text-left">
-                                                <p className="font-black text-slate-800 text-sm">{tek.nama_lengkap}</p>
-                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{tek.nama_bidang}</p>
+                                                <p className="font-black text-slate-800 text-sm">{tek.nama_lengkap || 'Unknown'}</p>
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{tek.nama_bidang || '-'}</p>
                                             </div>
                                         </div>
                                         {selectedTeknisi?.teknisi_id === tek.teknisi_id && (

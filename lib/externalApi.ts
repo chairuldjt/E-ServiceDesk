@@ -238,17 +238,30 @@ export async function postExternalOrderCancel(userId: number, data: any) {
 
 export async function getExternalOrderAssignList(userId: number, orderId: number) {
     const { jwt, BASE } = await getExternalToken(userId);
-    const res = await fetch(`${BASE}/order/order_assign_list/${orderId}`, {
-        headers: {
-            'Authorization': `Bearer ${jwt}`,
-            'access-token': jwt,
-            'Accept': 'application/json',
-        },
-    });
+    try {
+        const res = await fetch(`${BASE}/order/order_assign_list/${orderId}`, {
+            headers: {
+                'Authorization': `Bearer ${jwt}`,
+                'access-token': jwt,
+                'Accept': 'application/json',
+            },
+        });
 
-    if (!res.ok) throw new Error('Failed to fetch assign list');
-    const data = await res.json();
-    return data.result || [];
+        if (!res.ok) {
+            console.error('External API Error (Assign List):', await res.text());
+            return [];
+        }
+        const data = await res.json();
+
+        // Handle different possible structures: { result: [...] } or direct [...]
+        if (data && Array.isArray(data.result)) return data.result;
+        if (Array.isArray(data)) return data;
+
+        return [];
+    } catch (error) {
+        console.error('Error in getExternalOrderAssignList:', error);
+        return [];
+    }
 }
 
 export async function postExternalAssignOrderSave(userId: number, data: any) {
