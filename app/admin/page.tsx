@@ -152,8 +152,15 @@ function AdminContent() {
   };
 
   const handleChangeRole = (id: number, currentRole: string) => {
-    const newRole = currentRole === 'admin' ? 'user' : 'admin';
-    confirm(`Ubah Role?`, `Ubah role user menjadi ${newRole}?`, async () => {
+    // Cycle: user -> super -> admin -> user
+    let newRole = 'user';
+    if (currentRole === 'user') newRole = 'super';
+    else if (currentRole === 'super') newRole = 'admin';
+    else if (currentRole === 'admin') newRole = 'user';
+
+    const roleName = newRole === 'super' ? 'Super User' : newRole === 'admin' ? 'Admin' : 'User';
+
+    confirm(`Ubah Role?`, `Ubah role user menjadi ${roleName}?`, async () => {
       try {
         const res = await fetch(`/api/auth/users/${id}`, {
           method: 'PUT',
@@ -162,7 +169,7 @@ function AdminContent() {
         });
         if (res.ok) {
           fetchUsers();
-          showToast(`Role berubah menjadi ${newRole}`, 'success');
+          showToast(`Role berubah menjadi ${roleName}`, 'success');
         } else {
           showToast('Gagal mengubah role', 'error');
         }
@@ -435,10 +442,10 @@ function AdminContent() {
                         <button
                           onClick={() => handleChangeRole(u.id, u.role)}
                           className={`px-3 py-1.5 rounded-xl text-xs font-black border-2 transition-all hover:scale-105 uppercase tracking-wider ${u.role === 'admin'
-                              ? 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100'
-                              : u.role === 'super'
-                                ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
-                                : 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
+                            ? 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100'
+                            : u.role === 'super'
+                              ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+                              : 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
                             }`}
                         >
                           {u.role === 'admin' ? '🔐 Admin' : u.role === 'super' ? '⚡ Super' : '👤 User'}
@@ -522,6 +529,7 @@ function AdminContent() {
               className="w-full px-4 py-3 border-2 border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium"
             >
               <option value="user">User</option>
+              <option value="super">Super User</option>
               <option value="admin">Admin</option>
             </select>
           </div>
