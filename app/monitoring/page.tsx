@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { PremiumAlert, PremiumButton } from '@/components/ui/PremiumComponents';
+import Link from 'next/link';
 
 interface LeaderboardItem {
     teknisi: string;
@@ -32,6 +34,7 @@ function MonitoringContent() {
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [countdown, setCountdown] = useState(50);
+    const [configError, setConfigError] = useState<string | null>(null);
 
     const fetchData = useCallback(async (nocache = false, date?: string) => {
         // Only show full loading state on initial load or date change
@@ -44,12 +47,17 @@ function MonitoringContent() {
             if (date) url += `date=${date}&`;
 
             const res = await fetch(url);
-            if (!res.ok) throw new Error('Failed to fetch data');
             const json = await res.json();
+            if (!res.ok) throw new Error(json.error || 'Failed to fetch data');
             setData(json);
             setError(null);
+            setConfigError(null);
         } catch (err: any) {
-            setError(err.message);
+            if (err.message.includes('Kredensial')) {
+                setConfigError(err.message);
+            } else {
+                setError(err.message);
+            }
         } finally {
             setLoading(false);
             setIsRefreshing(false);
@@ -138,6 +146,22 @@ function MonitoringContent() {
                     </button>
                 </div>
             </div>
+
+            {configError && (
+                <PremiumAlert
+                    variant="amber"
+                    icon="🔌"
+                    action={
+                        <Link href="/settings">
+                            <PremiumButton size="sm" variant="primary">
+                                Set Kredensial
+                            </PremiumButton>
+                        </Link>
+                    }
+                >
+                    {configError}
+                </PremiumAlert>
+            )}
 
             {error && (
                 <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-xl text-red-700 font-medium">

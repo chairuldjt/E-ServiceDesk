@@ -289,3 +289,31 @@ export function SearchBar({ value, onChange, placeholder = 'Cari...', className 
         </div>
     );
 }
+
+interface PremiumAlertProps {
+    children: React.ReactNode;
+    variant?: 'blue' | 'emerald' | 'amber' | 'red';
+    icon?: string;
+    action?: React.ReactNode;
+}
+
+const alertVariants = {
+    blue: 'bg-blue-50 border-blue-200 text-blue-800',
+    emerald: 'bg-emerald-50 border-emerald-200 text-emerald-800',
+    amber: 'bg-amber-50 border-amber-200 text-amber-800',
+    red: 'bg-red-50 border-red-200 text-red-800',
+};
+
+export function PremiumAlert({ children, variant = 'blue', icon, action }: PremiumAlertProps) {
+    return (
+        <div className={`${alertVariants[variant]} border-2 p-5 rounded-3xl flex items-center justify-between gap-4 shadow-sm animate-in slide-in-from-top duration-500`}>
+            <div className="flex items-center gap-4">
+                {icon && <span className="text-2xl">{icon}</span>}
+                <div className="text-sm font-semibold leading-relaxed">
+                    {children}
+                </div>
+            </div>
+            {action && <div>{action}</div>}
+        </div>
+    );
+}

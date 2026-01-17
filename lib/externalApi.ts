@@ -21,7 +21,7 @@ export async function getExternalToken(userId: number) {
     const config = await getWebminConfig(userId);
 
     if (!config || !config.user || !config.pass) {
-        throw new Error('Koneksi belum disetting. Silakan cek menu Setting Webmin.');
+        throw new Error('🔌 Kredensial Webmin belum dikonfigurasi. Silakan ke menu Settings → Account Setting untuk menghubungkan akun Anda.');
     }
 
     const { user: USER, pass: PASS } = config;

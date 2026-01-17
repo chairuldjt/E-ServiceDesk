@@ -56,17 +56,9 @@ function LogbookListContent() {
   });
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
 
-  // Webmin Setting Modal State
-  const [isSettingModalOpen, setIsSettingModalOpen] = useState(false);
-  const [webminConfig, setWebminConfig] = useState({
-    user: '',
-    pass: ''
-  });
-  const [isSavingSetting, setIsSavingSetting] = useState(false);
 
   useEffect(() => {
     fetchLogbook();
-    fetchWebminConfig();
   }, []);
 
   const fetchLogbook = async () => {
@@ -82,38 +74,6 @@ function LogbookListContent() {
     }
   };
 
-  const fetchWebminConfig = async () => {
-    try {
-      const response = await fetch('/api/settings/webmin');
-      const data = await response.json();
-      setWebminConfig({ user: data.user || '', pass: data.pass || '' });
-    } catch (error) {
-      console.error('Error fetching webmin config:', error);
-    }
-  };
-
-  const handleSaveSetting = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSavingSetting(true);
-    try {
-      const response = await fetch('/api/settings/webmin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(webminConfig),
-      });
-
-      if (response.ok) {
-        showToast('Setting Webmin berhasil disimpan', 'success');
-        setIsSettingModalOpen(false);
-      } else {
-        showToast('Gagal menyimpan setting', 'error');
-      }
-    } catch (error) {
-      showToast('Terjadi kesalahan saat menyimpan', 'error');
-    } finally {
-      setIsSavingSetting(false);
-    }
-  };
 
   const handleDelete = (id: number) => {
     confirm('Hapus Logbook?', 'Apakah Anda yakin ingin menghapus data logbook ini?', async () => {
@@ -265,9 +225,6 @@ function LogbookListContent() {
         subtitle="Kelola catatan pekerjaan dan service"
         actions={
           <div className="flex gap-3">
-            <PremiumButton variant="secondary" onClick={() => setIsSettingModalOpen(true)}>
-              <span className="text-lg">⚙️</span> Setting Webmin
-            </PremiumButton>
             <Link href="/logbook/create">
               <PremiumButton>
                 <span className="text-lg">➕</span> Tambah Logbook
@@ -474,51 +431,6 @@ function LogbookListContent() {
         </form>
       </PremiumModal>
 
-      {/* Webmin Setting Modal */}
-      <PremiumModal
-        isOpen={isSettingModalOpen}
-        onClose={() => setIsSettingModalOpen(false)}
-        title="⚙️ Setting Koneksi Webmin"
-        size="sm"
-      >
-        <form onSubmit={handleSaveSetting} className="space-y-5">
-          <p className="text-slate-600 text-sm font-medium">Konfigurasi kredensial API eksternal</p>
-
-          <PremiumInput
-            label="Username Webmin"
-            type="text"
-            required
-            value={webminConfig.user}
-            onChange={e => setWebminConfig({ ...webminConfig, user: e.target.value })}
-          />
-
-          <PremiumInput
-            label="Password Webmin"
-            type="password"
-            required
-            value={webminConfig.pass}
-            onChange={e => setWebminConfig({ ...webminConfig, pass: e.target.value })}
-          />
-
-          <div className="flex gap-3 pt-4">
-            <PremiumButton
-              type="button"
-              variant="secondary"
-              onClick={() => setIsSettingModalOpen(false)}
-              className="flex-1"
-            >
-              Batal
-            </PremiumButton>
-            <PremiumButton
-              type="submit"
-              disabled={isSavingSetting}
-              className="flex-1"
-            >
-              {isSavingSetting ? 'Menyimpan...' : '💾 Simpan'}
-            </PremiumButton>
-          </div>
-        </form>
-      </PremiumModal>
 
       {/* Order Modal */}
       <PremiumModal

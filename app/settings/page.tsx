@@ -36,6 +36,11 @@ function SettingsContent() {
         confirmPassword: ''
     });
 
+    const [webminConfig, setWebminConfig] = useState({
+        user: '',
+        pass: ''
+    });
+
     useEffect(() => {
         fetchProfile();
     }, []);
@@ -49,6 +54,16 @@ function SettingsContent() {
                     username: data.data.username,
                     email: data.data.email,
                     profile_image: data.data.profile_image
+                });
+            }
+
+            // Fetch Webmin config
+            const webminResp = await fetch('/api/settings/webmin');
+            const webminData = await webminResp.json();
+            if (webminResp.ok) {
+                setWebminConfig({
+                    user: webminData.user || '',
+                    pass: webminData.pass || ''
                 });
             }
         } catch (error) {
@@ -148,6 +163,28 @@ function SettingsContent() {
             showToast('Gagal mengupload gambar', 'error');
         } finally {
             setUploading(false);
+        }
+    };
+
+    const handleWebminSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setUpdating(true);
+        try {
+            const response = await fetch('/api/settings/webmin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(webminConfig),
+            });
+
+            if (response.ok) {
+                showToast('Kredensial sinkronisasi berhasil disimpan', 'success');
+            } else {
+                showToast('Gagal menyimpan kredensial', 'error');
+            }
+        } catch (error) {
+            showToast('Terjadi kesalahan', 'error');
+        } finally {
+            setUpdating(false);
         }
     };
 
@@ -300,6 +337,61 @@ function SettingsContent() {
                                         disabled={updating}
                                     >
                                         {updating ? 'Menyimpan...' : 'Perbarui Password'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        {/* Webmin Connection Section */}
+                        <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-50 rounded-full flex items-center justify-center -mr-8 -mt-8 opacity-50">
+                                <span className="text-4xl">🔌</span>
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                                <span className="text-indigo-600">Sync</span> Koneksi External
+                            </h3>
+                            <p className="text-sm text-gray-500 mb-8 leading-relaxed">
+                                Konfigurasi kredensial API eksternal (Webmin) untuk fitur sinkronisasi pesanan/order otomatis.
+                            </p>
+                            <form onSubmit={handleWebminSubmit} className="space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-2">Username Webmin</label>
+                                        <input
+                                            type="text"
+                                            value={webminConfig.user}
+                                            onChange={(e) => setWebminConfig({ ...webminConfig, user: e.target.value })}
+                                            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                                            placeholder="User API"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-2">Password Webmin</label>
+                                        <input
+                                            type="password"
+                                            value={webminConfig.pass}
+                                            onChange={(e) => setWebminConfig({ ...webminConfig, pass: e.target.value })}
+                                            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                                            placeholder="••••••••"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                                <div className="flex justify-end pt-4 border-t border-slate-50">
+                                    <button
+                                        type="submit"
+                                        className="bg-indigo-600 text-white px-8 py-2.5 rounded-xl font-semibold hover:bg-indigo-700 transition shadow-lg shadow-indigo-100 disabled:opacity-50 flex items-center gap-2"
+                                        disabled={updating}
+                                    >
+                                        {updating ? (
+                                            <>
+                                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                                Menyimpan...
+                                            </>
+                                        ) : (
+                                            <>💾 Simpan Kredensial</>
+                                        )}
                                     </button>
                                 </div>
                             </form>

@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { useUI } from '@/context/UIContext';
+import { PremiumAlert, PremiumButton } from '@/components/ui/PremiumComponents';
+import Link from 'next/link';
 
 interface UnverifiedOrder {
     order_id: number;
@@ -58,6 +60,7 @@ function VerifyOrderContent() {
     const [orders, setOrders] = useState<UnverifiedOrder[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [configError, setConfigError] = useState<string | null>(null);
 
     // Detail Modal State
     const [selectedOrder, setSelectedOrder] = useState<OrderDetail | null>(null);
@@ -75,13 +78,18 @@ function VerifyOrderContent() {
 
     const fetchUnverifiedOrders = async () => {
         setLoading(true);
+        setConfigError(null);
         try {
             const response = await fetch('/api/monitoring/verify');
             const data = await response.json();
             if (response.ok) {
                 setOrders(data.result || []);
             } else {
-                showToast(data.error || 'Gagal mengambil daftar order', 'error');
+                if (response.status === 400 && data.error?.includes('Kredensial')) {
+                    setConfigError(data.error);
+                } else {
+                    showToast(data.error || 'Gagal mengambil daftar order', 'error');
+                }
             }
         } catch (error) {
             showToast('Terjadi kesalahan koneksi', 'error');
@@ -191,6 +199,22 @@ function VerifyOrderContent() {
                     />
                 </div>
             </div>
+
+            {configError && (
+                <PremiumAlert
+                    variant="amber"
+                    icon="🔌"
+                    action={
+                        <Link href="/settings">
+                            <PremiumButton size="sm" variant="primary">
+                                Set Kredensial
+                            </PremiumButton>
+                        </Link>
+                    }
+                >
+                    {configError}
+                </PremiumAlert>
+            )}
 
             {/* List Section */}
             <div className="bg-white rounded-[2rem] border border-slate-100 shadow-2xl overflow-hidden min-h-[500px]">

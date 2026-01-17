@@ -11,11 +11,10 @@ export async function GET() {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // Check if Webmin credentials are configured
         const config = await getWebminConfig(payload.id);
         if (!config || !config.user || !config.pass) {
             return NextResponse.json({
-                error: 'Kredensial Webmin belum dikonfigurasi. Silakan ke menu Settings → Account Setting untuk mengatur kredensial Webmin Anda.'
+                error: '🔌 Kredensial Webmin belum dikonfigurasi. Silakan ke menu Settings → Account Setting untuk menghubungkan akun Anda.'
             }, { status: 400 });
         }
 
