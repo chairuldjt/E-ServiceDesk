@@ -256,9 +256,8 @@ export async function getExternalOrderAssignList(userId: number, orderId: number
 
         if (!Array.isArray(users)) return [];
 
-        // Map and filter to TEKNISI to match previous expected structure
+        // Return all users regardless of role (TEKNISI, ADMINISTRASI, CLIENT, etc.)
         return users
-            .filter((u: any) => u.role_name === 'TEKNISI')
             .map((u: any) => ({
                 teknisi_id: u.user_id,
                 nama_lengkap: u.nama_lengkap,
