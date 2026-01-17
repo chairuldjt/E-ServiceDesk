@@ -101,22 +101,27 @@ function MonitoringContent() {
     return (
         <div className="min-h-screen p-4 md:p-8 space-y-8 animate-in fade-in duration-700">
             {/* Header Container */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/40 backdrop-blur-md p-6 rounded-3xl border border-white/20 shadow-xl">
-                <div>
-                    <h1 className="text-3xl font-extrabold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                        Technician Monitoring
-                    </h1>
-                    <p className="text-slate-500 font-medium mt-1 flex items-center gap-2">
-                        <span className="relative flex h-3 w-3">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-                        </span>
-                        Live Updates
-                        <span className="text-xs bg-slate-100 px-2 py-0.5 rounded-full text-slate-400 flex items-center gap-1 ml-1">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
-                            Refresh in {countdown}s
-                        </span>
-                    </p>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white/40 backdrop-blur-md p-8 rounded-[2rem] border border-white/20 shadow-xl">
+                <div className="flex items-center gap-5">
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg shadow-blue-200">
+                        📡
+                    </div>
+                    <div>
+                        <h1 className="text-3xl font-black text-slate-800">
+                            Technician Monitoring
+                        </h1>
+                        <p className="text-slate-500 font-medium mt-1 flex items-center gap-2">
+                            <span className="relative flex h-3 w-3">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                            </span>
+                            Live Updates
+                            <span className="text-[10px] bg-slate-100 px-3 py-1 rounded-full text-slate-400 font-black uppercase tracking-widest flex items-center gap-1 ml-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
+                                Refresh in {countdown}s
+                            </span>
+                        </p>
+                    </div>
                 </div>
 
                 <div className="flex items-center gap-3">
