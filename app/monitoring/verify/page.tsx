@@ -48,12 +48,12 @@ interface OrderHistory {
 }
 
 const STATUS_LEVELS = [
-    { code: 10, label: 'Open', icon: '🆕', color: 'blue', key: 'open' },
-    { code: 11, label: 'Follow Up', icon: '📞', color: 'indigo', key: 'follow_up' },
-    { code: 12, label: 'Running', icon: '⚡', color: 'emerald', key: 'running' },
-    { code: 13, label: 'Pending', icon: '⏳', color: 'amber', key: 'pending' },
-    { code: 15, label: 'Done', icon: '✅', color: 'purple', key: 'done' },
-    { code: 30, label: 'Verified', icon: '🛡️', color: 'slate', key: 'verified' },
+    { code: 10, label: 'Open', icon: '🆕', color: 'blue', key: 'open', gradient: 'from-blue-600 to-blue-800', shadow: 'shadow-blue-200', text: 'text-blue-100', glow: 'bg-blue-600' },
+    { code: 11, label: 'Follow Up', icon: '📞', color: 'indigo', key: 'follow_up', gradient: 'from-indigo-600 to-indigo-800', shadow: 'shadow-indigo-200', text: 'text-indigo-100', glow: 'bg-indigo-600' },
+    { code: 12, label: 'Running', icon: '⚡', color: 'emerald', key: 'running', gradient: 'from-emerald-500 to-emerald-700', shadow: 'shadow-emerald-200', text: 'text-emerald-100', glow: 'bg-emerald-600' },
+    { code: 13, label: 'Pending', icon: '⏳', color: 'amber', key: 'pending', gradient: 'from-amber-400 to-orange-600', shadow: 'shadow-amber-200', text: 'text-amber-100', glow: 'bg-amber-600' },
+    { code: 15, label: 'Done', icon: '✅', color: 'purple', key: 'done', gradient: 'from-purple-600 to-fuchsia-800', shadow: 'shadow-purple-200', text: 'text-purple-100', glow: 'bg-purple-600' },
+    { code: 30, label: 'Verified', icon: '🛡️', color: 'slate', key: 'verified', gradient: 'from-slate-600 to-slate-800', shadow: 'shadow-slate-200', text: 'text-slate-100', glow: 'bg-slate-600' },
 ];
 
 const ITEMS_PER_PAGE = 100;
@@ -276,12 +276,12 @@ function VerifyOrderContent() {
                             setCurrentPage(1);
                         }}
                         className={`p-6 rounded-[2.5rem] border transition-all duration-500 relative overflow-hidden group ${currentStatus === status.code
-                            ? 'bg-gradient-to-br from-blue-700 to-indigo-800 text-white shadow-2xl shadow-blue-200 scale-105 z-10'
+                            ? `bg-gradient-to-br ${status.gradient} text-white shadow-2xl ${status.shadow} scale-105 z-10`
                             : 'bg-white/80 backdrop-blur-sm border-white/20 text-slate-400 hover:shadow-xl hover:-translate-y-1'
                             }`}
                     >
                         {/* Decorative Background Glow */}
-                        <div className={`absolute -top-4 -right-4 w-24 h-24 rounded-full blur-2xl opacity-10 group-hover:opacity-25 transition-opacity ${currentStatus === status.code ? 'bg-white' : 'bg-blue-600'
+                        <div className={`absolute -top-4 -right-4 w-24 h-24 rounded-full blur-2xl opacity-10 group-hover:opacity-25 transition-opacity ${currentStatus === status.code ? 'bg-white' : status.glow
                             }`}></div>
 
                         <div className="flex flex-col items-center text-center relative z-10 h-full justify-between">
@@ -291,7 +291,7 @@ function VerifyOrderContent() {
                                     }`}>
                                     {orderSummary ? (orderSummary as any)[status.key] : '...'}
                                 </span>
-                                <span className={`text-[10px] font-black uppercase tracking-[0.2em] transform transition-transform ${currentStatus === status.code ? 'text-blue-100' : 'text-slate-400'
+                                <span className={`text-[10px] font-black uppercase tracking-[0.2em] transform transition-transform ${currentStatus === status.code ? status.text : 'text-slate-400'
                                     }`}>
                                     {status.label}
                                 </span>

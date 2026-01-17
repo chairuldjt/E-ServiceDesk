@@ -1,7 +1,7 @@
 import { getWebminConfig } from './settings';
 
 const DEFAULT_BASE = process.env.EXTERNAL_API_BASE || 'http://172.16.1.212:5010';
-const FETCH_TIMEOUT = 10000; // 10 seconds timeout
+const FETCH_TIMEOUT = 30000; // 30 seconds timeout
 
 // In-memory token cache (per user ID)
 const tokenCache: { [key: number]: { jwt: string; expiry: number } } = {};
@@ -12,7 +12,7 @@ function fetchWithTimeout(url: string, options: any = {}, timeout = FETCH_TIMEOU
     return Promise.race([
         fetch(url, options),
         new Promise<Response>((_, reject) =>
-            setTimeout(() => reject(new Error('Request timeout')), timeout)
+            setTimeout(() => reject(new Error(`Request timeout (${timeout}ms) for ${url}`)), timeout)
         )
     ]);
 }
@@ -196,9 +196,10 @@ export async function getExternalOrderHistory(userId: number, orderId: number) {
 
 export async function getExternalOrderSummary(userId: number) {
     const { jwt, BASE } = await getExternalToken(userId);
-    const res = await fetch(`${BASE}/redis/get_summary_order`, {
+    const res = await fetchWithTimeout(`${BASE}/redis/get_summary_order`, {
         headers: {
             'Authorization': `Bearer ${jwt}`,
+            'access-token': jwt, // Also include this as seen in user's working snippet
             'Accept': 'application/json',
         },
     });
