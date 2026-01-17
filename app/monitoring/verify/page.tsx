@@ -510,7 +510,9 @@ function VerifyOrderContent() {
                                                     <p className={`text-sm font-bold ${(currentStatus === 15 || currentStatus === 30) ? 'text-emerald-900 bg-white/60 border-emerald-100' : 'text-amber-900 bg-white/60 border-amber-100'} p-3 rounded-xl border mt-2`}>
                                                         {currentStatus === 13
                                                             ? (selectedOrder.ket_pending || 'Tidak ada keterangan pending')
-                                                            : (selectedOrder.ket_penyelesaian || ((currentStatus === 15 || currentStatus === 30) ? 'Tidak ada keterangan' : 'Masih dalam proses penanganan...'))
+                                                            : (currentStatus === 10 || currentStatus === 11 || currentStatus === 12)
+                                                                ? (orderHistory[0]?.status_note || 'Belum ada update penanganan terbaru.')
+                                                                : (selectedOrder.ket_penyelesaian || 'Tidak ada keterangan')
                                                         }
                                                     </p>
                                                 </div>
