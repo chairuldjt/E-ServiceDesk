@@ -48,15 +48,24 @@ interface OrderHistory {
 }
 
 const STATUS_LEVELS = [
-    { code: 10, label: 'Open', icon: '🆕', color: 'blue' },
-    { code: 11, label: 'Follow Up', icon: '📞', color: 'indigo' },
-    { code: 12, label: 'Running', icon: '⚡', color: 'emerald' },
-    { code: 13, label: 'Pending', icon: '⏳', color: 'amber' },
-    { code: 15, label: 'Done', icon: '✅', color: 'purple' },
-    { code: 30, label: 'Verified', icon: '🛡️', color: 'slate' },
+    { code: 10, label: 'Open', icon: '🆕', color: 'blue', key: 'open' },
+    { code: 11, label: 'Follow Up', icon: '📞', color: 'indigo', key: 'follow_up' },
+    { code: 12, label: 'Running', icon: '⚡', color: 'emerald', key: 'running' },
+    { code: 13, label: 'Pending', icon: '⏳', color: 'amber', key: 'pending' },
+    { code: 15, label: 'Done', icon: '✅', color: 'purple', key: 'done' },
+    { code: 30, label: 'Verified', icon: '🛡️', color: 'slate', key: 'verified' },
 ];
 
 const ITEMS_PER_PAGE = 100;
+
+interface OrderSummary {
+    open: number;
+    follow_up: number;
+    running: number;
+    pending: number;
+    done: number;
+    verified: number;
+}
 
 export default function VerifyOrderPage() {
     return (
@@ -74,6 +83,8 @@ function VerifyOrderContent() {
     const [configError, setConfigError] = useState<string | null>(null);
     const [currentStatus, setCurrentStatus] = useState(11); // Default Follow Up
     const [currentPage, setCurrentPage] = useState(1);
+    const [orderSummary, setOrderSummary] = useState<OrderSummary | null>(null);
+    const [refreshingSummary, setRefreshingSummary] = useState(false);
 
     // Detail Modal State
     const [selectedOrder, setSelectedOrder] = useState<OrderDetail | null>(null);
@@ -86,9 +97,24 @@ function VerifyOrderContent() {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
-        setCurrentPage(1);
         fetchOrders(currentStatus);
+        fetchSummary();
     }, [currentStatus]);
+
+    const fetchSummary = async () => {
+        setRefreshingSummary(true);
+        try {
+            const response = await fetch('/api/monitoring/summary');
+            const data = await response.json();
+            if (response.ok) {
+                setOrderSummary(data.result);
+            }
+        } catch (error) {
+            console.error('Error fetching summary:', error);
+        } finally {
+            setRefreshingSummary(false);
+        }
+    };
 
     useEffect(() => {
         setCurrentPage(1);
@@ -171,6 +197,7 @@ function VerifyOrderContent() {
                 showToast('Order berhasil diverifikasi', 'success');
                 setIsDetailModalOpen(false);
                 fetchOrders(currentStatus); // Refresh list
+                fetchSummary(); // Refresh counts
             } else {
                 showToast(result.error || 'Gagal memverifikasi order', 'error');
             }
@@ -203,7 +230,19 @@ function VerifyOrderContent() {
                         🛡️
                     </div>
                     <div>
-                        <h1 className="text-3xl font-black text-slate-800">Order Management</h1>
+                        <div className="flex items-center gap-3">
+                            <h1 className="text-3xl font-black text-slate-800">Order Management</h1>
+                            <button
+                                onClick={fetchSummary}
+                                disabled={refreshingSummary}
+                                className={`p-2 rounded-xl bg-slate-100 text-slate-500 hover:text-blue-600 hover:bg-white transition-all active:scale-90 ${refreshingSummary ? 'animate-spin' : ''}`}
+                                title="Refresh Totals"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                            </button>
+                        </div>
                         <p className="text-slate-500 font-medium mt-1">Pantau dan kelola tiket dari sistem eksternal</p>
                     </div>
                 </div>
@@ -237,12 +276,14 @@ function VerifyOrderContent() {
                                 }`}
                         >
                             <span className="text-xl">{status.icon}</span>
-                            <span>{status.label}</span>
-                            {currentStatus === status.code && (
-                                <span className={`ml-2 px-2 py-0.5 rounded-lg text-[10px] bg-blue-50 text-blue-600`}>
-                                    Active
-                                </span>
-                            )}
+                            <div className="flex flex-col items-start leading-tight">
+                                <span className="text-sm">{status.label}</span>
+                                {orderSummary && (
+                                    <span className={`text-[10px] ${currentStatus === status.code ? 'text-blue-400' : 'text-slate-300'}`}>
+                                        {(orderSummary as any)[status.key] || 0} Tickets
+                                    </span>
+                                )}
+                            </div>
                         </button>
                     ))}
                 </div>

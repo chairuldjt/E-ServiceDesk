@@ -193,3 +193,17 @@ export async function getExternalOrderHistory(userId: number, orderId: number) {
     const data = await res.json();
     return data.result || [];
 }
+
+export async function getExternalOrderSummary(userId: number) {
+    const { jwt, BASE } = await getExternalToken(userId);
+    const res = await fetch(`${BASE}/redis/get_summary_order`, {
+        headers: {
+            'Authorization': `Bearer ${jwt}`,
+            'Accept': 'application/json',
+        },
+    });
+
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.result;
+}
