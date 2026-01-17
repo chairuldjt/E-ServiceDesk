@@ -239,7 +239,7 @@ export async function postExternalOrderCancel(userId: number, data: any) {
 export async function getExternalOrderAssignList(userId: number, orderId: number) {
     const { jwt, BASE } = await getExternalToken(userId);
     try {
-        const res = await fetch(`${BASE}/order/order_assign_list/${orderId}`, {
+        const res = await fetch(`${BASE}/secure/user_list`, {
             headers: {
                 'Authorization': `Bearer ${jwt}`,
                 'access-token': jwt,
@@ -248,16 +248,22 @@ export async function getExternalOrderAssignList(userId: number, orderId: number
         });
 
         if (!res.ok) {
-            console.error('External API Error (Assign List):', await res.text());
+            console.error('External API Error (User List):', await res.text());
             return [];
         }
         const data = await res.json();
+        const users = data.result || data || [];
 
-        // Handle different possible structures: { result: [...] } or direct [...]
-        if (data && Array.isArray(data.result)) return data.result;
-        if (Array.isArray(data)) return data;
+        if (!Array.isArray(users)) return [];
 
-        return [];
+        // Map and filter to TEKNISI to match previous expected structure
+        return users
+            .filter((u: any) => u.role_name === 'TEKNISI')
+            .map((u: any) => ({
+                teknisi_id: u.user_id,
+                nama_lengkap: u.nama_lengkap,
+                nama_bidang: u.role_name
+            }));
     } catch (error) {
         console.error('Error in getExternalOrderAssignList:', error);
         return [];
