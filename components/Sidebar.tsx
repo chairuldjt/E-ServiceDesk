@@ -36,9 +36,14 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     { name: 'Monitoring', path: '/monitoring', icon: '📡' },
     { name: 'Order', path: '/monitoring/verify', icon: '🎫' },
     { name: 'Notepad', path: '/notepad', icon: '📝' },
-    { name: 'WhatsApp Bot', path: '/settings/whatsapp', icon: '📱' },
   ];
 
+  // Menu WhatsApp Bot (Admin & Super Only)
+  if (user.role === 'admin' || user.role === 'super') {
+    menuItems.push({ name: 'WhatsApp Bot', path: '/settings/whatsapp', icon: '📱' });
+  }
+
+  // Menu Admin Panel (Admin Only)
   if (user.role === 'admin') {
     menuItems.push({ name: 'Admin', path: '/admin', icon: '🔐' });
   }

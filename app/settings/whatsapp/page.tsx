@@ -11,9 +11,20 @@ interface SavedGroup {
     description?: string;
 }
 
+import { useAuth } from '@/hooks/useAuth';
+import { useRouter } from 'next/navigation';
+
 const WhatsAppContent = () => {
+    const { user, isLoading: userLoading } = useAuth();
+    const router = useRouter();
     const { showToast, confirm } = useUI();
     const [state, setState] = useState<any>(null);
+
+    useEffect(() => {
+        if (!userLoading && user && user.role !== 'admin' && user.role !== 'super') {
+            router.push('/dashboard');
+        }
+    }, [user, userLoading, router]);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
     const [activeTab, setActiveTab] = useState<'realtime' | 'upload'>('realtime');
