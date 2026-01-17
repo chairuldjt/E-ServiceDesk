@@ -289,3 +289,24 @@ export async function postExternalAssignOrderSave(userId: number, data: any) {
 
     return await res.json();
 }
+
+export async function postExternalOrderPending(userId: number, data: any) {
+    const { jwt, BASE } = await getExternalToken(userId);
+    const res = await fetch(`${BASE}/order/order_pending`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${jwt}`,
+            'access-token': jwt,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    });
+
+    if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`External API Error: ${errorText}`);
+    }
+
+    return await res.json();
+}

@@ -109,6 +109,10 @@ function VerifyOrderContent() {
     const [selectedTeknisi, setSelectedTeknisi] = useState<any>(null);
     const [teknisiSearch, setTeknisiSearch] = useState('');
 
+    // Pending Order State
+    const [isPendingModalOpen, setIsPendingModalOpen] = useState(false);
+    const [pendingReason, setPendingReason] = useState('');
+
     useEffect(() => {
         fetchOrders(currentStatus);
         fetchSummary();
@@ -320,6 +324,39 @@ function VerifyOrderContent() {
             } else {
                 const data = await response.json();
                 showToast(data.error || 'Gagal mendelegasikan order', 'error');
+            }
+        } catch (err) {
+            showToast('Terjadi kesalahan koneksi', 'error');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handlePendingSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedOrder || !pendingReason) return;
+
+        setIsSubmitting(true);
+        try {
+            const response = await fetch('/api/monitoring/pending-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    order_id: selectedOrder.order_id,
+                    status_desc: pendingReason
+                })
+            });
+
+            if (response.ok) {
+                showToast('Order berhasil di-pending', 'success');
+                setIsPendingModalOpen(false);
+                setIsDetailModalOpen(false);
+                setPendingReason('');
+                fetchOrders(currentStatus);
+                fetchSummary();
+            } else {
+                const data = await response.json();
+                showToast(data.error || 'Gagal pending order', 'error');
             }
         } catch (err) {
             showToast('Terjadi kesalahan koneksi', 'error');
@@ -843,6 +880,19 @@ function VerifyOrderContent() {
                                                         >
                                                             ✏️ Edit Order
                                                         </PremiumButton>
+
+                                                        {(currentStatus === 11 || currentStatus === 12) && (
+                                                            <PremiumButton
+                                                                onClick={() => {
+                                                                    setPendingReason('');
+                                                                    setIsPendingModalOpen(true);
+                                                                }}
+                                                                className="px-8 py-4 bg-rose-500 hover:bg-rose-600 text-white font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-rose-100 transition-all active:scale-95 text-xs"
+                                                            >
+                                                                ⏳ Pending Order
+                                                            </PremiumButton>
+                                                        )}
+
                                                         <PremiumButton
                                                             onClick={() => {
                                                                 setIsDelegasiModalOpen(true);
@@ -1044,6 +1094,44 @@ function VerifyOrderContent() {
                         </>
                     )}
                 </div>
+            </PremiumModal>
+
+            {/* Pending Modal */}
+            <PremiumModal
+                isOpen={isPendingModalOpen}
+                onClose={() => setIsPendingModalOpen(false)}
+                title="⏳ Pending Order"
+                size="sm"
+            >
+                <form onSubmit={handlePendingSubmit} className="space-y-6">
+                    <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Alasan Pending:</label>
+                        <PremiumTextarea
+                            required
+                            placeholder="Tuliskan alasan mengapa order ini di-pending..."
+                            value={pendingReason}
+                            onChange={(e) => setPendingReason(e.target.value)}
+                            className="min-h-[120px]"
+                        />
+                    </div>
+
+                    <div className="flex gap-3 pt-4">
+                        <button
+                            type="button"
+                            onClick={() => setIsPendingModalOpen(false)}
+                            className="flex-1 py-4 text-slate-400 font-bold uppercase text-[10px] tracking-widest hover:bg-slate-50 rounded-2xl transition"
+                        >
+                            Batal
+                        </button>
+                        <PremiumButton
+                            type="submit"
+                            disabled={isSubmitting || !pendingReason}
+                            className="flex-2 py-4 shadow-xl shadow-rose-100 uppercase font-black text-xs tracking-widest bg-rose-500"
+                        >
+                            {isSubmitting ? 'Processing...' : '💾 Simpan Pending'}
+                        </PremiumButton>
+                    </div>
+                </form>
             </PremiumModal>
 
             <style jsx global>{`
