@@ -107,9 +107,6 @@ function VerifyOrderContent() {
     const [assignList, setAssignList] = useState<any[]>([]);
     const [loadingAssign, setLoadingAssign] = useState(false);
     const [selectedTeknisi, setSelectedTeknisi] = useState<any>(null);
-    const [assignRole, setAssignRole] = useState('1');
-    const [assignDesc, setAssignDesc] = useState('NEW');
-    const [emojiCode, setEmojiCode] = useState(':gear:');
 
     useEffect(() => {
         fetchOrders(currentStatus);
@@ -305,12 +302,12 @@ function VerifyOrderContent() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     order_id: selectedOrder.order_id,
-                    id: selectedOrder.order_id, // Pass through as 'id' too
+                    id: selectedOrder.order_id,
                     teknisi_id: selectedTeknisi.teknisi_id,
                     nama_lengkap: selectedTeknisi.nama_lengkap,
-                    assign_type_code: assignRole,
-                    assign_desc: assignDesc,
-                    emoji_code: emojiCode
+                    assign_type_code: "1",
+                    assign_desc: "NEW",
+                    emoji_code: ":gear:"
                 })
             });
 
@@ -958,49 +955,8 @@ function VerifyOrderContent() {
                 size="sm"
             >
                 <div className="space-y-6">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="flex flex-col gap-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Role Delegasi:</label>
-                            <select
-                                value={assignRole}
-                                onChange={(e) => {
-                                    setAssignRole(e.target.value);
-                                    if (e.target.value === '1') setAssignDesc('NEW');
-                                    else if (e.target.value === '2') setAssignDesc('FOLLOW UP');
-                                }}
-                                className="bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-bold text-slate-700 text-xs"
-                            >
-                                <option value="1">Teknisi Utama (NEW)</option>
-                                <option value="2">Teknisi Pendamping (FOLLOW UP)</option>
-                            </select>
-                        </div>
-                        <div className="flex flex-col gap-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Emoji:</label>
-                            <select
-                                value={emojiCode}
-                                onChange={(e) => setEmojiCode(e.target.value)}
-                                className="bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-bold text-slate-700 text-xs"
-                            >
-                                <option value=":gear:">⚙️ Gear</option>
-                                <option value=":rocket:">🚀 Rocket</option>
-                                <option value=":tools:">🛠️ Tools</option>
-                                <option value=":check:">✅ Check</option>
-                            </select>
-                        </div>
-                        <div className="col-span-2 flex flex-col gap-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Keterangan Assign:</label>
-                            <input
-                                type="text"
-                                value={assignDesc}
-                                onChange={(e) => setAssignDesc(e.target.value)}
-                                className="bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-bold text-slate-700 text-xs"
-                                placeholder="Contoh: NEW, FOLLOW UP, PERBAIKAN..."
-                            />
-                        </div>
-                    </div>
-
-                    <div className="flex justify-between items-center pt-2">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pilih Personel</p>
+                    <div className="flex justify-between items-center">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pilih Teknisi Tujuan</p>
                         <button
                             onClick={fetchAssignList}
                             className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:underline"
