@@ -24,9 +24,26 @@ export async function POST(req: Request) {
                 break;
             case 'CLEAR_SESSION':
                 await logoutBot();
+                // Wait for a moment to ensure file locks are released
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
                 const authDir = path.join(process.cwd(), '.wwebjs_auth');
                 if (require('fs').existsSync(authDir)) {
-                    require('fs').rmSync(authDir, { recursive: true, force: true });
+                    try {
+                        require('fs').rmSync(authDir, { recursive: true, force: true });
+                    } catch (e) {
+                        console.error('Failed to remove auth directory (likely busy), continuing...', e);
+                        // Try one more time after another delay
+                        setTimeout(() => {
+                            try {
+                                if (require('fs').existsSync(authDir)) {
+                                    require('fs').rmSync(authDir, { recursive: true, force: true });
+                                }
+                            } catch (retryErr) {
+                                console.error('Retry remove failed:', retryErr);
+                            }
+                        }, 3000);
+                    }
                 }
                 break;
             case 'DELETE_AUTO_IMAGE':
