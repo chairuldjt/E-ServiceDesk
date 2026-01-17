@@ -131,8 +131,9 @@ export const initBot = () => {
 export const logoutBot = async () => {
     if (bot.client && bot.state.status === 'READY') {
         try {
-            console.log('Logging out form WhatsApp...');
-            await bot.client.logout();
+            console.log('Logging out from WhatsApp...');
+            // Use destroy() instead of logout() - it's the correct method in whatsapp-web.js
+            await bot.client.destroy();
         } catch (e) {
             console.error('Error logging out client', e);
         }
