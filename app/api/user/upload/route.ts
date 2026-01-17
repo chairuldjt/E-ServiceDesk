@@ -25,17 +25,20 @@ export async function POST(request: NextRequest) {
         const fileName = `profile-${payload.id}-${Date.now()}.${fileExtension}`;
 
         // Ensure upload directories exist and have correct permissions
+        // We ensure the entire path starting from 'public'
         const publicDir = join(process.cwd(), 'public');
         const uploadsDir = join(publicDir, 'uploads');
         const uploadDir = join(uploadsDir, 'profile');
 
-        const dirs = [uploadsDir, uploadDir];
+        const dirs = [publicDir, uploadsDir, uploadDir];
         for (const dir of dirs) {
-            if (!fs.existsSync(dir)) {
-                await mkdir(dir, { recursive: true });
-            }
-            // Always ensure 755 permissions for directories
-            try { await chmod(dir, 0o755); } catch (e) { }
+            try {
+                if (!fs.existsSync(dir)) {
+                    await mkdir(dir, { recursive: true });
+                }
+                // Force permission 755 (drwxr-xr-x) for Linux production
+                await chmod(dir, 0o755);
+            } catch (e) { }
         }
 
         const path = join(uploadDir, fileName);
@@ -52,16 +55,22 @@ export async function POST(request: NextRequest) {
         // Optional: Delete old image if exists
         const [oldUser]: any = await connection.execute('SELECT profile_image FROM users WHERE id = ?', [payload.id]);
         if (oldUser[0]?.profile_image) {
-            const oldPath = join(process.cwd(), 'public', oldUser[0].profile_image);
+            // Remove any query params if present for path matching
+            const oldRelativePath = oldUser[0].profile_image.split('?')[0];
+            const oldPath = join(publicDir, oldRelativePath);
             if (fs.existsSync(oldPath)) {
-                fs.unlinkSync(oldPath);
+                try { fs.unlinkSync(oldPath); } catch (e) { }
             }
         }
 
+        // Add a timestamp to the saved database URL to act as a cache-buster in the UI
+        const imageUrlWithCacheBuster = `${imageUrl}?t=${Date.now()}`;
+
         await connection.execute(
             'UPDATE users SET profile_image = ? WHERE id = ?',
-            [imageUrl, payload.id]
+            [imageUrlWithCacheBuster, payload.id]
         );
+
         connection.release();
 
         return NextResponse.json({
