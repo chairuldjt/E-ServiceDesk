@@ -107,6 +107,7 @@ function VerifyOrderContent() {
     const [assignList, setAssignList] = useState<any[]>([]);
     const [loadingAssign, setLoadingAssign] = useState(false);
     const [selectedTeknisi, setSelectedTeknisi] = useState<any>(null);
+    const [teknisiSearch, setTeknisiSearch] = useState('');
 
     useEffect(() => {
         fetchOrders(currentStatus);
@@ -961,8 +962,23 @@ function VerifyOrderContent() {
                             onClick={fetchAssignList}
                             className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:underline"
                         >
-                            🔄 Refresh
+                            🔄 Refresh List
                         </button>
+                    </div>
+
+                    <div className="relative group">
+                        <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                            <svg className="w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+                        <input
+                            type="text"
+                            placeholder="Cari nama teknisi..."
+                            value={teknisiSearch}
+                            onChange={(e) => setTeknisiSearch(e.target.value)}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-10 pr-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium text-sm"
+                        />
                     </div>
                     {loadingAssign ? (
                         <div className="py-20 flex flex-col items-center justify-center gap-4">
@@ -983,29 +999,31 @@ function VerifyOrderContent() {
                     ) : (
                         <>
                             <div className="space-y-2 max-h-[400px] overflow-y-auto px-1 custom-scrollbar">
-                                {assignList.map(tek => (
-                                    <button
-                                        key={tek.teknisi_id}
-                                        onClick={() => setSelectedTeknisi(tek)}
-                                        className={`w-full p-5 rounded-2xl border-2 transition-all flex items-center justify-between group ${selectedTeknisi?.teknisi_id === tek.teknisi_id
-                                            ? 'border-blue-600 bg-blue-50/50 shadow-md'
-                                            : 'border-slate-100 hover:border-blue-200'
-                                            }`}
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl flex items-center justify-center font-black text-slate-400 group-hover:from-blue-500 group-hover:to-indigo-600 group-hover:text-white transition-all">
-                                                {(tek.nama_lengkap || 'T').charAt(0)}
+                                {assignList
+                                    .filter(t => (t.nama_lengkap || '').toLowerCase().includes(teknisiSearch.toLowerCase()))
+                                    .map(tek => (
+                                        <button
+                                            key={tek.teknisi_id}
+                                            onClick={() => setSelectedTeknisi(tek)}
+                                            className={`w-full p-5 rounded-2xl border-2 transition-all flex items-center justify-between group ${selectedTeknisi?.teknisi_id === tek.teknisi_id
+                                                ? 'border-blue-600 bg-blue-50/50 shadow-md'
+                                                : 'border-slate-100 hover:border-blue-200'
+                                                }`}
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-10 h-10 bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl flex items-center justify-center font-black text-slate-400 group-hover:from-blue-500 group-hover:to-indigo-600 group-hover:text-white transition-all">
+                                                    {(tek.nama_lengkap || 'T').charAt(0)}
+                                                </div>
+                                                <div className="text-left">
+                                                    <p className="font-black text-slate-800 text-sm">{tek.nama_lengkap || 'Unknown'}</p>
+                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{tek.nama_bidang || '-'}</p>
+                                                </div>
                                             </div>
-                                            <div className="text-left">
-                                                <p className="font-black text-slate-800 text-sm">{tek.nama_lengkap || 'Unknown'}</p>
-                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{tek.nama_bidang || '-'}</p>
-                                            </div>
-                                        </div>
-                                        {selectedTeknisi?.teknisi_id === tek.teknisi_id && (
-                                            <span className="text-blue-600 text-xl">✅</span>
-                                        )}
-                                    </button>
-                                ))}
+                                            {selectedTeknisi?.teknisi_id === tek.teknisi_id && (
+                                                <span className="text-blue-600 text-xl">✅</span>
+                                            )}
+                                        </button>
+                                    ))}
                             </div>
 
                             <div className="flex flex-col gap-3 pt-4">
