@@ -328,8 +328,8 @@ function VerifyOrderContent() {
                                             </div>
                                         </td>
                                         <td className="px-8 py-5">
-                                            <p className="text-sm text-slate-600 line-clamp-1 max-w-[200px]">
-                                                {order.catatan}
+                                            <p className="text-sm text-slate-600 line-clamp-2 max-w-md leading-relaxed italic">
+                                                "{order.catatan}"
                                             </p>
                                         </td>
                                         <td className="px-8 py-5">
@@ -474,9 +474,11 @@ function VerifyOrderContent() {
                                                     <p className="text-[10px] font-bold text-slate-400 uppercase">Nama dan Lokasi</p>
                                                     <p className="font-bold text-slate-700">{selectedOrder.order_by || 'Unknown'} - {selectedOrder.location_desc}</p>
                                                 </div>
-                                                <div>
-                                                    <p className="text-[10px] font-bold text-slate-400 uppercase">Isi Keluhan</p>
-                                                    <p className="text-sm text-slate-600 italic leading-relaxed">"{selectedOrder.catatan}"</p>
+                                                <div className="bg-white/50 p-3 rounded-xl border border-blue-100">
+                                                    <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Isi Keluhan</p>
+                                                    <p className="text-sm text-slate-700 font-medium leading-relaxed">
+                                                        {selectedOrder.catatan || 'Tidak ada catatan keluhan.'}
+                                                    </p>
                                                 </div>
                                             </div>
                                         </div>
@@ -484,25 +486,32 @@ function VerifyOrderContent() {
 
                                     {/* Right Column: Technical Details */}
                                     <div className="space-y-6">
-                                        <div className="bg-emerald-50 p-6 rounded-3xl border border-emerald-100">
-                                            <h4 className="text-xs font-black text-emerald-600 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                                🛠️ Hasil Penanganan
+                                        <div className={`${(currentStatus === 15 || currentStatus === 30) ? 'bg-emerald-50 border-emerald-100' : 'bg-amber-50 border-amber-100'} p-6 rounded-3xl border`}>
+                                            <h4 className={`text-xs font-black ${(currentStatus === 15 || currentStatus === 30) ? 'text-emerald-600' : 'text-amber-600'} uppercase tracking-widest mb-4 flex items-center gap-2`}>
+                                                {(currentStatus === 15 || currentStatus === 30) ? '🛠️ Hasil Penanganan' : '🛠️ Progres Penanganan'}
                                             </h4>
                                             <div className="space-y-4">
                                                 <div className="flex justify-between">
                                                     <div>
-                                                        <p className="text-[10px] font-bold text-emerald-600/50 uppercase">Kunjungan</p>
-                                                        <p className="text-xs font-bold text-slate-700">{selectedOrder.tgl_kunjungan}</p>
+                                                        <p className={`text-[10px] font-bold ${(currentStatus === 15 || currentStatus === 30) ? 'text-emerald-600/50' : 'text-amber-600/50'} uppercase`}>Kunjungan</p>
+                                                        <p className="text-xs font-bold text-slate-700">{selectedOrder.tgl_kunjungan || '-'}</p>
                                                     </div>
-                                                    <div className="text-right">
-                                                        <p className="text-[10px] font-bold text-emerald-600/50 uppercase">Selesai</p>
-                                                        <p className="text-xs font-bold text-slate-700">{selectedOrder.tgl_selesai}</p>
-                                                    </div>
+                                                    {(currentStatus === 15 || currentStatus === 30) && (
+                                                        <div className="text-right">
+                                                            <p className="text-[10px] font-bold text-emerald-600/50 uppercase">Selesai</p>
+                                                            <p className="text-xs font-bold text-slate-700">{selectedOrder.tgl_selesai || '-'}</p>
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 <div>
-                                                    <p className="text-[10px] font-bold text-emerald-600/50 uppercase">Keterangan Penyelesaian</p>
-                                                    <p className="text-sm font-bold text-emerald-900 bg-white/60 p-3 rounded-xl border border-emerald-100 mt-2">
-                                                        {selectedOrder.ket_penyelesaian || 'Tidak ada keterangan'}
+                                                    <p className={`text-[10px] font-bold ${(currentStatus === 15 || currentStatus === 30) ? 'text-emerald-600/50' : 'text-amber-600/50'} uppercase`}>
+                                                        {currentStatus === 13 ? 'Keterangan Pending' : 'Keterangan Penyelesaian'}
+                                                    </p>
+                                                    <p className={`text-sm font-bold ${(currentStatus === 15 || currentStatus === 30) ? 'text-emerald-900 bg-white/60 border-emerald-100' : 'text-amber-900 bg-white/60 border-amber-100'} p-3 rounded-xl border mt-2`}>
+                                                        {currentStatus === 13
+                                                            ? (selectedOrder.ket_pending || 'Tidak ada keterangan pending')
+                                                            : (selectedOrder.ket_penyelesaian || ((currentStatus === 15 || currentStatus === 30) ? 'Tidak ada keterangan' : 'Masih dalam proses penanganan...'))
+                                                        }
                                                     </p>
                                                 </div>
                                             </div>
