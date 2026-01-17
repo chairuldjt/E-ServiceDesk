@@ -6,10 +6,10 @@ import { contentType } from 'mime-types';
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { path: string[] } }
+    { params }: { params: Promise<{ path: string[] }> }
 ) {
     try {
-        const pathParts = await params.path;
+        const { path: pathParts } = await params;
         const filePath = join(process.cwd(), 'uploads', ...pathParts);
 
         if (!existsSync(filePath)) {
