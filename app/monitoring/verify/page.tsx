@@ -101,6 +101,12 @@ function VerifyOrderContent() {
         fetchSummary();
     }, [currentStatus]);
 
+    useEffect(() => {
+        fetchSummary();
+        const interval = setInterval(fetchSummary, 5000);
+        return () => clearInterval(interval);
+    }, []);
+
     const fetchSummary = async () => {
         setRefreshingSummary(true);
         try {
@@ -230,63 +236,75 @@ function VerifyOrderContent() {
                         🛡️
                     </div>
                     <div>
-                        <div className="flex items-center gap-3">
-                            <h1 className="text-3xl font-black text-slate-800">Order Management</h1>
-                            <button
-                                onClick={fetchSummary}
-                                disabled={refreshingSummary}
-                                className={`p-2 rounded-xl bg-slate-100 text-slate-500 hover:text-blue-600 hover:bg-white transition-all active:scale-90 ${refreshingSummary ? 'animate-spin' : ''}`}
-                                title="Refresh Totals"
-                            >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                </svg>
-                            </button>
-                        </div>
+                        <h1 className="text-3xl font-black text-slate-800">Order Management</h1>
                         <p className="text-slate-500 font-medium mt-1">Pantau dan kelola tiket dari sistem eksternal</p>
                     </div>
                 </div>
 
-                <div className="relative group w-full md:w-96">
-                    <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                        <svg className="w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
+                <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
+                    <div className="text-[10px] bg-slate-100 text-slate-400 px-3 py-1.5 rounded-full font-bold uppercase tracking-widest animate-pulse flex items-center gap-2">
+                        <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                        Live Summary (5s)
                     </div>
-                    <input
-                        type="text"
-                        placeholder="Cari Order ID, No Order, atau Catatan..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-white border border-slate-200 rounded-2xl py-3.5 pl-12 pr-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all shadow-sm font-medium"
-                    />
+                    <div className="relative group w-full md:w-80">
+                        <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                            <svg className="w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+                        <input
+                            type="text"
+                            placeholder="Cari Order ID, No Order, atau Catatan..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full bg-white border border-slate-200 rounded-2xl py-3.5 pl-12 pr-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all shadow-sm font-medium"
+                        />
+                    </div>
                 </div>
             </div>
 
-            {/* Status Tabs */}
-            <div className="bg-white/60 backdrop-blur-sm p-3 rounded-[2rem] border border-white/20 shadow-lg overflow-x-auto">
-                <div className="flex gap-2 min-w-max">
-                    {STATUS_LEVELS.map((status) => (
-                        <button
-                            key={status.code}
-                            onClick={() => setCurrentStatus(status.code)}
-                            className={`flex items-center gap-3 px-6 py-3 rounded-2xl font-bold transition-all duration-300 ${currentStatus === status.code
-                                ? 'bg-white text-blue-600 shadow-md scale-105'
-                                : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'
-                                }`}
-                        >
-                            <span className="text-xl">{status.icon}</span>
-                            <div className="flex flex-col items-start leading-tight">
-                                <span className="text-sm">{status.label}</span>
-                                {orderSummary && (
-                                    <span className={`text-[10px] ${currentStatus === status.code ? 'text-blue-400' : 'text-slate-300'}`}>
-                                        {(orderSummary as any)[status.key] || 0} Tickets
-                                    </span>
-                                )}
+            {/* Status Summary Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 px-1">
+                {STATUS_LEVELS.map((status) => (
+                    <button
+                        key={status.code}
+                        onClick={() => {
+                            setCurrentStatus(status.code);
+                            setCurrentPage(1);
+                        }}
+                        className={`p-6 rounded-[2.5rem] border transition-all duration-500 relative overflow-hidden group ${currentStatus === status.code
+                            ? 'bg-gradient-to-br from-blue-700 to-indigo-800 text-white shadow-2xl shadow-blue-200 scale-105 z-10'
+                            : 'bg-white/80 backdrop-blur-sm border-white/20 text-slate-400 hover:shadow-xl hover:-translate-y-1'
+                            }`}
+                    >
+                        {/* Decorative Background Glow */}
+                        <div className={`absolute -top-4 -right-4 w-24 h-24 rounded-full blur-2xl opacity-10 group-hover:opacity-25 transition-opacity ${currentStatus === status.code ? 'bg-white' : 'bg-blue-600'
+                            }`}></div>
+
+                        <div className="flex flex-col items-center text-center relative z-10 h-full justify-between">
+                            <span className="text-2xl mb-3 opacity-60 group-hover:scale-110 transition-transform">{status.icon}</span>
+                            <div className="flex flex-col items-center gap-1">
+                                <span className={`text-5xl font-black ${currentStatus === status.code ? 'text-white' : 'text-slate-800'
+                                    }`}>
+                                    {orderSummary ? (orderSummary as any)[status.key] : '...'}
+                                </span>
+                                <span className={`text-[10px] font-black uppercase tracking-[0.2em] transform transition-transform ${currentStatus === status.code ? 'text-blue-100' : 'text-slate-400'
+                                    }`}>
+                                    {status.label}
+                                </span>
                             </div>
-                        </button>
-                    ))}
-                </div>
+
+                            {currentStatus === status.code ? (
+                                <div className="mt-4 w-6 h-1 bg-white/40 rounded-full"></div>
+                            ) : (
+                                <div className="mt-4 w-6 h-1 bg-transparent rounded-full opacity-0"></div>
+                            )}
+                        </div>
+                    </button>
+                ))}
             </div>
 
             {configError && (
@@ -306,21 +324,25 @@ function VerifyOrderContent() {
             )}
 
             {/* List Section */}
-            <div className="bg-white rounded-[2rem] border border-slate-100 shadow-2xl overflow-hidden min-h-[500px]">
-                <div className="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                        <span className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest ${currentStatus === 15 ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}`}>
-                            {filteredOrders.length} {STATUS_LEVELS.find(s => s.code === currentStatus)?.label} Tickets
+            <div className="bg-white/80 backdrop-blur-md rounded-[2.5rem] border border-white/20 shadow-2xl overflow-hidden min-h-[500px]">
+                <div className="p-8 bg-slate-50/50 border-b border-slate-100 flex justify-between items-center">
+                    <div className="flex items-center gap-4">
+                        <div className={`w-3 h-3 rounded-full animate-pulse ${currentStatus === 15 ? 'bg-emerald-500' : 'bg-blue-500'}`}></div>
+                        <h3 className="text-xl font-bold text-slate-800">
+                            {STATUS_LEVELS.find(s => s.code === currentStatus)?.label} Tickets
+                        </h3>
+                        <span className="bg-slate-200/50 text-slate-500 px-3 py-1 rounded-full text-xs font-black">
+                            {filteredOrders.length}
                         </span>
                         {currentStatus === 30 && (
-                            <span className="text-[10px] font-bold text-amber-600 italic">
+                            <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-3 py-1 rounded-full border border-amber-100">
                                 * Data sinkronisasi ribuan
                             </span>
                         )}
                     </div>
                     <button
                         onClick={() => fetchOrders(currentStatus)}
-                        className="text-slate-400 hover:text-blue-600 p-2 rounded-xl hover:bg-white transition-all active:scale-90"
+                        className="p-3 bg-white text-slate-400 hover:text-blue-600 rounded-2xl border border-slate-100 shadow-sm transition-all hover:shadow-md active:scale-90"
                     >
                         <svg className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -331,76 +353,84 @@ function VerifyOrderContent() {
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
                         <thead>
-                            <tr className="bg-slate-50/50">
-                                <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">No Order</th>
-                                <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Waktu</th>
-                                <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nama dan Lokasi</th>
-                                <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Catatan Keluhan</th>
-                                <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Teknisi</th>
-                                <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Aksi</th>
+                            <tr className="bg-slate-50/30">
+                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">No Order</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Waktu</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nama dan Lokasi</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Catatan Keluhan</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Teknisi</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-50">
+                        <tbody className="divide-y divide-slate-100">
                             {loading ? (
                                 Array.from({ length: 5 }).map((_, i) => (
                                     <tr key={i} className="animate-pulse">
-                                        <td colSpan={6} className="px-8 py-6">
-                                            <div className="h-6 bg-slate-100 rounded-lg w-full"></div>
+                                        <td colSpan={6} className="px-8 py-8">
+                                            <div className="h-4 bg-slate-100 rounded-full w-full opacity-50"></div>
                                         </td>
                                     </tr>
                                 ))
                             ) : paginatedOrders.length > 0 ? (
                                 paginatedOrders.map((order) => (
-                                    <tr key={order.order_id} className="hover:bg-blue-50/30 transition-colors group">
-                                        <td className="px-8 py-5">
-                                            <span className="font-black text-slate-800 bg-slate-100 px-3 py-1.5 rounded-lg text-sm border border-slate-200">
+                                    <tr key={order.order_id} className="hover:bg-blue-50/20 transition-colors group">
+                                        <td className="px-8 py-6">
+                                            <span className="font-black text-slate-800 bg-white px-4 py-2 rounded-xl text-sm border border-slate-100 shadow-sm group-hover:border-blue-200 transition-colors">
                                                 {order.order_no}
                                             </span>
                                         </td>
-                                        <td className="px-8 py-5 text-sm font-medium text-slate-500">
+                                        <td className="px-8 py-6 text-sm font-bold text-slate-500">
                                             {order.create_date}
                                         </td>
-                                        <td className="px-8 py-5">
+                                        <td className="px-8 py-6">
                                             <div className="flex flex-col">
-                                                <span className="font-bold text-slate-700">{order.order_by}</span>
-                                                <span className="text-xs text-slate-400 flex items-center gap-1">
-                                                    📍 {order.location_desc}
+                                                <span className="font-black text-slate-700">{order.order_by}</span>
+                                                <span className="text-xs text-slate-400 font-bold flex items-center gap-1.5 mt-1">
+                                                    <span className="text-blue-500">📍</span> {order.location_desc}
                                                 </span>
                                             </div>
                                         </td>
-                                        <td className="px-8 py-5">
-                                            <p className="text-sm text-slate-600 line-clamp-2 max-w-md leading-relaxed italic">
+                                        <td className="px-8 py-6">
+                                            <p className="text-sm text-slate-600 line-clamp-2 max-w-md leading-relaxed italic font-medium bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100 group-hover:bg-white transition-colors">
                                                 "{order.catatan}"
                                             </p>
                                         </td>
-                                        <td className="px-8 py-5">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">
+                                        <td className="px-8 py-6">
+                                            <div className="flex items-center gap-3 bg-white px-3 py-2 rounded-2xl border border-slate-100 shadow-sm group-hover:border-blue-100 transition-all">
+                                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center text-sm font-black shadow-md">
                                                     {order.teknisi.charAt(0)}
                                                 </div>
-                                                <span className="text-sm font-semibold text-slate-700">
+                                                <span className="text-sm font-black text-slate-700">
                                                     {order.teknisi.replace(/\|/g, '')}
                                                 </span>
                                             </div>
                                         </td>
-                                        <td className="px-8 py-5 text-right">
+                                        <td className="px-8 py-6 text-right">
                                             <button
                                                 onClick={() => handleViewDetail(order.order_id)}
-                                                className={`${currentStatus === 15 ? 'bg-blue-600' : 'bg-slate-700'} text-white px-5 py-2 rounded-xl text-sm font-bold hover:opacity-90 shadow-md transition-all active:scale-95 flex items-center gap-2 ml-auto`}
+                                                className={`${currentStatus === 15 ? 'bg-blue-600 shadow-blue-200' : 'bg-slate-800 shadow-slate-200'
+                                                    } text-white px-6 py-3 rounded-2xl text-sm font-black hover:opacity-90 shadow-xl transition-all active:scale-95 flex items-center gap-3 ml-auto`}
                                             >
-                                                {currentStatus === 15 ? '🔍 Verifikasi' : '👁️ View Detail'}
+                                                {currentStatus === 15 ? (
+                                                    <><span className="text-lg">🛡️</span> Verifikasi</>
+                                                ) : (
+                                                    <><span className="text-lg">👁️</span> Detail</>
+                                                )}
                                             </button>
                                         </td>
                                     </tr>
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={6} className="px-8 py-20 text-center text-slate-400 font-medium">
-                                        <div className="flex flex-col items-center gap-4">
-                                            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center text-4xl">
+                                    <td colSpan={6} className="px-8 py-32 text-center text-slate-400 font-medium">
+                                        <div className="flex flex-col items-center gap-6">
+                                            <div className="w-32 h-32 bg-slate-50/50 rounded-full flex items-center justify-center text-6xl shadow-inner animate-bounce duration-[3s]">
                                                 {currentStatus === 30 ? '📚' : '☕'}
                                             </div>
-                                            <p>Tidak ada order dengan status {STATUS_LEVELS.find(s => s.code === currentStatus)?.label}.</p>
+                                            <div>
+                                                <p className="text-xl font-black text-slate-300">Belum ada tiket</p>
+                                                <p className="text-sm text-slate-400 mt-2">Status {STATUS_LEVELS.find(s => s.code === currentStatus)?.label} saat ini sedang kosong.</p>
+                                            </div>
                                         </div>
                                     </td>
                                 </tr>
@@ -411,20 +441,19 @@ function VerifyOrderContent() {
 
                 {/* Pagination Controls */}
                 {totalPages > 1 && (
-                    <div className="p-6 bg-slate-50 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
-                        <p className="text-sm text-slate-500 font-medium">
-                            Showing <span className="text-slate-900 font-bold">{Math.min(filteredOrders.length, (currentPage - 1) * ITEMS_PER_PAGE + 1)}-{Math.min(filteredOrders.length, currentPage * ITEMS_PER_PAGE)}</span> of <span className="text-slate-900 font-bold">{filteredOrders.length}</span> tickets
+                    <div className="p-8 bg-slate-50/50 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6">
+                        <p className="text-sm text-slate-400 font-black tracking-widest uppercase">
+                            Showing <span className="text-slate-900">{Math.min(filteredOrders.length, (currentPage - 1) * ITEMS_PER_PAGE + 1)}-{Math.min(filteredOrders.length, currentPage * ITEMS_PER_PAGE)}</span> of <span className="text-slate-900">{filteredOrders.length}</span> tickets
                         </p>
-                        <div className="flex gap-2">
+                        <div className="flex gap-3">
                             <button
                                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                                 disabled={currentPage === 1}
-                                className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 disabled:opacity-50 transition-all"
+                                className="px-6 py-3 rounded-2xl bg-white border border-slate-200 text-slate-600 font-black hover:bg-slate-50 disabled:opacity-50 transition-all shadow-sm hover:shadow-md active:scale-95"
                             >
-                                Previous
+                                PREV
                             </button>
                             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                                // Simple pagination logic for first 5 pages or surrounding current page
                                 let pageNum = i + 1;
                                 if (totalPages > 5 && currentPage > 3) {
                                     pageNum = Math.min(totalPages - 2, currentPage - 2) + i;
@@ -435,9 +464,9 @@ function VerifyOrderContent() {
                                     <button
                                         key={pageNum}
                                         onClick={() => setCurrentPage(pageNum)}
-                                        className={`w-10 h-10 rounded-xl font-bold transition-all ${currentPage === pageNum
-                                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-100'
-                                            : 'bg-white border border-slate-200 text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+                                        className={`w-12 h-12 rounded-2xl font-black transition-all ${currentPage === pageNum
+                                            ? 'bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-xl scale-110'
+                                            : 'bg-white border border-slate-200 text-slate-400 hover:text-slate-600 hover:bg-slate-50 shadow-sm'
                                             }`}
                                     >
                                         {pageNum}
@@ -447,9 +476,9 @@ function VerifyOrderContent() {
                             <button
                                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                                 disabled={currentPage === totalPages}
-                                className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 disabled:opacity-50 transition-all"
+                                className="px-6 py-3 rounded-2xl bg-white border border-slate-200 text-slate-600 font-black hover:bg-slate-50 disabled:opacity-50 transition-all shadow-sm hover:shadow-md active:scale-95"
                             >
-                                Next
+                                NEXT
                             </button>
                         </div>
                     </div>
@@ -458,38 +487,44 @@ function VerifyOrderContent() {
 
             {/* Detail Modal */}
             {isDetailModalOpen && (
-                <div className="fixed inset-0 backdrop-blur-md bg-slate-900/40 flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
-                    <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-3xl overflow-hidden animate-in zoom-in-95 duration-300">
-                        <div className="bg-gradient-to-r from-blue-700 to-indigo-800 p-8 text-white relative">
-                            <div className="flex justify-between items-start">
+                <div className="fixed inset-0 backdrop-blur-md bg-slate-900/60 flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+                    <div className="bg-white rounded-[3rem] shadow-2xl w-full max-w-4xl overflow-hidden animate-in zoom-in-95 duration-300 border border-white/20">
+                        <div className="bg-gradient-to-r from-blue-800 via-indigo-900 to-slate-900 p-10 text-white relative">
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
+                            <div className="flex justify-between items-start relative z-10">
                                 <div>
-                                    <span className="bg-white/20 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-white/20">
-                                        Detail Tiket
+                                    <span className="bg-white/10 text-[10px] font-black uppercase tracking-[0.3em] px-4 py-1.5 rounded-full border border-white/20 flex items-center gap-2 w-fit">
+                                        <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse"></span>
+                                        Order Details
                                     </span>
-                                    <h2 className="text-3xl font-black mt-3">#{selectedOrder?.order_no || '...'}</h2>
+                                    <h2 className="text-4xl font-black mt-4 flex items-center gap-3">
+                                        #{selectedOrder?.order_no || '...'}
+                                        <span className="text-white/30 font-light">/</span>
+                                        <span className="text-lg font-bold text-blue-300 tracking-wider">TICKET</span>
+                                    </h2>
                                 </div>
                                 <button
                                     onClick={() => setIsDetailModalOpen(false)}
-                                    className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-all text-2xl"
+                                    className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center hover:bg-white/20 transition-all text-2xl border border-white/10 group active:scale-90"
                                 >
-                                    &times;
+                                    <span className="group-hover:rotate-90 transition-transform">&times;</span>
                                 </button>
                             </div>
 
                             {/* Fast Stats Row */}
-                            <div className="grid grid-cols-3 gap-4 mt-8">
-                                <div className="bg-white/10 p-4 rounded-2xl border border-white/10">
-                                    <p className="text-[10px] font-bold text-white/50 uppercase tracking-wider">Kategori</p>
-                                    <p className="font-bold text-sm truncate">{selectedOrder?.service_name || '-'}</p>
+                            <div className="grid grid-cols-3 gap-6 mt-10">
+                                <div className="bg-white/5 p-5 rounded-3xl border border-white/10 backdrop-blur-sm">
+                                    <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-2">Kategori</p>
+                                    <p className="font-black text-sm truncate">{selectedOrder?.service_name || '-'}</p>
                                 </div>
-                                <div className="bg-white/10 p-4 rounded-2xl border border-white/10">
-                                    <p className="text-[10px] font-bold text-white/50 uppercase tracking-wider">Teknisi</p>
-                                    <p className="font-bold text-sm truncate">{selectedOrder?.nama_teknisi || '-'}</p>
+                                <div className="bg-white/5 p-5 rounded-3xl border border-white/10 backdrop-blur-sm">
+                                    <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-2">Teknisi</p>
+                                    <p className="font-black text-sm truncate">{selectedOrder?.nama_teknisi || '-'}</p>
                                 </div>
-                                <div className="bg-white/10 p-4 rounded-2xl border border-white/10">
-                                    <p className="text-[10px] font-bold text-white/50 uppercase tracking-wider">Status</p>
-                                    <p className="font-bold text-sm flex items-center gap-1">
-                                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                <div className="bg-white/5 p-5 rounded-3xl border border-white/10 backdrop-blur-sm">
+                                    <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-2">Status</p>
+                                    <p className="font-black text-sm flex items-center gap-2">
+                                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-lg shadow-emerald-500/50"></span>
                                         {selectedOrder?.status_desc || '-'}
                                     </p>
                                 </div>
@@ -497,27 +532,35 @@ function VerifyOrderContent() {
                         </div>
 
                         {fetchingDetail ? (
-                            <div className="p-20 flex flex-col items-center justify-center gap-4">
-                                <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                                <p className="font-bold text-slate-400">Memuat detail order...</p>
+                            <div className="p-32 flex flex-col items-center justify-center gap-6 text-center">
+                                <div className="relative">
+                                    <div className="w-16 h-16 border-4 border-slate-100 rounded-full animate-pulse"></div>
+                                    <div className="absolute inset-0 w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                                </div>
+                                <p className="font-black text-slate-300 uppercase tracking-widest text-xs">Authenticating Order History...</p>
                             </div>
                         ) : selectedOrder && (
-                            <div className="p-8 lg:p-10 max-h-[70vh] overflow-y-auto custom-scrollbar">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="p-10 lg:p-12 max-h-[60vh] overflow-y-auto custom-scrollbar bg-slate-50/30">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                                     {/* Left Column: Reports */}
-                                    <div className="space-y-6">
-                                        <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100">
-                                            <h4 className="text-xs font-black text-blue-600 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                                📝 Laporan Keluhan
+                                    <div className="space-y-8">
+                                        <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+                                            <h4 className="text-xs font-black text-blue-600 uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
+                                                <span className="w-8 h-8 bg-blue-50 flex items-center justify-center rounded-xl">📝</span>
+                                                Laporan Keluhan
                                             </h4>
-                                            <div className="space-y-4">
+                                            <div className="space-y-6">
                                                 <div>
-                                                    <p className="text-[10px] font-bold text-slate-400 uppercase">Nama dan Lokasi</p>
-                                                    <p className="font-bold text-slate-700">{selectedOrder.order_by || 'Unknown'} - {selectedOrder.location_desc}</p>
+                                                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1.5">User & Lokasi</p>
+                                                    <p className="font-black text-slate-800 text-lg">{selectedOrder.order_by || 'Unknown'}</p>
+                                                    <p className="text-sm font-bold text-slate-400 flex items-center gap-2">
+                                                        <span className="text-blue-500">📍</span> {selectedOrder.location_desc}
+                                                    </p>
                                                 </div>
-                                                <div className="bg-white/50 p-3 rounded-xl border border-blue-100">
-                                                    <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Isi Keluhan</p>
-                                                    <p className="text-sm text-slate-700 font-medium leading-relaxed">
+                                                <div className="bg-slate-50 p-6 rounded-[2rem] border border-blue-100/50 relative">
+                                                    <div className="absolute top-4 right-6 text-blue-100 text-4xl font-serif">"</div>
+                                                    <p className="text-[10px] font-black text-blue-300 uppercase tracking-widest mb-2">Deskripsi Tiket</p>
+                                                    <p className="text-sm text-slate-700 font-bold leading-relaxed italic">
                                                         {selectedOrder.catatan || 'Tidak ada catatan keluhan.'}
                                                     </p>
                                                 </div>
@@ -526,112 +569,126 @@ function VerifyOrderContent() {
                                     </div>
 
                                     {/* Right Column: Technical Details */}
-                                    <div className="space-y-6">
-                                        <div className={`${(currentStatus === 15 || currentStatus === 30) ? 'bg-emerald-50 border-emerald-100' : 'bg-amber-50 border-amber-100'} p-6 rounded-3xl border`}>
-                                            <h4 className={`text-xs font-black ${(currentStatus === 15 || currentStatus === 30) ? 'text-emerald-600' : 'text-amber-600'} uppercase tracking-widest mb-4 flex items-center gap-2`}>
-                                                {(currentStatus === 15 || currentStatus === 30) ? '🛠️ Hasil Penanganan' : '🛠️ Progres Penanganan'}
+                                    <div className="space-y-8">
+                                        <div className={`${(currentStatus === 15 || currentStatus === 30) ? 'bg-white border-emerald-100 shadow-emerald-100/50' : 'bg-white border-amber-100 shadow-amber-100/50'} p-8 rounded-[2.5rem] border shadow-xl`}>
+                                            <h4 className={`text-xs font-black ${(currentStatus === 15 || currentStatus === 30) ? 'text-emerald-600' : 'text-amber-600'} uppercase tracking-[0.2em] mb-6 flex items-center gap-3`}>
+                                                <span className={`w-8 h-8 ${(currentStatus === 15 || currentStatus === 30) ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'} flex items-center justify-center rounded-xl`}>🛠️</span>
+                                                {(currentStatus === 15 || currentStatus === 30) ? 'Hasil Penanganan' : 'Progres Penanganan'}
                                             </h4>
-                                            <div className="space-y-4">
-                                                <div className="flex justify-between">
+                                            <div className="space-y-6">
+                                                <div className="flex justify-between items-center bg-slate-50/50 p-4 rounded-2xl border border-slate-50">
                                                     <div>
-                                                        <p className={`text-[10px] font-bold ${(currentStatus === 15 || currentStatus === 30) ? 'text-emerald-600/50' : 'text-amber-600/50'} uppercase`}>Kunjungan</p>
-                                                        <p className="text-xs font-bold text-slate-700">{selectedOrder.tgl_kunjungan || '-'}</p>
+                                                        <p className={`text-[10px] font-black ${(currentStatus === 15 || currentStatus === 30) ? 'text-emerald-300' : 'text-amber-300'} uppercase tracking-widest mb-1`}>Kunjungan</p>
+                                                        <p className="text-sm font-black text-slate-700">{selectedOrder.tgl_kunjungan || '-'}</p>
                                                     </div>
                                                     {(currentStatus === 15 || currentStatus === 30) && (
-                                                        <div className="text-right">
-                                                            <p className="text-[10px] font-bold text-emerald-600/50 uppercase">Selesai</p>
-                                                            <p className="text-xs font-bold text-slate-700">{selectedOrder.tgl_selesai || '-'}</p>
+                                                        <div className="text-right border-l border-slate-200 pl-6">
+                                                            <p className="text-[10px] font-black text-emerald-300 uppercase tracking-widest mb-1">Selesai</p>
+                                                            <p className="text-sm font-black text-slate-700">{selectedOrder.tgl_selesai || '-'}</p>
                                                         </div>
                                                     )}
                                                 </div>
                                                 <div>
-                                                    <p className={`text-[10px] font-bold ${(currentStatus === 15 || currentStatus === 30) ? 'text-emerald-600/50' : 'text-amber-600/50'} uppercase`}>
-                                                        {currentStatus === 13 ? 'Keterangan Pending' : 'Keterangan Penyelesaian'}
+                                                    <p className={`text-[10px] font-black ${(currentStatus === 15 || currentStatus === 30) ? 'text-emerald-300' : 'text-amber-300'} uppercase tracking-widest mb-2`}>
+                                                        {currentStatus === 13 ? 'Keterangan Pending' : 'Update Deskripsi'}
                                                     </p>
-                                                    <p className={`text-sm font-bold ${(currentStatus === 15 || currentStatus === 30) ? 'text-emerald-900 bg-white/60 border-emerald-100' : 'text-amber-900 bg-white/60 border-amber-100'} p-3 rounded-xl border mt-2`}>
+                                                    <div className={`text-sm font-bold ${(currentStatus === 15 || currentStatus === 30) ? 'text-emerald-900 bg-emerald-50/30 border-emerald-100' : 'text-amber-900 bg-amber-50/30 border-amber-100'} p-6 rounded-[2rem] border min-h-[100px]`}>
                                                         {currentStatus === 13
                                                             ? (selectedOrder.ket_pending || 'Tidak ada keterangan pending')
                                                             : (currentStatus === 10 || currentStatus === 11 || currentStatus === 12)
-                                                                ? (orderHistory[0]?.status_note || 'Belum ada update penanganan terbaru.')
-                                                                : (selectedOrder.ket_penyelesaian || 'Tidak ada keterangan')
+                                                                ? (orderHistory[0]?.status_note || 'Menunggu update teknisi di lapangan...')
+                                                                : (selectedOrder.ket_penyelesaian || 'Penyelesaian telah dikonfirmasi.')
                                                         }
-                                                    </p>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
 
                                     {/* History/Log Section */}
-                                    <div className="md:col-span-2 bg-slate-50 p-6 rounded-3xl border border-slate-100">
-                                        <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
-                                            📜 Riwayat Status / Log Tiket
+                                    <div className="md:col-span-2 bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden">
+                                        <h4 className="text-xs font-black text-slate-400 uppercase tracking-[0.3em] mb-10 flex items-center gap-4">
+                                            <span className="w-10 h-10 bg-slate-50 flex items-center justify-center rounded-2xl">📜</span>
+                                            Timeline Tiket / Audit Log
                                         </h4>
-                                        <div className="relative space-y-8 before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
+                                        <div className="relative space-y-10 pl-4 before:absolute before:inset-y-0 before:left-9 before:w-0.5 before:bg-gradient-to-b before:from-blue-100 before:via-blue-500 before:to-transparent">
                                             {orderHistory.length > 0 ? orderHistory.map((log, idx) => (
-                                                <div key={idx} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                                                    <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-100 group-[.is-active]:bg-blue-600 text-slate-300 group-[.is-active]:text-emerald-50 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 transition-colors duration-500">
-                                                        <div className={`w-2 h-2 rounded-full ${idx === 0 ? 'bg-white animate-pulse' : 'bg-slate-400'}`}></div>
+                                                <div key={idx} className="relative flex gap-8 group">
+                                                    <div className={`relative z-10 w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-125 duration-500 ${idx === 0
+                                                        ? 'bg-blue-600 border-4 border-blue-100 text-white'
+                                                        : 'bg-white border-2 border-slate-100 text-slate-300'
+                                                        }`}>
+                                                        <div className={`w-2 h-2 rounded-full ${idx === 0 ? 'bg-white animate-ping' : 'bg-slate-300'}`}></div>
                                                     </div>
-                                                    <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white p-4 rounded-2xl border border-slate-100 shadow-sm transition-all hover:shadow-md">
-                                                        <div className="flex items-center justify-between space-x-2 mb-1">
-                                                            <div className="font-bold text-slate-800">{log.status_desc}</div>
-                                                            <time className="font-medium text-xs text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full">{log.status_date}</time>
+                                                    <div className="flex-1 bg-slate-50/80 p-6 rounded-[2rem] border border-slate-100 transition-all hover:bg-white hover:shadow-xl hover:border-blue-100">
+                                                        <div className="flex flex-wrap items-center justify-between gap-4 mb-3">
+                                                            <div className="font-black text-slate-800 tracking-tight uppercase">{log.status_desc}</div>
+                                                            <div className="flex items-center gap-2 font-black text-[10px] text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full border border-blue-100">
+                                                                🕒 {log.status_date}
+                                                            </div>
                                                         </div>
-                                                        <div className="text-slate-500 text-xs mb-2">Oleh: <span className="font-bold text-slate-600">{log.nama_petugas || 'System'}</span></div>
+                                                        <div className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-3">
+                                                            Petugas: <span className="text-slate-900 ml-1">{log.nama_petugas || 'System Automated'}</span>
+                                                        </div>
                                                         {log.status_note && (
-                                                            <div className="text-sm text-slate-600 bg-slate-50/50 p-3 rounded-xl border border-slate-100/50 italic">
+                                                            <div className="text-sm text-slate-600 bg-white/60 p-5 rounded-2xl border border-blue-50/50 italic font-semibold leading-relaxed">
                                                                 "{log.status_note}"
                                                             </div>
                                                         )}
                                                     </div>
                                                 </div>
                                             )) : (
-                                                <p className="text-center text-slate-400 text-sm italic">Belum ada riwayat status.</p>
+                                                <p className="text-center py-10 text-slate-300 font-black uppercase tracking-widest text-[10px]">No History Log Found</p>
                                             )}
                                         </div>
                                     </div>
 
-                                    {/* Verify Form Footer - Show ONLY if status is DONE (15) */}
+                                    {/* Action Footer */}
                                     {currentStatus === 15 ? (
-                                        <div className="md:col-span-2 pt-6 border-t border-slate-100">
-                                            <form onSubmit={handleVerifySubmit} className="space-y-4">
-                                                <label className="block text-sm font-black text-slate-700 uppercase tracking-wider mb-2">
-                                                    Konfirmasi Verifikasi
-                                                </label>
+                                        <div className="md:col-span-2 pt-10 border-t border-slate-100">
+                                            <form onSubmit={handleVerifySubmit} className="space-y-6">
+                                                <div className="flex items-center gap-4 mb-2">
+                                                    <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center font-bold text-xl">🛡️</div>
+                                                    <label className="text-sm font-black text-slate-800 uppercase tracking-[0.2em]">
+                                                        Final Verification
+                                                    </label>
+                                                </div>
                                                 <textarea
                                                     required
-                                                    placeholder="Berikan umpan balik atau catatan tambahan (Contoh: PC sudah normal, terima kasih)"
+                                                    placeholder="Berikan catatan terakhir untuk menutup tiket ini (Contoh: Pekerjaan telah kami cek & sesuai)"
                                                     value={verifyNote}
                                                     onChange={(e) => setVerifyNote(e.target.value)}
-                                                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all min-h-[100px] text-sm font-medium"
+                                                    className="w-full bg-slate-50 border border-slate-200 rounded-[2rem] p-8 focus:ring-8 focus:ring-emerald-50 focus:border-emerald-500 outline-none transition-all min-h-[150px] text-sm font-bold shadow-inner"
                                                 />
-                                                <div className="flex gap-4">
+                                                <div className="flex gap-6">
                                                     <button
                                                         type="button"
                                                         onClick={() => setIsDetailModalOpen(false)}
-                                                        className="flex-1 py-4 text-slate-400 font-bold hover:bg-slate-50 rounded-2xl transition"
+                                                        className="flex-1 py-5 text-slate-400 font-black uppercase tracking-widest hover:bg-slate-50 rounded-[2rem] transition active:scale-95"
                                                     >
-                                                        Tutup
+                                                        Cancel
                                                     </button>
                                                     <button
                                                         type="submit"
                                                         disabled={isSubmitting}
-                                                        className="flex-[2] bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-black py-4 rounded-2xl shadow-xl shadow-blue-200 hover:shadow-blue-300 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3"
+                                                        className="flex-[2] bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black py-5 rounded-[2rem] shadow-2xl shadow-emerald-200 hover:shadow-emerald-300 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-4 tracking-widest uppercase text-sm"
                                                     >
                                                         {isSubmitting ? (
-                                                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                                        ) : '🛡️ Konfirmasi & Verifikasi'}
+                                                            <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+                                                        ) : (
+                                                            <><span className="text-xl">✅</span> Confirm & Verify Ticket</>
+                                                        )}
                                                     </button>
                                                 </div>
                                             </form>
                                         </div>
                                     ) : (
-                                        <div className="md:col-span-2 pt-6 border-t border-slate-100 text-right">
+                                        <div className="md:col-span-2 pt-10 border-t border-slate-100 text-right">
                                             <button
                                                 onClick={() => setIsDetailModalOpen(false)}
-                                                className="px-10 py-4 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200 transition"
+                                                className="px-12 py-5 bg-slate-100 text-slate-600 font-black uppercase tracking-widest rounded-[2rem] hover:bg-slate-200 transition active:scale-95 shadow-lg border border-slate-200"
                                             >
-                                                Tutup
+                                                Close Detail
                                             </button>
                                         </div>
                                     )}
@@ -644,18 +701,20 @@ function VerifyOrderContent() {
 
             <style jsx global>{`
                 .custom-scrollbar::-webkit-scrollbar {
-                    width: 6px;
+                    width: 8px;
                 }
                 .custom-scrollbar::-webkit-scrollbar-track {
-                    background: #f1f1f1;
-                    border-radius: 20px;
+                    background: transparent;
                 }
                 .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background: #cbd5e1;
-                    border-radius: 20px;
+                    background: #e2e8f0;
+                    border-radius: 100px;
+                    border: 4px solid transparent;
+                    background-clip: content-box;
                 }
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-                    background: #94a3b8;
+                    background: #cbd5e1;
+                    background-clip: content-box;
                 }
             `}</style>
         </div>
