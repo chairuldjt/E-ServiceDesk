@@ -28,6 +28,14 @@ async function getGroups(): Promise<SavedGroup[]> {
 
 // Helper to save DB
 async function saveGroups(groups: SavedGroup[]) {
+    const { mkdir } = await import('fs/promises');
+    const dataDir = path.dirname(DB_PATH);
+
+    // Create data directory if it doesn't exist
+    if (!existsSync(dataDir)) {
+        await mkdir(dataDir, { recursive: true });
+    }
+
     await writeFile(DB_PATH, JSON.stringify(groups, null, 2));
 }
 
