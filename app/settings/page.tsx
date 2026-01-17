@@ -38,7 +38,8 @@ function SettingsContent() {
 
     const [webminConfig, setWebminConfig] = useState({
         user: '',
-        pass: ''
+        pass: '',
+        base_url: ''
     });
 
     useEffect(() => {
@@ -63,7 +64,8 @@ function SettingsContent() {
             if (webminResp.ok) {
                 setWebminConfig({
                     user: webminData.user || '',
-                    pass: webminData.pass || ''
+                    pass: webminData.pass || '',
+                    base_url: webminData.base_url || ''
                 });
             }
         } catch (error) {
@@ -109,21 +111,19 @@ function SettingsContent() {
         setUpdating(true);
         try {
             const response = await fetch('/api/user/profile', {
-                method: 'PUT',
+                method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    username: profile.username,
-                    email: profile.email,
                     currentPassword: passwordData.currentPassword,
                     newPassword: passwordData.newPassword
                 })
             });
             const data = await response.json();
             if (response.ok) {
-                showToast('Password berhasil diubah', 'success');
+                showToast('Password berhasil diperbarui', 'success');
                 setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
             } else {
-                showToast(data.error || 'Gagal mengubah password', 'error');
+                showToast(data.error || 'Gagal memperbarui password', 'error');
             }
         } catch (error) {
             showToast('Terjadi kesalahan', 'error');
@@ -136,16 +136,15 @@ function SettingsContent() {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // Validate type
-        if (!file.type.startsWith('image/')) {
-            showToast('File harus berupa gambar', 'error');
+        if (file.size > 2 * 1024 * 1024) {
+            showToast('Ukuran file maksimal 2MB', 'error');
             return;
         }
 
-        setUploading(true);
         const formData = new FormData();
         formData.append('file', file);
 
+        setUploading(true);
         try {
             const response = await fetch('/api/user/upload', {
                 method: 'POST',
@@ -378,6 +377,26 @@ function SettingsContent() {
                                         />
                                     </div>
                                 </div>
+
+                                {user?.role === 'admin' && (
+                                    <div className="pt-4 border-t border-slate-50">
+                                        <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                                            <span>🌐</span> Custom External API Base URL
+                                            <span className="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-lg uppercase tracking-wider">Admin Only</span>
+                                        </label>
+                                        <input
+                                            type="url"
+                                            value={webminConfig.base_url}
+                                            onChange={(e) => setWebminConfig({ ...webminConfig, base_url: e.target.value })}
+                                            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition font-mono text-sm"
+                                            placeholder="http://172.16.1.212:5010"
+                                        />
+                                        <p className="mt-2 text-[11px] text-gray-400">
+                                            Default: <code>{process.env.NEXT_PUBLIC_EXTERNAL_API_BASE || 'http://172.16.1.212:5010'}</code>. Ubah jika IP server eksternal berubah.
+                                        </p>
+                                    </div>
+                                )}
+
                                 <div className="flex justify-end pt-4 border-t border-slate-50">
                                     <button
                                         type="submit"

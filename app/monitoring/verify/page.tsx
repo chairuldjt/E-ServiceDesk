@@ -47,6 +47,15 @@ interface OrderHistory {
     status_note: string;
 }
 
+const STATUS_LEVELS = [
+    { code: 11, label: 'Follow Up', icon: '📞', color: 'indigo' },
+    { code: 10, label: 'Open', icon: '🆕', color: 'blue' },
+    { code: 12, label: 'Running', icon: '⚡', color: 'emerald' },
+    { code: 13, label: 'Pending', icon: '⏳', color: 'amber' },
+    { code: 15, label: 'Done', icon: '✅', color: 'purple' },
+    { code: 30, label: 'Verified', icon: '🛡️', color: 'slate' },
+];
+
 export default function VerifyOrderPage() {
     return (
         <ProtectedRoute>
@@ -61,6 +70,7 @@ function VerifyOrderContent() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [configError, setConfigError] = useState<string | null>(null);
+    const [currentStatus, setCurrentStatus] = useState(11); // Default Follow Up
 
     // Detail Modal State
     const [selectedOrder, setSelectedOrder] = useState<OrderDetail | null>(null);
@@ -73,14 +83,14 @@ function VerifyOrderContent() {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
-        fetchUnverifiedOrders();
-    }, []);
+        fetchOrders(currentStatus);
+    }, [currentStatus]);
 
-    const fetchUnverifiedOrders = async () => {
+    const fetchOrders = async (status: number) => {
         setLoading(true);
         setConfigError(null);
         try {
-            const response = await fetch('/api/monitoring/verify');
+            const response = await fetch(`/api/monitoring/verify?status=${status}`);
             const data = await response.json();
             if (response.ok) {
                 setOrders(data.result || []);
@@ -152,7 +162,7 @@ function VerifyOrderContent() {
             if (response.ok) {
                 showToast('Order berhasil diverifikasi', 'success');
                 setIsDetailModalOpen(false);
-                fetchUnverifiedOrders(); // Refresh list
+                fetchOrders(currentStatus); // Refresh list
             } else {
                 showToast(result.error || 'Gagal memverifikasi order', 'error');
             }
@@ -175,12 +185,12 @@ function VerifyOrderContent() {
             {/* Header Section */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white/40 backdrop-blur-md p-8 rounded-[2rem] border border-white/20 shadow-xl">
                 <div className="flex items-center gap-5">
-                    <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg shadow-blue-200">
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg shadow-blue-200">
                         🛡️
                     </div>
                     <div>
-                        <h1 className="text-3xl font-black text-slate-800">Verifikasi Order</h1>
-                        <p className="text-slate-500 font-medium mt-1">Selesaikan tiket yang sudah dikerjakan teknisi</p>
+                        <h1 className="text-3xl font-black text-slate-800">Order Management</h1>
+                        <p className="text-slate-500 font-medium mt-1">Pantau dan kelola tiket dari sistem eksternal</p>
                     </div>
                 </div>
 
@@ -197,6 +207,30 @@ function VerifyOrderContent() {
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full bg-white border border-slate-200 rounded-2xl py-3.5 pl-12 pr-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all shadow-sm font-medium"
                     />
+                </div>
+            </div>
+
+            {/* Status Tabs */}
+            <div className="bg-white/60 backdrop-blur-sm p-3 rounded-[2rem] border border-white/20 shadow-lg overflow-x-auto">
+                <div className="flex gap-2 min-w-max">
+                    {STATUS_LEVELS.map((status) => (
+                        <button
+                            key={status.code}
+                            onClick={() => setCurrentStatus(status.code)}
+                            className={`flex items-center gap-3 px-6 py-3 rounded-2xl font-bold transition-all duration-300 ${currentStatus === status.code
+                                ? 'bg-white text-blue-600 shadow-md scale-105'
+                                : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'
+                                }`}
+                        >
+                            <span className="text-xl">{status.icon}</span>
+                            <span>{status.label}</span>
+                            {currentStatus === status.code && (
+                                <span className={`ml-2 px-2 py-0.5 rounded-lg text-[10px] bg-blue-50 text-blue-600`}>
+                                    Active
+                                </span>
+                            )}
+                        </button>
+                    ))}
                 </div>
             </div>
 
@@ -220,12 +254,17 @@ function VerifyOrderContent() {
             <div className="bg-white rounded-[2rem] border border-slate-100 shadow-2xl overflow-hidden min-h-[500px]">
                 <div className="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
                     <div className="flex items-center gap-3">
-                        <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider">
-                            {filteredOrders.length} Menunggu Verifikasi
+                        <span className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest ${currentStatus === 15 ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}`}>
+                            {filteredOrders.length} {STATUS_LEVELS.find(s => s.code === currentStatus)?.label} Tickets
                         </span>
+                        {currentStatus === 30 && (
+                            <span className="text-[10px] font-bold text-amber-600 italic">
+                                * Data sinkronisasi ribuan
+                            </span>
+                        )}
                     </div>
                     <button
-                        onClick={fetchUnverifiedOrders}
+                        onClick={() => fetchOrders(currentStatus)}
                         className="text-slate-400 hover:text-blue-600 p-2 rounded-xl hover:bg-white transition-all active:scale-90"
                     >
                         <svg className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -292,9 +331,9 @@ function VerifyOrderContent() {
                                         <td className="px-8 py-5 text-right">
                                             <button
                                                 onClick={() => handleViewDetail(order.order_id)}
-                                                className="bg-blue-600 text-white px-5 py-2 rounded-xl text-sm font-bold hover:bg-blue-700 shadow-md shadow-blue-100 transition-all active:scale-95 flex items-center gap-2 ml-auto"
+                                                className={`${currentStatus === 15 ? 'bg-blue-600' : 'bg-slate-700'} text-white px-5 py-2 rounded-xl text-sm font-bold hover:opacity-90 shadow-md transition-all active:scale-95 flex items-center gap-2 ml-auto`}
                                             >
-                                                🔍 Verifikasi
+                                                {currentStatus === 15 ? '🔍 Verifikasi' : '👁️ View Detail'}
                                             </button>
                                         </td>
                                     </tr>
@@ -304,9 +343,9 @@ function VerifyOrderContent() {
                                     <td colSpan={6} className="px-8 py-20 text-center text-slate-400 font-medium">
                                         <div className="flex flex-col items-center gap-4">
                                             <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center text-4xl">
-                                                ☕
+                                                {currentStatus === 30 ? '📚' : '☕'}
                                             </div>
-                                            <p>Tidak ada order yang menunggu verifikasi.</p>
+                                            <p>Tidak ada order dengan status {STATUS_LEVELS.find(s => s.code === currentStatus)?.label}.</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -440,39 +479,50 @@ function VerifyOrderContent() {
                                         </div>
                                     </div>
 
-                                    {/* Verify Form Footer */}
-                                    <div className="md:col-span-2 pt-6 border-t border-slate-100">
-                                        <form onSubmit={handleVerifySubmit} className="space-y-4">
-                                            <label className="block text-sm font-black text-slate-700 uppercase tracking-wider mb-2">
-                                                Konfirmasi Verifikasi
-                                            </label>
-                                            <textarea
-                                                required
-                                                placeholder="Berikan umpan balik atau catatan tambahan (Contoh: PC sudah normal, terima kasih)"
-                                                value={verifyNote}
-                                                onChange={(e) => setVerifyNote(e.target.value)}
-                                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all min-h-[100px] text-sm font-medium"
-                                            />
-                                            <div className="flex gap-4">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setIsDetailModalOpen(false)}
-                                                    className="flex-1 py-4 text-slate-400 font-bold hover:bg-slate-50 rounded-2xl transition"
-                                                >
-                                                    Tutup
-                                                </button>
-                                                <button
-                                                    type="submit"
-                                                    disabled={isSubmitting}
-                                                    className="flex-[2] bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-black py-4 rounded-2xl shadow-xl shadow-blue-200 hover:shadow-blue-300 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3"
-                                                >
-                                                    {isSubmitting ? (
-                                                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                                    ) : '🛡️ Konfirmasi & Verifikasi'}
-                                                </button>
-                                            </div>
-                                        </form>
-                                    </div>
+                                    {/* Verify Form Footer - Show ONLY if status is DONE (15) */}
+                                    {currentStatus === 15 ? (
+                                        <div className="md:col-span-2 pt-6 border-t border-slate-100">
+                                            <form onSubmit={handleVerifySubmit} className="space-y-4">
+                                                <label className="block text-sm font-black text-slate-700 uppercase tracking-wider mb-2">
+                                                    Konfirmasi Verifikasi
+                                                </label>
+                                                <textarea
+                                                    required
+                                                    placeholder="Berikan umpan balik atau catatan tambahan (Contoh: PC sudah normal, terima kasih)"
+                                                    value={verifyNote}
+                                                    onChange={(e) => setVerifyNote(e.target.value)}
+                                                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all min-h-[100px] text-sm font-medium"
+                                                />
+                                                <div className="flex gap-4">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setIsDetailModalOpen(false)}
+                                                        className="flex-1 py-4 text-slate-400 font-bold hover:bg-slate-50 rounded-2xl transition"
+                                                    >
+                                                        Tutup
+                                                    </button>
+                                                    <button
+                                                        type="submit"
+                                                        disabled={isSubmitting}
+                                                        className="flex-[2] bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-black py-4 rounded-2xl shadow-xl shadow-blue-200 hover:shadow-blue-300 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3"
+                                                    >
+                                                        {isSubmitting ? (
+                                                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                                        ) : '🛡️ Konfirmasi & Verifikasi'}
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    ) : (
+                                        <div className="md:col-span-2 pt-6 border-t border-slate-100 text-right">
+                                            <button
+                                                onClick={() => setIsDetailModalOpen(false)}
+                                                className="px-10 py-4 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200 transition"
+                                            >
+                                                Tutup
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}

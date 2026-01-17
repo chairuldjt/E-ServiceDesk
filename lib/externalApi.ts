@@ -1,6 +1,6 @@
 import { getWebminConfig } from './settings';
 
-const BASE = process.env.EXTERNAL_API_BASE || 'http://172.16.1.212:5010';
+const DEFAULT_BASE = process.env.EXTERNAL_API_BASE || 'http://172.16.1.212:5010';
 const FETCH_TIMEOUT = 10000; // 10 seconds timeout
 
 // In-memory token cache (per user ID)
@@ -25,6 +25,8 @@ export async function getExternalToken(userId: number) {
     }
 
     const { user: USER, pass: PASS } = config;
+
+    const BASE = config.base_url || DEFAULT_BASE;
 
     // Check Cache
     const cached = tokenCache[userId];
@@ -83,7 +85,7 @@ export async function getExternalToken(userId: number) {
 }
 
 export async function postExternalOrder(userId: number, data: any) {
-    const { jwt } = await getExternalToken(userId);
+    const { jwt, BASE } = await getExternalToken(userId);
     const res = await fetch(`${BASE}/order/order_save`, {
         method: 'POST',
         headers: {
@@ -103,7 +105,7 @@ export async function postExternalOrder(userId: number, data: any) {
 }
 
 export async function getExternalCatalogs(userId: number) {
-    const { jwt } = await getExternalToken(userId);
+    const { jwt, BASE } = await getExternalToken(userId);
     const res = await fetch(`${BASE}/order/service_catalog_list`, {
         headers: {
             'Authorization': `Bearer ${jwt}`,
@@ -117,7 +119,7 @@ export async function getExternalCatalogs(userId: number) {
 }
 
 export async function getExternalUsers(userId: number) {
-    const { jwt } = await getExternalToken(userId);
+    const { jwt, BASE } = await getExternalToken(userId);
     const res = await fetch(`${BASE}/user/user_list`, {
         headers: {
             'Authorization': `Bearer ${jwt}`,
@@ -131,7 +133,7 @@ export async function getExternalUsers(userId: number) {
 }
 
 export async function getExternalOrdersByStatus(userId: number, status: number) {
-    const { jwt } = await getExternalToken(userId);
+    const { jwt, BASE } = await getExternalToken(userId);
     const res = await fetch(`${BASE}/order/order_list_by_status/${status}`, {
         headers: {
             'Authorization': `Bearer ${jwt}`,
@@ -145,7 +147,7 @@ export async function getExternalOrdersByStatus(userId: number, status: number) 
 }
 
 export async function getExternalOrderDetail(userId: number, orderId: number) {
-    const { jwt } = await getExternalToken(userId);
+    const { jwt, BASE } = await getExternalToken(userId);
     const res = await fetch(`${BASE}/order/order_detail_by_id/${orderId}`, {
         headers: {
             'Authorization': `Bearer ${jwt}`,
@@ -159,7 +161,7 @@ export async function getExternalOrderDetail(userId: number, orderId: number) {
 }
 
 export async function postExternalVerify(userId: number, data: any) {
-    const { jwt } = await getExternalToken(userId);
+    const { jwt, BASE } = await getExternalToken(userId);
     const res = await fetch(`${BASE}/order/order_verified`, {
         method: 'POST',
         headers: {
@@ -179,7 +181,7 @@ export async function postExternalVerify(userId: number, data: any) {
 }
 
 export async function getExternalOrderHistory(userId: number, orderId: number) {
-    const { jwt } = await getExternalToken(userId);
+    const { jwt, BASE } = await getExternalToken(userId);
     const res = await fetch(`${BASE}/order/order_history_by_id/${orderId}`, {
         headers: {
             'Authorization': `Bearer ${jwt}`,

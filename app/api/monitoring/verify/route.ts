@@ -4,12 +4,15 @@ import { getPayloadFromCookie } from '@/lib/jwt';
 import { getWebminConfig } from '@/lib/settings';
 import { EXTERNAL_USERS } from '@/lib/constants';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
     try {
         const payload = await getPayloadFromCookie();
         if (!payload) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
+
+        const { searchParams } = new URL(request.url);
+        const status = parseInt(searchParams.get('status') || '11');
 
         const config = await getWebminConfig(payload.id);
         if (!config || !config.user || !config.pass) {
@@ -18,8 +21,8 @@ export async function GET() {
             }, { status: 400 });
         }
 
-        // 1. Get List of Orders (DONE status 15)
-        const data = await getExternalOrdersByStatus(payload.id, 15);
+        // 1. Get List of Orders by Status
+        const data = await getExternalOrdersByStatus(payload.id, status);
         return NextResponse.json({ result: data });
     } catch (error: any) {
         console.error('Verify List API Error:', error);
