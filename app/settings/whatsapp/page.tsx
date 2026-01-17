@@ -170,15 +170,37 @@ const WhatsAppContent = () => {
                 </div>
 
                 <div className="flex flex-col md:flex-row items-center gap-3 bg-white/60 backdrop-blur-xl p-2.5 rounded-[2rem] border border-white/50 shadow-2xl shadow-slate-200/50">
-                    <div className={`flex items-center gap-3 px-5 py-3 rounded-full text-xs font-black uppercase tracking-wider transition-all shadow-lg
-                        ${state?.status === 'READY' ? 'bg-gradient-to-r from-emerald-400 to-teal-500 text-white shadow-emerald-200 ring-2 ring-emerald-200/50' :
-                            state?.status === 'QR_CODE' ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-amber-200 ring-2 ring-amber-200/50' :
-                                ['LOADING', 'CONNECTING'].includes(state?.status || '') ? 'bg-gradient-to-r from-blue-400 to-indigo-500 text-white shadow-blue-200 ring-2 ring-blue-200/50 animate-pulse' :
-                                    ['DISCONNECTED', 'OFFLINE', 'UNKNOWN'].includes(state?.status || 'OFFLINE') ? 'bg-gradient-to-r from-slate-500 to-slate-600 text-white shadow-slate-200 ring-2 ring-slate-200/50' :
-                                        'bg-gradient-to-r from-rose-400 to-pink-500 text-white shadow-rose-200 ring-2 ring-rose-200/50'}`}>
-                        <div className={`w-2.5 h-2.5 rounded-full bg-white ${state?.status === 'READY' ? 'animate-pulse' : ''}`}></div>
-                        {state?.status || 'OFFLINE'}
-                    </div>
+                    {/* Status Badge helper function */}
+                    {(() => {
+                        const getStatusStyle = (status: string) => {
+                            switch (status) {
+                                case 'READY':
+                                    return 'bg-emerald-500 bg-gradient-to-r from-emerald-400 to-teal-500 text-white shadow-emerald-200 ring-2 ring-emerald-200/50';
+                                case 'QR_CODE':
+                                    return 'bg-amber-500 bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-amber-200 ring-2 ring-amber-200/50';
+                                case 'LOADING':
+                                case 'CONNECTING':
+                                    return 'bg-blue-500 bg-gradient-to-r from-blue-400 to-indigo-500 text-white shadow-blue-200 ring-2 ring-blue-200/50 animate-pulse';
+                                case 'DISCONNECTED':
+                                case 'OFFLINE':
+                                case 'UNKNOWN':
+                                    // Use solid Slate-600 fallback + gradient
+                                    return 'bg-slate-600 bg-gradient-to-r from-slate-500 to-slate-600 text-white shadow-slate-200 ring-2 ring-slate-200/50';
+                                default:
+                                    // Error state
+                                    return 'bg-rose-500 bg-gradient-to-r from-rose-400 to-pink-500 text-white shadow-rose-200 ring-2 ring-rose-200/50';
+                            }
+                        };
+
+                        const currentStatus = state?.status || 'OFFLINE';
+
+                        return (
+                            <div className={`flex items-center gap-3 px-5 py-3 rounded-full text-xs font-black uppercase tracking-wider transition-all shadow-lg ${getStatusStyle(currentStatus)}`}>
+                                <div className={`w-2.5 h-2.5 rounded-full bg-white ${currentStatus === 'READY' ? 'animate-pulse' : ''}`}></div>
+                                {currentStatus}
+                            </div>
+                        );
+                    })()}
 
                     <div className="h-8 w-px bg-slate-200 mx-1 hidden md:block"></div>
 
