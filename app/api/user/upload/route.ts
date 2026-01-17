@@ -25,12 +25,12 @@ export async function POST(request: NextRequest) {
         const fileName = `profile-${payload.id}-${Date.now()}.${fileExtension}`;
 
         // Ensure upload directories exist and have correct permissions
-        // We ensure the entire path starting from 'public'
-        const publicDir = join(process.cwd(), 'public');
-        const uploadsDir = join(publicDir, 'uploads');
-        const uploadDir = join(uploadsDir, 'profile');
+        // We use project root 'uploads' folder (outside public) to avoid Next.js static serving issues in production
+        const rootDir = process.cwd();
+        const uploadsDir = join(rootDir, 'uploads');
+        const profileDir = join(uploadsDir, 'profile');
 
-        const dirs = [publicDir, uploadsDir, uploadDir];
+        const dirs = [uploadsDir, profileDir];
         for (const dir of dirs) {
             try {
                 if (!fs.existsSync(dir)) {
@@ -41,13 +41,14 @@ export async function POST(request: NextRequest) {
             } catch (e) { }
         }
 
-        const path = join(uploadDir, fileName);
+        const path = join(profileDir, fileName);
         await writeFile(path, buffer);
 
-        // Explicitly set file permissions to 644 (rw-r--r--)
+        // Force file permission 644 (rw-r--r--)
         await chmod(path, 0o644);
 
-        const imageUrl = `/uploads/profile/${fileName}`;
+        // Use our new dynamic serving route instead of static serving
+        const imageUrl = `/api/view-uploads/profile/${fileName}`;
 
         // Update user record
         const connection = await pool.getConnection();
@@ -57,9 +58,17 @@ export async function POST(request: NextRequest) {
         if (oldUser[0]?.profile_image) {
             // Remove any query params if present for path matching
             const oldRelativePath = oldUser[0].profile_image.split('?')[0];
-            const oldPath = join(publicDir, oldRelativePath);
-            if (fs.existsSync(oldPath)) {
-                try { fs.unlinkSync(oldPath); } catch (e) { }
+
+            // Map old path format to physical path
+            let oldPhysicalPath = '';
+            if (oldRelativePath.startsWith('/api/view-uploads/')) {
+                oldPhysicalPath = join(rootDir, 'uploads', oldRelativePath.replace('/api/view-uploads/', ''));
+            } else {
+                oldPhysicalPath = join(rootDir, 'public', oldRelativePath);
+            }
+
+            if (fs.existsSync(oldPhysicalPath)) {
+                try { fs.unlinkSync(oldPhysicalPath); } catch (e) { }
             }
         }
 
@@ -75,7 +84,7 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({
             message: 'Foto profil berhasil diperbarui',
-            imageUrl
+            imageUrl: imageUrlWithCacheBuster
         });
     } catch (error) {
         console.error('Upload error:', error);
