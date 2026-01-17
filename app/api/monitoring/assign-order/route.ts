@@ -10,17 +10,20 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { order_id, teknisi_id, nama_lengkap } = body;
+        const { order_id, id, teknisi_id, nama_lengkap, assign_type_code, assign_desc, emoji_code } = body;
 
         if (!order_id || !teknisi_id || !nama_lengkap) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
         const externalPayload = {
+            id: id || order_id,
             order_id,
             teknisi_id: teknisi_id.toString(),
             nama_lengkap,
-            assign_type_code: "1",
+            assign_type_code: (assign_type_code || "1").toString(),
+            assign_desc: assign_desc || "NEW",
+            emoji_code: emoji_code || ":gear:",
             user_id: payload.id // Using local user ID
         };
 
