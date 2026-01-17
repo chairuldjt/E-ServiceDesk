@@ -44,8 +44,8 @@ next-env.d.ts
 .wwebjs_auth/
 .wwebjs_cache/
 
-# Local data files
-data/
+# Local data files (but keep the directory structure)
+data/*.json
 
 # Temporary files
 public/temp_screenshot.png
