@@ -169,14 +169,17 @@ const WhatsAppContent = () => {
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2 bg-white/50 p-2 rounded-2xl border border-white/40 shadow-sm">
-                    <div className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all
-                        ${state?.status === 'READY' ? 'bg-emerald-100 text-emerald-700 ring-2 ring-emerald-200' :
-                            state?.status === 'QR_CODE' ? 'bg-amber-100 text-amber-700 ring-2 ring-amber-200' :
-                                'bg-rose-100 text-rose-700 ring-2 ring-rose-200'}`}>
-                        <div className={`w-2 h-2 rounded-full ${state?.status === 'READY' ? 'bg-emerald-500 animate-pulse' : 'bg-current'}`}></div>
-                        {state?.status || 'UNKNOWN'}
+                <div className="flex flex-col md:flex-row items-center gap-3 bg-white/60 backdrop-blur-xl p-2.5 rounded-[2rem] border border-white/50 shadow-2xl shadow-slate-200/50">
+                    <div className={`flex items-center gap-3 px-5 py-3 rounded-full text-xs font-black uppercase tracking-wider transition-all shadow-lg
+                        ${state?.status === 'READY' ? 'bg-gradient-to-r from-emerald-400 to-teal-500 text-white shadow-emerald-200 ring-2 ring-emerald-200/50' :
+                            state?.status === 'QR_CODE' ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-amber-200 ring-2 ring-amber-200/50' :
+                                state?.status === 'LOADING' || state?.status === 'CONNECTING' ? 'bg-gradient-to-r from-blue-400 to-indigo-500 text-white shadow-blue-200 ring-2 ring-blue-200/50 animate-pulse' :
+                                    'bg-gradient-to-r from-rose-400 to-pink-500 text-white shadow-rose-200 ring-2 ring-rose-200/50'}`}>
+                        <div className={`w-2.5 h-2.5 rounded-full bg-white ${state?.status === 'READY' ? 'animate-pulse' : ''}`}></div>
+                        {state?.status || 'OFFLINE'}
                     </div>
+
+                    <div className="h-8 w-px bg-slate-200 mx-1 hidden md:block"></div>
 
                     {state?.status === 'READY' ? (
                         <button
@@ -188,19 +191,27 @@ const WhatsAppContent = () => {
                                 );
                             }}
                             disabled={actionLoading}
-                            className="bg-rose-50 text-rose-600 px-4 py-2.5 rounded-xl font-bold text-xs hover:bg-rose-100 transition border border-rose-200 flex items-center gap-2"
+                            className="group relative px-6 py-3 rounded-full bg-white border border-rose-100 text-rose-600 font-bold text-xs hover:bg-rose-50 hover:border-rose-200 hover:shadow-lg hover:shadow-rose-100 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 overflow-hidden"
                         >
-                            <span className="text-lg">🛑</span> Disconnect
+                            <span className="relative z-10 flex items-center gap-2">
+                                <span className="text-sm">🛑</span>
+                                {actionLoading ? 'Stopping...' : 'Disconnect'}
+                            </span>
                         </button>
                     ) : (
                         <button
                             onClick={() => handleAction('START')}
-                            disabled={actionLoading}
-                            className="bg-emerald-50 text-emerald-600 px-4 py-2.5 rounded-xl font-bold text-xs hover:bg-emerald-100 transition border border-emerald-200 flex items-center gap-2"
+                            disabled={actionLoading || state?.status === 'LOADING' || state?.status === 'CONNECTING'}
+                            className="group relative px-6 py-3 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold text-xs hover:shadow-lg hover:shadow-emerald-200 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 overflow-hidden"
                         >
-                            <span className="text-lg">▶️</span> Connect
+                            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                            <span className="relative z-10 flex items-center gap-2">
+                                <span className="text-sm">⚡</span>
+                                {actionLoading || state?.status === 'LOADING' || state?.status === 'CONNECTING' ? 'Connecting...' : 'Connect Bot'}
+                            </span>
                         </button>
                     )}
+
                     <button
                         onClick={() => {
                             confirm(
@@ -210,9 +221,10 @@ const WhatsAppContent = () => {
                             );
                         }}
                         disabled={actionLoading}
-                        className="bg-slate-50 text-slate-600 px-4 py-2.5 rounded-xl font-bold text-xs hover:bg-slate-100 transition border border-slate-200 flex items-center gap-2"
+                        className="group relative px-6 py-3 rounded-full bg-white border border-slate-200 text-slate-600 font-bold text-xs hover:bg-slate-50 hover:border-slate-300 hover:shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                     >
-                        <span className="text-lg">🔄</span> Logout
+                        <span className="text-sm group-hover:rotate-180 transition-transform duration-500">🔄</span>
+                        {actionLoading ? 'Processing...' : 'Reset Session'}
                     </button>
                 </div>
             </div>
