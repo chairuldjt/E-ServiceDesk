@@ -395,7 +395,7 @@ function VerifyOrderContent() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white/40 backdrop-blur-md p-8 rounded-[2rem] border border-white/20 shadow-xl">
                 <div className="flex items-center gap-5">
                     <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg shadow-blue-200">
-                        🛠️
+                        🎫
                     </div>
                     <div>
                         <h1 className="text-3xl font-black text-slate-800">Order Management</h1>

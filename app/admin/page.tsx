@@ -219,7 +219,7 @@ function AdminContent() {
   return (
     <div className="min-h-screen p-4 md:p-8 space-y-8 animate-in fade-in duration-700">
       <PageHeader
-        icon="🛡️"
+        icon="🔐"
         title="Admin Dashboard"
         subtitle="Manajemen sistem dan user"
       />
@@ -321,7 +321,7 @@ function AdminContent() {
               <div className="p-8 rounded-[2.5rem] border bg-gradient-to-br from-slate-600 to-slate-800 text-white shadow-2xl shadow-slate-200 relative overflow-hidden group hover:scale-105 transition-all duration-300">
                 <div className="absolute -top-4 -right-4 w-32 h-32 rounded-full blur-3xl opacity-20 bg-white group-hover:opacity-40 transition-opacity"></div>
                 <div className="flex flex-col items-center text-center relative z-10">
-                  <span className="text-3xl mb-4 group-hover:scale-110 transition-transform">🛡️</span>
+                  <span className="text-3xl mb-4 group-hover:scale-110 transition-transform">🔐</span>
                   <span className="text-5xl font-black mb-2 antialiased tabular-nums">{stats.adminUsers}</span>
                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-100 opacity-80">Administrator</span>
                   <div className="mt-4 w-8 h-1 bg-white/30 rounded-full"></div>
@@ -439,7 +439,7 @@ function AdminContent() {
                             : 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
                             }`}
                         >
-                          {u.role === 'admin' ? '🛡️ Admin' : '👤 User'}
+                          {u.role === 'admin' ? '🔐 Admin' : '👤 User'}
                         </button>
                       </td>
                       <td className="px-6 py-4">

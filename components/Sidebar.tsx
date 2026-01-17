@@ -34,12 +34,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     { name: 'Dashboard', path: '/dashboard', icon: '📊' },
     { name: 'Logbook', path: '/logbook', icon: '📔' },
     { name: 'Monitoring', path: '/monitoring', icon: '📡' },
-    { name: 'Order', path: '/monitoring/verify', icon: '🛡️' },
+    { name: 'Order', path: '/monitoring/verify', icon: '🎫' },
     { name: 'Notepad', path: '/notepad', icon: '📝' },
   ];
 
   if (user.role === 'admin') {
-    menuItems.push({ name: 'Admin', path: '/admin', icon: '🛡️' });
+    menuItems.push({ name: 'Admin', path: '/admin', icon: '🔐' });
   }
 
   return (
@@ -59,7 +59,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className="h-20 flex items-center justify-between px-6 border-b border-slate-700/50 shrink-0 bg-gradient-to-r from-blue-600/10 to-indigo-600/10">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 rounded-xl flex items-center justify-center text-xl shadow-lg shadow-blue-500/20 border border-white/10 group">
-              <span className="group-hover:rotate-12 transition-transform duration-300">🛠️</span>
+              <span className="group-hover:rotate-12 transition-transform duration-300">⚡</span>
             </div>
             <div className="flex flex-col">
               <h1 className="text-lg font-black bg-gradient-to-r from-white via-blue-200 to-teal-200 bg-clip-text text-transparent leading-none">

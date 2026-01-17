@@ -16,8 +16,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "E-ServiceDesk",
-  description: "Internal Service Desk System",
+  title: "E-ServiceDesk | Internal Service Hub",
+  description: "Modern & Robust Internal Service Desk System",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({

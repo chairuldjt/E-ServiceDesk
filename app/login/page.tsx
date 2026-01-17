@@ -70,7 +70,7 @@ function LoginContent() {
       <div className="bg-white/95 backdrop-blur-md rounded-[2.5rem] shadow-2xl p-10 w-full max-w-md border border-white/20">
         <div className="flex flex-col items-center mb-10">
           <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl flex items-center justify-center text-4xl shadow-2xl shadow-blue-500/40 mb-6 border border-white/20 animate-in zoom-in duration-700">
-            🛠️
+            ⚡
           </div>
           <h1 className="text-4xl font-black text-slate-800 tracking-tight">
             E-Service<span className="text-blue-600">Desk</span>
