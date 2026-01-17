@@ -869,19 +869,17 @@ function VerifyOrderContent() {
                                                             </div>
                                                         </form>
                                                     </div>
-                                                ) : (currentStatus === 10 || currentStatus === 11 || currentStatus === 12 || currentStatus === 13) ? (
+                                                ) : (currentStatus === 10 || currentStatus === 11 || currentStatus === 12) ? (
                                                     <div className="md:col-span-2 pt-10 border-t border-slate-100 flex flex-wrap gap-4 justify-end">
-                                                        {(currentStatus !== 13) && (
-                                                            <PremiumButton
-                                                                onClick={() => {
-                                                                    setEditFormData({ ...selectedOrder });
-                                                                    setIsEditModalOpen(true);
-                                                                }}
-                                                                className="px-8 py-4 bg-amber-500 hover:bg-amber-600 text-white font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-amber-100 transition-all active:scale-95 text-xs"
-                                                            >
-                                                                ✏️ Edit Order
-                                                            </PremiumButton>
-                                                        )}
+                                                        <PremiumButton
+                                                            onClick={() => {
+                                                                setEditFormData({ ...selectedOrder });
+                                                                setIsEditModalOpen(true);
+                                                            }}
+                                                            className="px-8 py-4 bg-amber-500 hover:bg-amber-600 text-white font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-amber-100 transition-all active:scale-95 text-xs"
+                                                        >
+                                                            ✏️ Edit Order
+                                                        </PremiumButton>
 
                                                         {(currentStatus === 11 || currentStatus === 12) && (
                                                             <PremiumButton
@@ -902,7 +900,7 @@ function VerifyOrderContent() {
                                                             }}
                                                             className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-blue-100 transition-all active:scale-95 text-xs"
                                                         >
-                                                            {currentStatus === 13 ? '⏩ Forward / Delegasi' : '👥 Delegasi'}
+                                                            👥 Delegasi
                                                         </PremiumButton>
                                                         <PremiumButton
                                                             onClick={handleCancelOrder}
