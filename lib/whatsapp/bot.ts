@@ -91,10 +91,9 @@ export const initBot = async () => {
                 ],
                 executablePath: process.env.CHROME_PATH || undefined,
             },
-            // Using a stable web version to avoid the "markedUnread" error in latest WA Web
+            // Disable version caching to prevent "i is not a function" error on render
             webVersionCache: {
-                type: 'remote',
-                remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html',
+                type: 'none'
             }
         });
 
