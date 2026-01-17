@@ -24,19 +24,24 @@ export async function POST(request: NextRequest) {
         const fileExtension = file.name.split('.').pop();
         const fileName = `profile-${payload.id}-${Date.now()}.${fileExtension}`;
 
-        // Ensure upload directory exists
-        const uploadDir = join(process.cwd(), 'public', 'uploads', 'profile');
-        if (!fs.existsSync(uploadDir)) {
-            await mkdir(uploadDir, { recursive: true });
-            // Set directory permissions to 755 (drwxr-xr-x)
-            await chmod(uploadDir, 0o755);
+        // Ensure upload directories exist and have correct permissions
+        const publicDir = join(process.cwd(), 'public');
+        const uploadsDir = join(publicDir, 'uploads');
+        const uploadDir = join(uploadsDir, 'profile');
+
+        const dirs = [uploadsDir, uploadDir];
+        for (const dir of dirs) {
+            if (!fs.existsSync(dir)) {
+                await mkdir(dir, { recursive: true });
+            }
+            // Always ensure 755 permissions for directories
+            try { await chmod(dir, 0o755); } catch (e) { }
         }
 
         const path = join(uploadDir, fileName);
         await writeFile(path, buffer);
 
         // Explicitly set file permissions to 644 (rw-r--r--)
-        // This ensures the web server can read the file regardless of umask
         await chmod(path, 0o644);
 
         const imageUrl = `/uploads/profile/${fileName}`;
