@@ -538,8 +538,10 @@ function VerifyOrderContent() {
                             <tr className="bg-slate-50/30">
                                 <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">No Order</th>
                                 <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Waktu</th>
-                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nama dan Lokasi</th>
-                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Catatan Keluhan</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Pelapor & Lokasi</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Ext</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Keluhan</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
                                 <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Teknisi</th>
                                 <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Aksi</th>
                             </tr>
@@ -548,7 +550,7 @@ function VerifyOrderContent() {
                             {loading ? (
                                 Array.from({ length: 5 }).map((_, i) => (
                                     <tr key={i} className="animate-pulse">
-                                        <td colSpan={6} className="px-8 py-8">
+                                        <td colSpan={8} className="px-8 py-8">
                                             <div className="h-4 bg-slate-100 rounded-full w-full opacity-50"></div>
                                         </td>
                                     </tr>
@@ -573,9 +575,25 @@ function VerifyOrderContent() {
                                             </div>
                                         </td>
                                         <td className="px-8 py-6">
-                                            <p className="text-sm text-slate-600 line-clamp-2 max-w-md leading-relaxed italic font-medium bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100 group-hover:bg-white transition-colors">
+                                            <span className="text-sm font-black text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-xl border border-indigo-100 italic">
+                                                {order.ext_phone || '-'}
+                                            </span>
+                                        </td>
+                                        <td className="px-8 py-6">
+                                            <p className="text-sm text-slate-600 line-clamp-2 max-w-xs leading-relaxed italic font-medium bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100 group-hover:bg-white transition-colors">
                                                 "{order.catatan}"
                                             </p>
+                                        </td>
+                                        <td className="px-8 py-6">
+                                            <span className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border ${order.status_desc.includes('DONE') ? 'bg-purple-50 text-purple-600 border-purple-100' :
+                                                    order.status_desc.includes('FOLLOW UP') ? 'bg-indigo-50 text-indigo-600 border-indigo-100' :
+                                                        order.status_desc.includes('PENDING') ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                                            order.status_desc.includes('RUNNING') ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                                                                order.status_desc.includes('VERIFIED') ? 'bg-slate-50 text-slate-600 border-slate-100' :
+                                                                    'bg-blue-50 text-blue-600 border-blue-100'
+                                                }`}>
+                                                {order.status_desc}
+                                            </span>
                                         </td>
                                         <td className="px-8 py-6">
                                             <div className="flex items-center gap-3 bg-white px-3 py-2 rounded-2xl border border-slate-100 shadow-sm group-hover:border-blue-100 transition-all">
@@ -604,7 +622,7 @@ function VerifyOrderContent() {
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={6} className="px-8 py-32 text-center text-slate-400 font-medium">
+                                    <td colSpan={8} className="px-8 py-32 text-center text-slate-400 font-medium">
                                         <div className="flex flex-col items-center gap-6">
                                             <div className="w-32 h-32 bg-slate-50/50 rounded-full flex items-center justify-center text-6xl shadow-inner animate-bounce duration-[3s]">
                                                 {currentStatus === 30 ? '📚' : '☕'}
@@ -737,11 +755,16 @@ function VerifyOrderContent() {
                                                         </h4>
                                                         <div className="space-y-6">
                                                             <div>
-                                                                <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1.5">User & Lokasi</p>
+                                                                <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1.5">User, Lokasi & Ext</p>
                                                                 <p className="font-black text-slate-800 text-lg">{selectedOrder.order_by || 'Unknown'}</p>
-                                                                <p className="text-sm font-bold text-slate-400 flex items-center gap-2">
-                                                                    <span className="text-blue-500">📍</span> {selectedOrder.location_desc}
-                                                                </p>
+                                                                <div className="flex flex-wrap gap-4 mt-1">
+                                                                    <p className="text-sm font-bold text-slate-400 flex items-center gap-2">
+                                                                        <span className="text-blue-500">📍</span> {selectedOrder.location_desc}
+                                                                    </p>
+                                                                    <p className="text-sm font-bold text-indigo-500 flex items-center gap-2">
+                                                                        <span className="text-indigo-500">📞</span> Ext: {selectedOrder.ext_phone || '-'}
+                                                                    </p>
+                                                                </div>
                                                             </div>
                                                             <div className="bg-slate-50 p-6 rounded-[2rem] border border-blue-100/50 relative">
                                                                 <div className="absolute top-4 right-6 text-blue-100 text-4xl font-serif">"</div>
