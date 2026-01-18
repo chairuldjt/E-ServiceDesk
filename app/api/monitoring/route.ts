@@ -60,6 +60,8 @@ export async function GET(request: NextRequest) {
         const rekap: { [key: string]: number } = {};
         let totalOrder = 0;
 
+        const { EXTERNAL_USERS } = await import('@/lib/constants');
+
         allOrders.forEach((o: any) => {
             if (o.create_date && o.create_date.includes(dateStringPHP)) {
                 totalOrder++;
@@ -68,7 +70,15 @@ export async function GET(request: NextRequest) {
                 list.forEach((nama: string) => {
                     const trimmed = nama.trim();
                     if (trimmed === "") return;
-                    rekap[trimmed] = (rekap[trimmed] || 0) + 1;
+
+                    // Match name with EXTERNAL_USERS to get full name
+                    const userMatch = EXTERNAL_USERS.find(u =>
+                        u.name.toLowerCase() === trimmed.toLowerCase() ||
+                        u.login?.toLowerCase() === trimmed.toLowerCase()
+                    );
+
+                    const displayName = userMatch ? userMatch.name : trimmed;
+                    rekap[displayName] = (rekap[displayName] || 0) + 1;
                 });
             }
         });
