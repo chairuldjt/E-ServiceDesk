@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { useEffect, useState } from 'react';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -12,8 +13,21 @@ interface SidebarProps {
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { user } = useAuth();
+  const [isWhatsappVisible, setIsWhatsappVisible] = useState(true);
+
+  useEffect(() => {
+    if (user && (user.role === 'admin' || user.role === 'super')) {
+      fetch('/api/settings/whatsapp-visibility')
+        .then(res => res.json())
+        .then(data => {
+          if (data.visible !== undefined) setIsWhatsappVisible(data.visible);
+        })
+        .catch(console.error);
+    }
+  }, [user]);
 
   if (!user) return null;
+
 
   const isActive = (path: string) => {
     // Priority 1: Exact Match
@@ -38,8 +52,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     { name: 'Notepad', path: '/notepad', icon: '📝' },
   ];
 
-  // Menu WhatsApp Bot (Admin & Super Only)
-  if (user.role === 'admin' || user.role === 'super') {
+  // Menu WhatsApp Bot (Admin & Super Only, and if visible)
+  if ((user.role === 'admin' || user.role === 'super') && isWhatsappVisible) {
     menuItems.push({ name: 'WhatsApp Bot', path: '/whatsapp', icon: '📱' });
   }
 
@@ -47,6 +61,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   if (user.role === 'admin') {
     menuItems.push({ name: 'Admin', path: '/admin', icon: '🔐' });
   }
+
 
   return (
     <>

@@ -56,3 +56,40 @@ export async function saveWebminConfig(userId: number, config: { user: string; p
         throw error;
     }
 }
+
+export async function getSetting(id: string, userId: number = 0) {
+    try {
+        await ensureTableExists();
+        const [rows]: any = await db.query(
+            'SELECT value FROM settings WHERE id = ? AND user_id = ?',
+            [id, userId]
+        );
+        if (rows.length > 0) {
+            try {
+                return JSON.parse(rows[0].value);
+            } catch {
+                return rows[0].value;
+            }
+        }
+        return null;
+    } catch (error) {
+        console.error(`Error fetching setting ${id}:`, error);
+        return null;
+    }
+}
+
+export async function saveSetting(id: string, value: any, userId: number = 0) {
+    try {
+        await ensureTableExists();
+        const stringValue = typeof value === 'string' ? value : JSON.stringify(value);
+        await db.query(
+            'INSERT INTO settings (id, user_id, value) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE value = ?',
+            [id, userId, stringValue, stringValue]
+        );
+        return true;
+    } catch (error) {
+        console.error(`Error saving setting ${id}:`, error);
+        throw error;
+    }
+}
+
