@@ -30,10 +30,19 @@ export async function GET() {
         const jamMatch = salinContent.match(/Jam\s*([\d.]+)\s*sd\s*([\d.]+)/i);
         const jam = jamMatch ? `${jamMatch[1]} - ${jamMatch[2]} WIB` : '07.00 - 14.00 WIB';
 
-        // Extract Service Desk name
-        // Pattern: Service Desk :<br>\s+-\s+([^(]+)
-        const sdMatch = salinContent.match(/Service Desk\s*:\s*<br>\s*-\s*([^(<\n\r]+)/i);
-        const serviceDesk = sdMatch ? sdMatch[1].trim() : 'Unknown';
+        // Extract Service Desk names
+        // Get the block between "Service Desk :" and "Teknisi :"
+        const sdSectionMatch = salinContent.match(/Service Desk\s*:\s*<br>([\s\S]*?)(?:<br>\s*<br>|Teknisi\s*:)/i);
+        let serviceDesk = 'Unknown';
+
+        if (sdSectionMatch) {
+            const sdSection = sdSectionMatch[1];
+            // Match all names starting with - and before (phone number)
+            const nameMatches = Array.from(sdSection.matchAll(/-\s*([^(<\n\r]+)/g));
+            if (nameMatches.length > 0) {
+                serviceDesk = nameMatches.map((m: any) => m[1].trim()).join(', ');
+            }
+        }
 
         return NextResponse.json({
             serviceDesk,
