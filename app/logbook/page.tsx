@@ -228,6 +228,9 @@ function LogbookListContent() {
         } else {
           failCount++;
         }
+
+        // Add 500ms delay to be safe for external server
+        await new Promise(resolve => setTimeout(resolve, 500));
       } catch (error) {
         console.error(`Error bulk order for ID ${entry.id}:`, error);
         failCount++;
