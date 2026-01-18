@@ -54,17 +54,11 @@ npm install
 
 ### Step 4: Reset database
 ```bash
-# Drop database
-mysql -h localhost -u root -p"Rsdk#admin*1" -e "DROP DATABASE logbook_db;"
+# Reset total database (Drop & Recreate via Script)
+npm run db:reset
 
-# Create fresh database
-mysql -h localhost -u root -p"Rsdk#admin*1" -e "CREATE DATABASE logbook_db;"
-
-# Create tables
-mysql -h localhost -u root -p"Rsdk#admin*1" logbook_db -e "CREATE TABLE IF NOT EXISTS users (id INT AUTO_INCREMENT PRIMARY KEY, username VARCHAR(100) UNIQUE NOT NULL, email VARCHAR(100) UNIQUE NOT NULL, password_hash VARCHAR(255) NOT NULL, role ENUM('user', 'admin') DEFAULT 'user', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP); CREATE TABLE IF NOT EXISTS logbook (id INT AUTO_INCREMENT PRIMARY KEY, user_id INT NOT NULL, extensi VARCHAR(100), nama VARCHAR(255), lokasi VARCHAR(255), catatan TEXT, solusi TEXT, penyelesaian TEXT, status ENUM('draft', 'completed') DEFAULT 'draft', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE);"
-
-# Create admin user
-Get-Content "seed-admin.sql" | & "E:\Project\xampp\mysql\bin\mysql" -h localhost -u root -p"Rsdk#admin*1" logbook_db
+# Re-inisialisasi struktur & admin user
+npm run db:init
 ```
 
 ### Step 5: Restart server

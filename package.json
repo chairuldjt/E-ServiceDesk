@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:init": "npx tsx init-db.ts",
+    "db:reset": "npx tsx reset-db.ts",
+    "db:reset-admin": "npx tsx reset-admin.ts"
   },
   "dependencies": {
     "@tailwindcss/typography": "^0.5.19",

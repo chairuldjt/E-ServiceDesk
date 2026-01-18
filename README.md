@@ -47,7 +47,7 @@ JWT_EXPIRES_IN=7d
 Jalankan perintah berikut untuk membuat database, tabel, dan user admin secara otomatis:
 
 ```bash
-npx tsx init-db.ts
+npm run db:init
 ```
 
 Script ini akan:
@@ -55,12 +55,18 @@ Script ini akan:
 2. Membuat semua tabel (`users`, `logbook`, `notes`).
 3. Menyiapkan user admin default.
 
-### 5. Utility: Reset Admin Password
-Jika Anda lupa password admin atau ingin mereset akun admin ke default:
-```bash
-npx tsx reset-admin.ts
-```
-Akun akan direset menjadi: `admin` / `admin123`.
+### 5. Utility: Database Management
+Tersedia beberapa perintah untuk mempermudah manajemen database:
+
+*   **Reset Password Admin:** Jika Anda lupa password atau ingin mereset akun admin ke default (`admin` / `admin123`):
+    ```bash
+    npm run db:reset-admin
+    ```
+*   **Reset Total Database:** Untuk menghapus dan membuat ulang database dari nol (Hati-hati: Semua data akan hilang!):
+    ```bash
+    npm run db:reset
+    ```
+*   **Re-inisialisasi:** Setelah reset, jalankan `npm run db:init` untuk membangun ulang struktur tabel.
 
 ---
 

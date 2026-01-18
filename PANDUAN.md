@@ -19,7 +19,7 @@ Website pencatatan logbook berbasis web yang dibangun dengan:
 
 ### 2. ✓ Database Configuration
 - Database: `logbook_db` dibuat secara otomatis
-- Tables: `users`, `logbook`, dan `notes` dibuat secara otomatis via `init-db.ts`
+- Tables: `users`, `logbook`, dan `notes` dibuat secara otomatis via `npm run db:init`
 - MySQL credentials: root / [Sesuai .env.local Anda]
 
 ### 3. ✓ Environment Setup
