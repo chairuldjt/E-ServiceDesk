@@ -575,7 +575,7 @@ function VerifyOrderContent() {
                                             </div>
                                         </td>
                                         <td className="px-8 py-6">
-                                            <span className="text-sm font-black text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-xl border border-indigo-100 italic">
+                                            <span className="text-sm font-black text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-xl border border-indigo-100 italic whitespace-nowrap">
                                                 {order.ext_phone || '-'}
                                             </span>
                                         </td>
@@ -585,7 +585,7 @@ function VerifyOrderContent() {
                                             </p>
                                         </td>
                                         <td className="px-8 py-6">
-                                            <span className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border ${order.status_desc.includes('DONE') ? 'bg-purple-50 text-purple-600 border-purple-100' :
+                                            <span className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border whitespace-nowrap ${order.status_desc.includes('DONE') ? 'bg-purple-50 text-purple-600 border-purple-100' :
                                                     order.status_desc.includes('FOLLOW UP') ? 'bg-indigo-50 text-indigo-600 border-indigo-100' :
                                                         order.status_desc.includes('PENDING') ? 'bg-amber-50 text-amber-600 border-amber-100' :
                                                             order.status_desc.includes('RUNNING') ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
