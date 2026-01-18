@@ -71,11 +71,11 @@ export async function GET(request: NextRequest) {
 
         // Add Title
         worksheet.insertRow(1, []);
-        const titleRow = worksheet.getRow(2);
-        titleRow.getCell(1).value = `LAPORAN ORDER SIMRS TANGGAL ${dateTitle}`.toUpperCase();
         worksheet.mergeCells('A2:I2');
-        titleRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
-        titleRow.getCell(1).font = { bold: true, size: 14 };
+        const titleCell = worksheet.getCell('A2');
+        titleCell.value = `LAPORAN ORDER SIMRS TANGGAL ${dateTitle}`.toUpperCase();
+        titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+        titleCell.font = { bold: true, size: 14 };
 
         // Move headers to Row 4 (leaving Row 3 empty as spacing)
         const headerRow = worksheet.getRow(4);
@@ -99,7 +99,7 @@ export async function GET(request: NextRequest) {
         // Add Data Rows
         allOrders.forEach((order: any, index: number) => {
             const teknisi = (order.teknisi || '').split('|').map((t: string) => t.trim()).filter((t: string) => t !== "").join('\n');
-            const sd = order.order_by_name || '-';
+            const sd = order.order_by || '-';
 
             const row = worksheet.addRow([
                 index + 1,
