@@ -101,20 +101,19 @@ export async function GET(request: NextRequest) {
 
         // Add Data Rows
         allOrders.forEach((order: any, index: number) => {
-            const teknisiList = (order.teknisi || '').split('|').map((t: string) => t.trim()).filter((t: string) => t !== "");
-            const sd = teknisiList[0] || '-';
-            const teknisi = teknisiList.slice(1).join('\n') || sd;
+            const teknisi = (order.teknisi || '').split('|').map((t: string) => t.trim()).filter((t: string) => t !== "").join('\n');
+            const sd = order.order_by_name || '-';
 
             const row = worksheet.addRow([
                 index + 1,
                 order.order_no,
                 order.create_date,
                 order.ext_phone || 'Chat WA',
-                `${order.order_by} / ${order.location_desc}`,
+                order.location_desc,
                 order.catatan,
                 sd,
                 order.status_desc.toUpperCase(),
-                teknisi
+                teknisi || '-'
             ]);
 
             row.eachCell((cell) => {
