@@ -71,16 +71,13 @@ export async function GET(request: NextRequest) {
 
         // Add Title
         worksheet.insertRow(1, []);
-        worksheet.insertRow(2, ['', `LAPORAN ORDER SIMRS TANGGAL ${dateTitle}`.toUpperCase()]);
-        worksheet.mergeCells('B2:I2');
-        worksheet.getRow(2).getCell(2).alignment = { horizontal: 'center', vertical: 'middle' };
-        worksheet.getRow(2).getCell(2).font = { bold: true, size: 14 };
+        const titleRow = worksheet.getRow(2);
+        titleRow.getCell(1).value = `LAPORAN ORDER SIMRS TANGGAL ${dateTitle}`.toUpperCase();
+        worksheet.mergeCells('A2:I2');
+        titleRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
+        titleRow.getCell(1).font = { bold: true, size: 14 };
 
-        // Add Subtitle
-        worksheet.insertRow(3, ['', 'ORDER MASUK SIMRS']);
-        worksheet.getRow(3).getCell(2).font = { bold: true };
-
-        // Move headers to Row 4
+        // Move headers to Row 4 (leaving Row 3 empty as spacing)
         const headerRow = worksheet.getRow(4);
         headerRow.values = ['NO', 'NO ORDER', 'TANGGAL', 'TELEPON', 'USER', 'ORDER', 'SERVICE DESK', 'KETERANGAN', 'TEKNISI'];
         headerRow.eachCell((cell) => {
