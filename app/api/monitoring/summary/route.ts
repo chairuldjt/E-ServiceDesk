@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getExternalOrderSummary } from '@/lib/externalApi';
 import { getPayloadFromCookie } from '@/lib/jwt';
 
 export async function GET() {
@@ -9,6 +8,7 @@ export async function GET() {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        const { getExternalOrderSummary } = await import('@/lib/externalApi');
         const data = await getExternalOrderSummary(payload.id);
         if (!data) {
             return NextResponse.json({ error: 'Gagal mengambil summary order' }, { status: 500 });

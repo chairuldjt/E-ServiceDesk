@@ -95,7 +95,16 @@ export async function PUT(
 
     await connection.execute(
       'UPDATE logbook SET extensi = ?, nama = ?, lokasi = ?, catatan = ?, solusi = ?, penyelesaian = ?, status = ? WHERE id = ?',
-      [extensi, nama, lokasi, catatan, solusi, penyelesaian, status, id]
+      [
+        extensi,
+        nama,
+        lokasi,
+        catatan,
+        solusi || logbook.solusi || 'belum ada',
+        penyelesaian || logbook.penyelesaian || 'belum ada',
+        status,
+        id
+      ]
     );
 
     const [updated]: any = await connection.execute(

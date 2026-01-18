@@ -14,8 +14,6 @@ interface LogbookEntry {
   nama: string;
   lokasi: string;
   catatan: string;
-  solusi: string;
-  penyelesaian: string;
   status: string;
   created_at: string;
   updated_at: string;
@@ -65,8 +63,6 @@ function DetailLogbookContent() {
     extensi: '',
     lokasi: '',
     catatan: '',
-    solusi: 'belum ada',
-    penyelesaian: 'belum ada',
     status: 'pending_order',
   });
 
@@ -91,8 +87,6 @@ function DetailLogbookContent() {
         extensi: entry.extensi || '',
         lokasi: entry.lokasi || '',
         catatan: entry.catatan || '',
-        solusi: entry.solusi || 'belum ada',
-        penyelesaian: entry.penyelesaian || 'belum ada',
         status: entry.status || 'pending_order',
       });
     } catch (error) {
@@ -188,8 +182,8 @@ function DetailLogbookContent() {
     <div className="min-h-screen p-4 md:p-8 space-y-8 animate-in fade-in duration-700">
       <PageHeader
         icon={isEditing ? '✏️' : '📋'}
-        title={isEditing ? 'Edit Logbook' : 'Detail Logbook'}
-        subtitle={isEditing ? 'Perbarui informasi catatan pekerjaan' : 'Informasi lengkap catatan logbook'}
+        title={isEditing ? 'Edit Order' : 'Detail Order'}
+        subtitle={isEditing ? 'Perbarui informasi catatan pekerjaan' : 'Informasi lengkap catatan order'}
         actions={
           <Link href="/logbook">
             <PremiumButton variant="secondary" className="text-xs uppercase tracking-widest px-6">
@@ -245,23 +239,11 @@ function DetailLogbookContent() {
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 px-4">Catatan / Keluhan</label>
                     <p className="text-slate-700 px-4 font-medium leading-relaxed whitespace-pre-wrap">{logbook.catatan || '-'}</p>
                   </div>
-
-                  <div className="relative group">
-                    <div className="absolute -left-2 top-0 bottom-0 w-1 bg-blue-200 rounded-full group-hover:bg-blue-400 transition-colors"></div>
-                    <label className="block text-[10px] font-black text-blue-600 uppercase tracking-widest mb-3 px-4">Solusi</label>
-                    <p className="text-slate-700 px-4 font-medium leading-relaxed whitespace-pre-wrap">{logbook.solusi || 'belum ada'}</p>
-                  </div>
-
-                  <div className="relative group">
-                    <div className="absolute -left-2 top-0 bottom-0 w-1 bg-emerald-200 rounded-full group-hover:bg-emerald-400 transition-colors"></div>
-                    <label className="block text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-3 px-4">Penyelesaian</label>
-                    <p className="text-slate-700 px-4 font-medium leading-relaxed whitespace-pre-wrap">{logbook.penyelesaian || 'belum ada'}</p>
-                  </div>
                 </div>
 
                 <div className="pt-10 flex flex-col md:flex-row gap-4">
                   <PremiumButton onClick={() => setIsEditing(true)} className="flex-1 py-5 text-sm font-black tracking-widest shadow-xl shadow-blue-100 uppercase">
-                    ✏️ Edit Logbook
+                    ✏️ Edit Order
                   </PremiumButton>
                   {logbook.status !== 'ordered' && (
                     <PremiumButton
@@ -289,7 +271,7 @@ function DetailLogbookContent() {
                   />
 
                   <div>
-                    <label className="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">Status Logbook</label>
+                    <label className="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">Status Order</label>
                     <select
                       name="status"
                       value={formData.status}
@@ -321,26 +303,8 @@ function DetailLogbookContent() {
                   value={formData.catatan}
                   onChange={handleChange}
                   placeholder="..."
-                  rows={4}
+                  rows={6}
                 />
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <PremiumTextarea
-                    label="Solusi"
-                    name="solusi"
-                    value={formData.solusi}
-                    onChange={handleChange}
-                    rows={4}
-                  />
-
-                  <PremiumTextarea
-                    label="Penyelesaian Akhir"
-                    name="penyelesaian"
-                    value={formData.penyelesaian}
-                    onChange={handleChange}
-                    rows={4}
-                  />
-                </div>
 
                 <div className="flex flex-col md:flex-row gap-4 pt-10">
                   <PremiumButton

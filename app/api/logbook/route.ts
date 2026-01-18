@@ -18,11 +18,9 @@ export async function GET(request: NextRequest) {
     let query = 'SELECT * FROM logbook';
     const params: any[] = [];
 
-    // Admin dapat melihat semua logbook, user hanya logbook mereka sendiri
-    if (payload.role !== 'admin') {
-      query += ' WHERE user_id = ?';
-      params.push(payload.id);
-    }
+    // Semua user (termasuk admin) hanya melihat logbook mereka sendiri
+    query += ' WHERE user_id = ?';
+    params.push(payload.id);
 
     query += ' ORDER BY created_at DESC';
 

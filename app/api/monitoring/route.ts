@@ -40,9 +40,11 @@ export async function GET(request: NextRequest) {
         };
 
         const results = await Promise.all(STATUSES.map(fetchStatus));
-        const allOrders = results.flat();
+        let allOrders = results.flat();
 
-        // 4. Process Data
+        // 4. Filter by User - REMOVED for global data
+
+        // 5. Process Data
         const today = new Date();
         const dateToFilter = requestedDate ? new Date(requestedDate) : today;
 

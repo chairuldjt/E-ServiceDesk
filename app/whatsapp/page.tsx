@@ -845,15 +845,26 @@ const WhatsAppContent = () => {
                             <div>
                                 <div className="flex justify-between items-center mb-3">
                                     <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">Group ID</label>
-                                    <button
-                                        onClick={() => {
-                                            setGroupForm({ alias: '', id: config.groupId || '' });
-                                            setIsGroupModalOpen(true);
-                                        }}
-                                        className="text-[10px] font-bold text-white bg-gradient-to-r from-blue-500 to-indigo-600 px-3 py-1.5 rounded-lg hover:shadow-md transition flex items-center gap-1 shadow-blue-200"
-                                    >
-                                        <span>+</span> Simpan ID
-                                    </button>
+                                    <div className="flex gap-2">
+                                        {config.groupId && savedGroups.some(g => g.id === config.groupId) && (
+                                            <button
+                                                onClick={() => handleDeleteGroup(config.groupId)}
+                                                className="text-[10px] font-bold text-rose-600 bg-rose-50 px-3 py-1.5 rounded-lg hover:shadow-md transition flex items-center gap-1 border border-rose-100"
+                                                title="Hapus grup"
+                                            >
+                                                <span>🗑️</span> Hapus
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={() => {
+                                                setGroupForm({ alias: '', id: config.groupId || '' });
+                                                setIsGroupModalOpen(true);
+                                            }}
+                                            className="text-[10px] font-bold text-white bg-gradient-to-r from-blue-500 to-indigo-600 px-3 py-1.5 rounded-lg hover:shadow-md transition flex items-center gap-1 shadow-blue-200"
+                                        >
+                                            <span>+</span> Simpan ID
+                                        </button>
+                                    </div>
                                 </div>
                                 <input
                                     type="text"

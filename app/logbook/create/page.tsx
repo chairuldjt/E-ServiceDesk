@@ -11,8 +11,6 @@ interface LogbookFormEntry {
   extensi: string;
   lokasi: string;
   catatan: string;
-  solusi: string;
-  penyelesaian: string;
 }
 
 export default function CreateLogbookPage() {
@@ -31,11 +29,11 @@ function CreateLogbookContent() {
 
   // Multi-entry state
   const [entries, setEntries] = useState<LogbookFormEntry[]>([
-    { extensi: '', lokasi: '', catatan: '', solusi: 'belum ada', penyelesaian: 'belum ada' }
+    { extensi: '', lokasi: '', catatan: '' }
   ]);
 
   const handleAddRow = () => {
-    setEntries([...entries, { extensi: '', lokasi: '', catatan: '', solusi: 'belum ada', penyelesaian: 'belum ada' }]);
+    setEntries([...entries, { extensi: '', lokasi: '', catatan: '' }]);
   };
 
   const handleRemoveRow = (index: number) => {
@@ -90,7 +88,7 @@ function CreateLogbookContent() {
     <div className="min-h-screen p-4 md:p-8 space-y-8 animate-in fade-in duration-700">
       <PageHeader
         icon="➕"
-        title="Tambah Logbook Baru"
+        title="Tambah Order Baru"
         subtitle="Buat beberapa catatan pekerjaan sekaligus"
         actions={
           <Link href="/logbook">
@@ -110,7 +108,7 @@ function CreateLogbookContent() {
                   <span className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-black text-sm">
                     {index + 1}
                   </span>
-                  <h3 className="text-xl font-black text-slate-800">Data Logbook</h3>
+                  <h3 className="text-xl font-black text-slate-800">Data Order</h3>
                 </div>
                 {entries.length > 1 && (
                   <button
@@ -148,24 +146,9 @@ function CreateLogbookContent() {
                 value={entry.catatan}
                 onChange={(e) => handleChange(index, 'catatan', e.target.value)}
                 placeholder="Rincian masalah..."
-                rows={2}
+                rows={4}
                 className="mb-6"
               />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <PremiumTextarea
-                  label="Solusi"
-                  value={entry.solusi}
-                  onChange={(e) => handleChange(index, 'solusi', e.target.value)}
-                  rows={2}
-                />
-                <PremiumTextarea
-                  label="Penyelesaian"
-                  value={entry.penyelesaian}
-                  onChange={(e) => handleChange(index, 'penyelesaian', e.target.value)}
-                  rows={2}
-                />
-              </div>
             </PremiumCard>
           ))}
 
@@ -176,7 +159,7 @@ function CreateLogbookContent() {
               onClick={handleAddRow}
               className="flex-1 py-4 text-xs font-black uppercase tracking-widest bg-blue-50 text-blue-700 border-blue-100 hover:bg-blue-100"
             >
-              ➕ Tambah Baris Logbook (Multi-Entry)
+              ➕ Tambah Baris Order (Multi-Entry)
             </PremiumButton>
 
             <PremiumButton
@@ -184,7 +167,7 @@ function CreateLogbookContent() {
               disabled={loading}
               className="flex-1 py-4 text-xs font-black uppercase tracking-widest shadow-2xl shadow-blue-100"
             >
-              {loading ? 'MENYIMPAN...' : '💾 SIMPAN SEMUA LOGBOOK'}
+              {loading ? 'MENYIMPAN...' : '💾 SIMPAN SEMUA ORDER'}
             </PremiumButton>
           </div>
 
