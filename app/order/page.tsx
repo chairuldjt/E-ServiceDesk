@@ -507,7 +507,7 @@ function VerifyOrderContent() {
 
             {/* List Section */}
             <div className="bg-white/80 backdrop-blur-md rounded-[2.5rem] border border-white/20 shadow-2xl overflow-hidden min-h-[500px]">
-                <div className="p-8 bg-slate-50/50 border-b border-slate-100 flex justify-between items-center">
+                <div className="p-4 md:p-6 bg-slate-50/50 border-b border-slate-100 flex justify-between items-center">
                     <div className="flex items-center gap-4">
                         <div className={`w-3 h-3 rounded-full animate-pulse ${currentStatus === 15 ? 'bg-emerald-500' : 'bg-blue-500'}`}></div>
                         <h3 className="text-xl font-bold text-slate-800">
@@ -536,14 +536,14 @@ function VerifyOrderContent() {
                     <table className="w-full text-left">
                         <thead>
                             <tr className="bg-slate-50/30">
-                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">No Order</th>
-                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Waktu</th>
-                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Pelapor & Lokasi</th>
-                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Ext</th>
-                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Keluhan</th>
-                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
-                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Teknisi</th>
-                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Aksi</th>
+                                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">No Order</th>
+                                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Waktu</th>
+                                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Pelapor & Lokasi</th>
+                                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Ext</th>
+                                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Keluhan</th>
+                                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Teknisi</th>
+                                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right sticky right-0 bg-slate-50/90 backdrop-blur-md z-20 shadow-[-12px_0_15px_-3px_rgba(0,0,0,0.05)]">Aksi</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -558,63 +558,63 @@ function VerifyOrderContent() {
                             ) : paginatedOrders.length > 0 ? (
                                 paginatedOrders.map((order) => (
                                     <tr key={order.order_id} className="hover:bg-blue-50/20 transition-colors group">
-                                        <td className="px-8 py-6">
-                                            <span className="font-black text-slate-800 bg-white px-4 py-2 rounded-xl text-sm border border-slate-100 shadow-sm group-hover:border-blue-200 transition-colors">
+                                        <td className="px-4 py-4">
+                                            <span className="font-black text-slate-800 bg-white px-3 py-1.5 rounded-lg text-xs border border-slate-100 shadow-sm group-hover:border-blue-200 transition-colors">
                                                 {order.order_no}
                                             </span>
                                         </td>
-                                        <td className="px-8 py-6 text-sm font-bold text-slate-500">
+                                        <td className="px-4 py-4 text-xs font-bold text-slate-500 whitespace-nowrap">
                                             {order.create_date}
                                         </td>
-                                        <td className="px-8 py-6">
-                                            <div className="flex flex-col">
-                                                <span className="font-black text-slate-700">{order.order_by}</span>
-                                                <span className="text-xs text-slate-400 font-bold flex items-center gap-1.5 mt-1">
+                                        <td className="px-4 py-4">
+                                            <div className="flex flex-col min-w-[120px]">
+                                                <span className="font-black text-slate-700 text-sm">{order.order_by}</span>
+                                                <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1 mt-0.5">
                                                     <span className="text-blue-500">📍</span> {order.location_desc}
                                                 </span>
                                             </div>
                                         </td>
-                                        <td className="px-8 py-6">
-                                            <span className="text-sm font-black text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-xl border border-indigo-100 italic whitespace-nowrap">
+                                        <td className="px-4 py-4">
+                                            <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-100 italic whitespace-nowrap">
                                                 {order.ext_phone || '-'}
                                             </span>
                                         </td>
-                                        <td className="px-8 py-6">
-                                            <p className="text-sm text-slate-600 line-clamp-2 max-w-xs leading-relaxed italic font-medium bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100 group-hover:bg-white transition-colors">
+                                        <td className="px-4 py-4">
+                                            <p className="text-xs text-slate-600 line-clamp-2 max-w-[200px] leading-relaxed italic font-medium bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 group-hover:bg-white transition-colors">
                                                 "{order.catatan}"
                                             </p>
                                         </td>
-                                        <td className="px-8 py-6">
-                                            <span className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border whitespace-nowrap ${order.status_desc.includes('DONE') ? 'bg-purple-50 text-purple-600 border-purple-100' :
-                                                    order.status_desc.includes('FOLLOW UP') ? 'bg-indigo-50 text-indigo-600 border-indigo-100' :
-                                                        order.status_desc.includes('PENDING') ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                                                            order.status_desc.includes('RUNNING') ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-                                                                order.status_desc.includes('VERIFIED') ? 'bg-slate-50 text-slate-600 border-slate-100' :
-                                                                    'bg-blue-50 text-blue-600 border-blue-100'
+                                        <td className="px-4 py-4">
+                                            <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wider border whitespace-nowrap ${order.status_desc.includes('DONE') ? 'bg-purple-50 text-purple-600 border-purple-100' :
+                                                order.status_desc.includes('FOLLOW UP') ? 'bg-indigo-50 text-indigo-600 border-indigo-100' :
+                                                    order.status_desc.includes('PENDING') ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                                        order.status_desc.includes('RUNNING') ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                                                            order.status_desc.includes('VERIFIED') ? 'bg-slate-50 text-slate-600 border-slate-100' :
+                                                                'bg-blue-50 text-blue-600 border-blue-100'
                                                 }`}>
                                                 {order.status_desc}
                                             </span>
                                         </td>
-                                        <td className="px-8 py-6">
-                                            <div className="flex items-center gap-3 bg-white px-3 py-2 rounded-2xl border border-slate-100 shadow-sm group-hover:border-blue-100 transition-all">
-                                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center text-sm font-black shadow-md">
+                                        <td className="px-4 py-4">
+                                            <div className="flex items-center gap-2 bg-white px-2 py-1.5 rounded-xl border border-slate-100 shadow-sm group-hover:border-blue-100 transition-all max-w-[150px]">
+                                                <div className="w-8 h-8 shrink-0 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center text-[10px] font-black shadow-md">
                                                     {order.teknisi.charAt(0)}
                                                 </div>
-                                                <span className="text-sm font-black text-slate-700">
+                                                <span className="text-xs font-black text-slate-700 truncate">
                                                     {order.teknisi.replace(/\|/g, '')}
                                                 </span>
                                             </div>
                                         </td>
-                                        <td className="px-8 py-6 text-right">
+                                        <td className="px-4 py-4 text-right sticky right-0 bg-white/90 backdrop-blur-md z-10 group-hover:bg-blue-50/90 shadow-[-12px_0_15px_-3px_rgba(0,0,0,0.05)] transition-colors">
                                             <button
                                                 onClick={() => handleViewDetail(order.order_id)}
                                                 className={`${currentStatus === 15 ? 'bg-blue-600 shadow-blue-200' : 'bg-slate-800 shadow-slate-200'
-                                                    } text-white px-6 py-3 rounded-2xl text-sm font-black hover:opacity-90 shadow-xl transition-all active:scale-95 flex items-center gap-3 ml-auto`}
+                                                    } text-white px-4 py-2 rounded-xl text-xs font-black hover:opacity-90 shadow-lg transition-all active:scale-95 flex items-center gap-2 ml-auto whitespace-nowrap`}
                                             >
                                                 {currentStatus === 15 ? (
-                                                    <><span className="text-lg">🛡️</span> Verifikasi</>
+                                                    <><span className="text-base">🛡️</span> Verifikasi</>
                                                 ) : (
-                                                    <><span className="text-lg">👁️</span> Detail</>
+                                                    <><span className="text-base">👁️</span> Detail</>
                                                 )}
                                             </button>
                                         </td>
@@ -622,7 +622,7 @@ function VerifyOrderContent() {
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={8} className="px-8 py-32 text-center text-slate-400 font-medium">
+                                    <td colSpan={8} className="px-4 py-24 text-center text-slate-400 font-medium">
                                         <div className="flex flex-col items-center gap-6">
                                             <div className="w-32 h-32 bg-slate-50/50 rounded-full flex items-center justify-center text-6xl shadow-inner animate-bounce duration-[3s]">
                                                 {currentStatus === 30 ? '📚' : '☕'}
@@ -641,7 +641,7 @@ function VerifyOrderContent() {
 
                 {/* Pagination Controls */}
                 {totalPages > 1 && (
-                    <div className="p-8 bg-slate-50/50 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div className="p-4 md:p-6 bg-slate-50/50 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6">
                         <p className="text-sm text-slate-400 font-black tracking-widest uppercase">
                             Showing <span className="text-slate-900">{Math.min(filteredOrders.length, (currentPage - 1) * ITEMS_PER_PAGE + 1)}-{Math.min(filteredOrders.length, currentPage * ITEMS_PER_PAGE)}</span> of <span className="text-slate-900">{filteredOrders.length}</span> tickets
                         </p>
