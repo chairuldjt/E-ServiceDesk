@@ -29,6 +29,7 @@ export async function GET(request: NextRequest) {
             const orderRes = await fetch(`${BASE}/order/order_list_by_status/${status}`, {
                 headers: {
                     'Authorization': `Bearer ${jwt}`,
+                    'access-token': jwt,
                     'Accept': 'application/json',
                 },
             });

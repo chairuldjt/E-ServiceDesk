@@ -19,7 +19,9 @@ export async function POST(request: NextRequest) {
         const response = await axios.post(EXPORTER_URL,
             new URLSearchParams({
                 user_export: username,
-                pass_export: password
+                pass_export: password,
+                field_name: 'dst',
+                field_pattern: '2000'
             }).toString(),
             {
                 headers: {

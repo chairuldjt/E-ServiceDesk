@@ -48,6 +48,40 @@ function CreateLogbookContent() {
     setEntries(newEntries);
   };
 
+  const handleSaveSingle = async (index: number) => {
+    const entry = entries[index];
+    if (!entry.extensi || !entry.lokasi) {
+      showToast('Extensi dan lokasi harus diisi', 'error');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch('/api/logbook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...entry, nama: entry.lokasi }),
+      });
+
+      if (response.ok) {
+        showToast('Order berhasil disimpan', 'success');
+        if (entries.length > 1) {
+          setEntries(entries.filter((_, i) => i !== index));
+        } else {
+          // If it was the last row, redirect
+          router.push('/logbook');
+        }
+      } else {
+        const data = await response.json();
+        showToast(data.error || 'Gagal menyimpan order', 'error');
+      }
+    } catch (error) {
+      showToast('Terjadi kesalahan koneksi', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -110,15 +144,25 @@ function CreateLogbookContent() {
                   </span>
                   <h3 className="text-xl font-black text-slate-800">Data Order</h3>
                 </div>
-                {entries.length > 1 && (
+                <div className="flex items-center gap-4">
                   <button
                     type="button"
-                    onClick={() => handleRemoveRow(index)}
-                    className="text-xs font-black text-red-400 uppercase tracking-widest hover:text-red-600 transition"
+                    onClick={() => handleSaveSingle(index)}
+                    className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-xl hover:bg-emerald-700 transition shadow-lg shadow-emerald-100 text-[10px] font-black uppercase tracking-widest"
+                    disabled={loading}
                   >
-                    🗑️ Hapus Baris
+                    💾 Simpan Baris Ini
                   </button>
-                )}
+                  {entries.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveRow(index)}
+                      className="text-xs font-black text-red-400 uppercase tracking-widest hover:text-red-600 transition"
+                    >
+                      🗑️ Hapus Baris
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">

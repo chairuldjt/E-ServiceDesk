@@ -24,8 +24,6 @@ const getStatusBadge = (status: string) => {
   switch (status) {
     case 'ordered':
       return { label: 'Sudah Diorderkan', variant: 'emerald' as const };
-    case 'completed':
-      return { label: 'Selesai', variant: 'emerald' as const };
     case 'pending_order':
     case 'draft':
     default:
@@ -47,6 +45,7 @@ function LogbookListContent() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]); // Default to today
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -68,12 +67,15 @@ function LogbookListContent() {
 
 
   useEffect(() => {
-    fetchLogbook();
-  }, []);
+    fetchLogbook(selectedDate);
+  }, [selectedDate]);
 
-  const fetchLogbook = async () => {
+  const fetchLogbook = async (date?: string) => {
     try {
-      const response = await fetch('/api/logbook');
+      setLoading(true);
+      let url = '/api/logbook';
+      if (date) url += `?date=${date}`;
+      const response = await fetch(url);
       const data = await response.json();
       setLogbookEntries(data.data);
     } catch (error) {
@@ -106,7 +108,7 @@ function LogbookListContent() {
   };
 
   const toggleStatus = (entry: LogbookEntry) => {
-    const newStatus = entry.status === 'ordered' || entry.status === 'completed' ? 'pending_order' : 'completed';
+    const newStatus = entry.status === 'ordered' ? 'pending_order' : 'ordered';
 
     confirm(`Ubah Status?`, `Ubah status order ke ${getStatusBadge(newStatus).label}?`, async () => {
       try {
@@ -161,7 +163,7 @@ function LogbookListContent() {
       if (response.ok) {
         showToast('Order berhasil dikirim dan status order diupdate', 'success');
         setIsOrderModalOpen(false);
-        fetchLogbook();
+        fetchLogbook(selectedDate);
       } else {
         showToast(`Gagal: ${result.error}`, 'error');
       }
@@ -240,7 +242,7 @@ function LogbookListContent() {
     showToast(`${successCount} order berhasil dikirim, ${failCount} gagal`, successCount > 0 ? 'success' : 'error');
     setIsBulkOrderModalOpen(false);
     setSelectedIds([]);
-    fetchLogbook();
+    fetchLogbook(selectedDate);
     setIsSubmittingBulk(false);
   };
 
@@ -280,10 +282,22 @@ function LogbookListContent() {
         title="Create Order"
         subtitle="Kelola catatan pekerjaan dan service desk"
         actions={
-          <div className="flex gap-3">
+          <div className="flex flex-col md:flex-row gap-3">
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="px-4 py-2 rounded-xl border-2 border-slate-100 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 bg-white transition-all shadow-sm font-bold text-slate-700"
+            />
             <PremiumButton
               variant="secondary"
-              onClick={() => window.open('/api/order/export-laporan', '_blank')}
+              onClick={() => fetchLogbook(selectedDate)}
+            >
+              <span className="text-lg">🔄</span> Refresh
+            </PremiumButton>
+            <PremiumButton
+              variant="secondary"
+              onClick={() => window.open(`/api/order/export-laporan?date=${selectedDate}`, '_blank')}
             >
               <span className="text-lg">📂</span> Export Laporan Jaga
             </PremiumButton>
@@ -310,7 +324,6 @@ function LogbookListContent() {
               { value: 'all', label: 'Semua Status' },
               { value: 'pending_order', label: 'Belum Diorderkan' },
               { value: 'ordered', label: 'Sudah Diorderkan' },
-              { value: 'completed', label: 'Selesai' },
             ]}
           />
         </div>
@@ -386,7 +399,7 @@ function LogbookListContent() {
                       <td className="px-6 py-6 text-center">
                         <button
                           onClick={() => toggleStatus(entry)}
-                          className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all border-2 w-full max-w-[150px] mx-auto text-center ${(entry.status === 'ordered' || entry.status === 'completed')
+                          className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all border-2 w-full max-w-[150px] mx-auto text-center ${entry.status === 'ordered'
                             ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                             : 'bg-blue-50 text-blue-700 border-blue-200'
                             }`}

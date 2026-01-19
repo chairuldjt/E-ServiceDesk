@@ -15,12 +15,20 @@ export async function GET(request: NextRequest) {
     }
 
     const connection = await pool.getConnection();
+    const { searchParams } = new URL(request.url);
+    const date = searchParams.get('date'); // YYYY-MM-DD
+
     let query = 'SELECT * FROM logbook';
     const params: any[] = [];
 
     // Semua user (termasuk admin) hanya melihat logbook mereka sendiri
     query += ' WHERE user_id = ?';
     params.push(payload.id);
+
+    if (date) {
+      query += ' AND DATE(created_at) = ?';
+      params.push(date);
+    }
 
     query += ' ORDER BY created_at DESC';
 

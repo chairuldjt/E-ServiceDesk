@@ -12,6 +12,9 @@ export async function GET(request: NextRequest) {
     }
 
     try {
+        const { searchParams } = new URL(request.url);
+        const requestedDate = searchParams.get('date'); // YYYY-MM-DD
+
         const { jwt, BASE } = await getExternalToken(payload.id);
 
         // 1. Fetch orders from all statuses
@@ -19,6 +22,7 @@ export async function GET(request: NextRequest) {
             const orderRes = await fetch(`${BASE}/order/order_list_by_status/${status}`, {
                 headers: {
                     'Authorization': `Bearer ${jwt}`,
+                    'access-token': jwt,
                     'Accept': 'application/json',
                 },
             });
@@ -32,16 +36,17 @@ export async function GET(request: NextRequest) {
         const results = await Promise.all(STATUSES.map(fetchStatus));
         let allOrders = results.flat();
 
-        // 2. Filter by Today's Date
+        // 2. Filter by Date
         const today = new Date();
-        const day = String(today.getDate()).padStart(2, '0');
-        const monthsStr = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        const monthShort = monthsStr[today.getMonth()];
-        const yearShort = String(today.getFullYear()).slice(-2);
-        const dateStringPHP = `${day} ${monthShort} ${yearShort}`; // "19 Jan 26"
+        const filterDate = requestedDate ? new Date(requestedDate) : today;
 
-        // Also filter by ISO date just in case
-        const dateISO = today.toISOString().split('T')[0];
+        const day = String(filterDate.getDate()).padStart(2, '0');
+        const monthsStr = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const monthShort = monthsStr[filterDate.getMonth()];
+        const yearShort = String(filterDate.getFullYear()).slice(-2);
+        const dateStringPHP = `${day} ${monthShort} ${yearShort}`;
+
+        const dateISO = filterDate.toISOString().split('T')[0];
 
         allOrders = allOrders.filter((o: any) => {
             return (o.create_date && o.create_date.includes(dateStringPHP)) ||
@@ -67,7 +72,7 @@ export async function GET(request: NextRequest) {
 
         // Format Date for Title
         const monthsFull = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-        const dateTitle = `${today.getDate()} ${monthsFull[today.getMonth()]} ${today.getFullYear()}`;
+        const dateTitle = `${filterDate.getDate()} ${monthsFull[filterDate.getMonth()]} ${filterDate.getFullYear()}`;
 
         // Add Title
         worksheet.insertRow(1, []);

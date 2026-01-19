@@ -26,7 +26,7 @@ export async function getExternalToken(userId: number) {
 
     const { user: USER, pass: PASS } = config;
 
-    const BASE = config.base_url || DEFAULT_BASE;
+    let BASE = (config.base_url || DEFAULT_BASE).replace(/\/+$/, '');
 
     // Check Cache
     const cached = tokenCache[userId];
@@ -43,7 +43,18 @@ export async function getExternalToken(userId: number) {
         });
 
         if (!loginRes.ok) {
-            throw new Error('Gagal periksa User/PW. Pastikan kredensial Webmin benar.');
+            const errorText = await loginRes.text();
+            console.error(`Auth Login Failed (${BASE}):`, {
+                status: loginRes.status,
+                statusText: loginRes.statusText,
+                body: errorText
+            });
+            throw new Error(`Gagal menghubungkan ke server API (${loginRes.status}). Periksa URL external.`);
+        }
+
+        const loginData = await loginRes.json();
+        if (loginData.result === false) {
+            throw new Error('Kredensial (User/PW) ditolak oleh server external. Pastikan Username & Password benar di pengaturan Akun.');
         }
 
         // Capture cookies
@@ -110,6 +121,7 @@ export async function getExternalCatalogs(userId: number) {
     const res = await fetch(`${BASE}/order/service_catalog_list`, {
         headers: {
             'Authorization': `Bearer ${jwt}`,
+            'access-token': jwt,
             'Accept': 'application/json',
         },
     });
@@ -124,6 +136,7 @@ export async function getExternalUsers(userId: number) {
     const res = await fetch(`${BASE}/user/user_list`, {
         headers: {
             'Authorization': `Bearer ${jwt}`,
+            'access-token': jwt,
             'Accept': 'application/json',
         },
     });
@@ -138,6 +151,7 @@ export async function getExternalOrdersByStatus(userId: number, status: number) 
     const res = await fetch(`${BASE}/order/order_list_by_status/${status}`, {
         headers: {
             'Authorization': `Bearer ${jwt}`,
+            'access-token': jwt,
             'Accept': 'application/json',
         },
     });
@@ -152,6 +166,7 @@ export async function getExternalOrderDetail(userId: number, orderId: number) {
     const res = await fetch(`${BASE}/order/order_detail_by_id/${orderId}`, {
         headers: {
             'Authorization': `Bearer ${jwt}`,
+            'access-token': jwt,
             'Accept': 'application/json',
         },
     });
@@ -167,6 +182,7 @@ export async function postExternalVerify(userId: number, data: any) {
         method: 'POST',
         headers: {
             'Authorization': `Bearer ${jwt}`,
+            'access-token': jwt,
             'Accept': 'application/json',
             'Content-Type': 'application/json',
         },
@@ -186,6 +202,7 @@ export async function getExternalOrderHistory(userId: number, orderId: number) {
     const res = await fetch(`${BASE}/order/order_history_by_id/${orderId}`, {
         headers: {
             'Authorization': `Bearer ${jwt}`,
+            'access-token': jwt,
             'Accept': 'application/json',
         },
     });
