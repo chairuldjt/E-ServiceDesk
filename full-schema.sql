@@ -8,9 +8,10 @@ CREATE TABLE IF NOT EXISTS users (
   username VARCHAR(100) NOT NULL UNIQUE,
   email VARCHAR(100) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
-  role ENUM('user', 'admin') DEFAULT 'user',
+  role ENUM('user', 'admin', 'super') DEFAULT 'user',
   is_active TINYINT(1) DEFAULT 1,
   profile_image VARCHAR(255) DEFAULT NULL,
+  telegram_session TEXT DEFAULT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -24,7 +25,7 @@ CREATE TABLE IF NOT EXISTS logbook (
   catatan TEXT,
   solusi TEXT,
   penyelesaian TEXT,
-  status ENUM('draft', 'completed') DEFAULT 'draft',
+  status ENUM('draft', 'pending_order', 'ordered', 'completed') DEFAULT 'draft',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -35,7 +36,7 @@ CREATE TABLE IF NOT EXISTS notes (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
   title VARCHAR(255) NOT NULL,
-  content TEXT,
+  content LONGTEXT,
   color VARCHAR(50) DEFAULT 'white',
   is_public TINYINT(1) DEFAULT 0,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

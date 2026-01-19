@@ -50,6 +50,7 @@ async function initDatabase() {
                 role ENUM('user', 'admin', 'super') DEFAULT 'user',
                 is_active TINYINT(1) DEFAULT 1,
                 profile_image VARCHAR(255) DEFAULT NULL,
+                telegram_session TEXT DEFAULT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         `);
@@ -128,6 +129,13 @@ async function initDatabase() {
             console.log('   - Adding missing "profile_image" column to "users" table...');
             await connection.query('ALTER TABLE users ADD COLUMN profile_image VARCHAR(255) DEFAULT NULL AFTER is_active');
             console.log('   - Column "profile_image" added successfully');
+        }
+
+        const hasTelegramSession = userColumns.some((col: any) => col.Field === 'telegram_session');
+        if (!hasTelegramSession) {
+            console.log('   - Adding missing "telegram_session" column to "users" table...');
+            await connection.query('ALTER TABLE users ADD COLUMN telegram_session TEXT DEFAULT NULL AFTER profile_image');
+            console.log('   - Column "telegram_session" added successfully');
         }
 
         const hasImages = columns.some((col: any) => col.Field === 'images');
