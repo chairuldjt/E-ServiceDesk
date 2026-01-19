@@ -57,6 +57,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     menuItems.push({ name: 'WhatsApp Bot', path: '/whatsapp', icon: '📱' });
   }
 
+  // Menu Telegram Bot (Admin & Super Only)
+  if (user.role === 'admin' || user.role === 'super') {
+    menuItems.push({ name: 'Telegram', path: '/telegram', icon: '✈️' });
+  }
+
   // Menu Admin Panel (Admin Only)
   if (user.role === 'admin') {
     menuItems.push({ name: 'Admin', path: '/admin', icon: '🔐' });
