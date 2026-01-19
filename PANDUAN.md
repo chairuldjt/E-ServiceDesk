@@ -54,6 +54,11 @@ Website pencatatan logbook berbasis web yang dibangun dengan:
 - Password: `admin123`
 - Role: `admin`
 
+### 8. ✓ Telegram Bridge
+- Integrasi bot @Robtechbot
+- Support pengiriman foto & otomasi
+- Persisten menu keyboard
+
 ---
 
 ## 🚀 Cara Menjalankan
@@ -191,6 +196,20 @@ Server akan berjalan di: `http://localhost:3000`
 - Tabel semua logbook dari semua user
 - Export semua data ke Excel
 - View hanya (tidak bisa edit/delete dari dashboard admin)
+
+---
+
+### ✈️ Telegram Bridge
+
+**URL**: `/telegram`
+
+**Fitur**:
+- **Connection Wizard**: Hubungkan akun Telegram Anda langsung dari dashboard.
+- **Mac OS Style Terminal**: Log aktivitas bot dengan antarmuka terminal yang elegan.
+- **Photo Support**: Kirim foto (upload/paste) langsung ke @Robtechbot.
+- **Smart Automation**: Tombol "Jalankan Update Otomatis" untuk memicu bot mengerjakan tugas rutin.
+- **Bot Menu**: Akses tombol keyboard bot langsung di bawah layar chat.
+- **Live Stream**: Update pesan bot secara real-time.
 
 ---
 

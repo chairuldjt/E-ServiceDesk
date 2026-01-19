@@ -8,6 +8,7 @@
 - [x] All APIs implemented
 - [x] Frontend pages completed
 - [x] Authentication & Export CDR working
+- [x] Telegram Bridge & Photo Support implemented
 - [x] Development server running
 
 ---
@@ -81,6 +82,7 @@ Access: /admin dashboard
 - CRUD Operations (Create/Read/Update/Delete)
 - Search & Filter
 - Export to Excel
+- Telegram Bridge (Photo Support & Automation)
 - Admin Dashboard
 - Role-Based Access
 
