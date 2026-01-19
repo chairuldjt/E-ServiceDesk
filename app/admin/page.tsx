@@ -44,7 +44,7 @@ function AdminContent() {
   const router = useRouter();
   const [logbookEntries, setLogbookEntries] = useState<LogbookEntry[]>([]);
   const [users, setUsers] = useState<User[]>([]);
-  const [activeTab, setActiveTab] = useState<'overview' | 'logbook' | 'users' | 'settings'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'settings'>('overview');
   const [isWhatsappVisible, setIsWhatsappVisible] = useState(true);
   const [isSettingsLoading, setIsSettingsLoading] = useState(false);
 
@@ -288,15 +288,6 @@ function AdminContent() {
             📊 Overview
           </button>
           <button
-            onClick={() => setActiveTab('logbook')}
-            className={`flex-1 py-3 px-4 font-bold text-sm rounded-xl transition-all ${activeTab === 'logbook'
-              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
-              : 'text-slate-600 hover:bg-slate-50'
-              }`}
-          >
-            📚 Logbook
-          </button>
-          <button
             onClick={() => setActiveTab('users')}
             className={`flex-1 py-3 px-4 font-bold text-sm rounded-xl transition-all ${activeTab === 'users'
               ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
@@ -320,46 +311,6 @@ function AdminContent() {
 
       {activeTab === 'overview' && (
         <div className="space-y-8">
-          {/* Logbook Stats */}
-          <div>
-            <h2 className="text-xl font-black text-slate-900 mb-4 flex items-center gap-2">
-              📚 Statistik Logbook
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Total Logbook */}
-              <div className="p-8 rounded-[2.5rem] border bg-gradient-to-br from-blue-600 to-indigo-800 text-white shadow-2xl shadow-blue-200 relative overflow-hidden group hover:scale-105 transition-all duration-300">
-                <div className="absolute -top-4 -right-4 w-32 h-32 rounded-full blur-3xl opacity-20 bg-white group-hover:opacity-40 transition-opacity"></div>
-                <div className="flex flex-col items-center text-center relative z-10">
-                  <span className="text-3xl mb-4 group-hover:scale-110 transition-transform">📚</span>
-                  <span className="text-5xl font-black mb-2 antialiased tabular-nums">{stats.total}</span>
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-100 opacity-80">Total Logbook</span>
-                  <div className="mt-4 w-8 h-1 bg-white/30 rounded-full"></div>
-                </div>
-              </div>
-
-              {/* Completed */}
-              <div className="p-8 rounded-[2.5rem] border bg-gradient-to-br from-emerald-500 to-teal-700 text-white shadow-2xl shadow-emerald-200 relative overflow-hidden group hover:scale-105 transition-all duration-300">
-                <div className="absolute -top-4 -right-4 w-32 h-32 rounded-full blur-3xl opacity-20 bg-white group-hover:opacity-40 transition-opacity"></div>
-                <div className="flex flex-col items-center text-center relative z-10">
-                  <span className="text-3xl mb-4 group-hover:scale-110 transition-transform">✅</span>
-                  <span className="text-5xl font-black mb-2 antialiased tabular-nums">{stats.completed}</span>
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-100 opacity-80">Logbook Selesai</span>
-                  <div className="mt-4 w-8 h-1 bg-white/30 rounded-full"></div>
-                </div>
-              </div>
-
-              {/* Draft */}
-              <div className="p-8 rounded-[2.5rem] border bg-gradient-to-br from-amber-400 to-orange-600 text-white shadow-2xl shadow-amber-200 relative overflow-hidden group hover:scale-105 transition-all duration-300">
-                <div className="absolute -top-4 -right-4 w-32 h-32 rounded-full blur-3xl opacity-20 bg-white group-hover:opacity-40 transition-opacity"></div>
-                <div className="flex flex-col items-center text-center relative z-10">
-                  <span className="text-3xl mb-4 group-hover:scale-110 transition-transform">📝</span>
-                  <span className="text-5xl font-black mb-2 antialiased tabular-nums">{stats.draft}</span>
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-100 opacity-80">Logbook Draft</span>
-                  <div className="mt-4 w-8 h-1 bg-white/30 rounded-full"></div>
-                </div>
-              </div>
-            </div>
-          </div>
 
           {/* User Stats */}
           <div>
@@ -404,64 +355,6 @@ function AdminContent() {
         </div>
       )}
 
-      {activeTab === 'logbook' && (
-        <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-black text-slate-900">Semua Logbook</h2>
-            <a href="/api/logbook/export" download>
-              <PremiumButton variant="success">
-                <span className="text-lg">📥</span> Export Excel
-              </PremiumButton>
-            </a>
-          </div>
-
-          <PremiumCard className="overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gradient-to-r from-slate-50 to-gray-50 border-b-2 border-slate-200">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-xs font-black text-slate-700 uppercase tracking-wider">Extensi</th>
-                    <th className="px-6 py-4 text-left text-xs font-black text-slate-700 uppercase tracking-wider">Nama</th>
-                    <th className="px-6 py-4 text-left text-xs font-black text-slate-700 uppercase tracking-wider">Lokasi</th>
-                    <th className="px-6 py-4 text-left text-xs font-black text-slate-700 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-4 text-left text-xs font-black text-slate-700 uppercase tracking-wider">Dibuat</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {logbookEntries.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="px-6 py-12 text-center">
-                        <div className="flex flex-col items-center">
-                          <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-3xl mb-3">
-                            📚
-                          </div>
-                          <p className="text-slate-400 font-medium">Belum ada data logbook</p>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : (
-                    logbookEntries.map((entry) => (
-                      <tr key={entry.id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="px-6 py-4 text-sm font-semibold text-slate-900">{entry.extensi}</td>
-                        <td className="px-6 py-4 text-sm font-semibold text-slate-900">{entry.nama}</td>
-                        <td className="px-6 py-4 text-sm text-slate-700">{entry.lokasi}</td>
-                        <td className="px-6 py-4 text-sm">
-                          <PremiumBadge variant={entry.status === 'completed' ? 'emerald' : 'amber'} size="sm">
-                            {entry.status === 'completed' ? '✅ Selesai' : '📝 Draft'}
-                          </PremiumBadge>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-slate-500 font-medium">
-                          {new Date(entry.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </PremiumCard>
-        </div>
-      )}
 
       {activeTab === 'users' && (
         <div className="space-y-6">

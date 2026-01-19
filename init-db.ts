@@ -92,6 +92,17 @@ async function initDatabase() {
         `);
         console.log('   - Table "notes" ready');
 
+        // Technician Status Table
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS technician_status (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                technician_name VARCHAR(255) UNIQUE NOT NULL,
+                is_off_order TINYINT(1) DEFAULT 0,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        `);
+        console.log('   - Table "technician_status" ready');
+
         // Step 3.5: Migration - Check for missing columns
         console.log('Checking for schema updates...');
 

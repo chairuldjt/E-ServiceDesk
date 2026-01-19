@@ -45,5 +45,12 @@ CREATE TABLE IF NOT EXISTS notes (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Default Admin (admin@logbook.com / admin123)
-INSERT IGNORE INTO users (username, email, password_hash, role) VALUES 
 ('admin', 'admin@logbook.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcg7b3XeKeUxWdeS86E36Z5SrUm', 'admin');
+
+-- Table: technician_status
+CREATE TABLE IF NOT EXISTS technician_status (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    technician_name VARCHAR(255) UNIQUE NOT NULL,
+    is_off_order TINYINT(1) DEFAULT 0,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

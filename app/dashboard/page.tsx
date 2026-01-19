@@ -47,6 +47,10 @@ function DashboardContent() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ total: 0, completed: 0, draft: 0 });
+  const [orderStats, setOrderStats] = useState({ totalOrderCreated: 0, totalReceived: 0, totalCompleted: 0 });
+  const [monitoringData, setMonitoringData] = useState<any>(null);
+  const [selectedDate, setSelectedDate] = useState(new Date().toLocaleDateString('en-CA'));
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [exportUsername, setExportUsername] = useState('');
   const [exportPassword, setExportPassword] = useState('');
@@ -100,9 +104,61 @@ function DashboardContent() {
       }
     };
 
+    const fetchOrderStats = async (date: string) => {
+      setIsRefreshing(true);
+      try {
+        const res = await fetch(`/api/dashboard/order-stats?date=${date}`);
+        if (res.ok) {
+          const data = await res.json();
+          setOrderStats(data.stats);
+        }
+
+        // Also fetch monitoring breakdown
+        const monRes = await fetch(`/api/monitoring?date=${date}`);
+        if (monRes.ok) {
+          const monData = await monRes.json();
+          setMonitoringData(monData);
+        }
+      } catch (err) {
+        console.error('Error fetching dashboard stats:', err);
+      } finally {
+        setTimeout(() => setIsRefreshing(false), 300);
+      }
+    };
+
     fetchDashboardData();
     fetchPiket();
-  }, []);
+    fetchOrderStats(selectedDate);
+  }, [selectedDate]);
+
+  const handleToggleOffOrder = async (teknisiName: string, currentStatus: boolean) => {
+    try {
+      const res = await fetch('/api/monitoring/technician-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          technician_name: teknisiName,
+          is_off_order: !currentStatus
+        })
+      });
+
+      if (res.ok) {
+        // Refresh data
+        fetch(`/api/monitoring?date=${selectedDate}`)
+          .then(r => r.json())
+          .then(data => setMonitoringData(data));
+
+        setToastMessage(`${teknisiName} ${!currentStatus ? 'set to OFF ORDER' : 'set to ACTIVE'}`);
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 3000);
+      } else {
+        const err = await res.json();
+        alert(err.error || 'Gagal mengubah status');
+      }
+    } catch (err) {
+      console.error('Error toggling off order:', err);
+    }
+  };
 
   const handleExportCDR = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -279,24 +335,24 @@ Terima kasih`;
       )}
 
       {/* Laporan Jaga: Compact Version */}
-      <div className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-[2rem] p-6 text-white shadow-xl relative overflow-hidden border border-slate-700">
+      <div className={`bg-gradient-to-r from-slate-800 to-slate-900 rounded-[2rem] p-6 text-white shadow-xl relative overflow-hidden border border-slate-700 transition-all duration-500 ${isRefreshing ? 'opacity-50 scale-[0.99] blur-[0.5px]' : 'opacity-100 scale-100'}`}>
         <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex flex-col md:flex-row items-center gap-6 flex-1">
-            <div className="w-12 h-12 bg-blue-600/20 rounded-xl flex items-center justify-center text-2xl border border-blue-500/30">
+            <div className={`w-12 h-12 bg-blue-600/20 rounded-xl flex items-center justify-center text-2xl border border-blue-500/30 ${isRefreshing ? 'animate-bounce' : ''}`}>
               📋
             </div>
             <div className="space-y-1 text-center md:text-left">
               <h2 className="text-lg font-black tracking-tight flex items-center gap-2 justify-center md:justify-start">
                 Laporan Jaga Service Desk
                 <span className="flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 text-[8px] px-2 py-0.5 rounded-full border border-emerald-500/20 uppercase tracking-widest font-black">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <span className={`w-1.5 h-1.5 rounded-full bg-emerald-400 ${isRefreshing ? 'animate-ping' : 'animate-pulse'}`}></span>
                   Live
                 </span>
               </h2>
               <div className="flex flex-wrap justify-center md:justify-start gap-x-6 gap-y-1 text-xs font-medium text-slate-400">
-                <p>Hari / Tanggal : <span className="text-white font-bold">{piketLoading ? '...' : (piketData?.hariTanggal || '-')}</span></p>
-                <p>Jam : <span className="text-white font-bold">{piketLoading ? '...' : (piketData?.jam || '-')}</span></p>
-                <p>Petugas : <span className="text-blue-400 font-bold uppercase">{piketLoading ? '...' : (piketData?.serviceDesk || '-')}</span></p>
+                <p>Hari / Tanggal : <span className="text-white font-bold">{piketLoading || isRefreshing ? '...' : (piketData?.hariTanggal || '-')}</span></p>
+                <p>Jam : <span className="text-white font-bold">{piketLoading || isRefreshing ? '...' : (piketData?.jam || '-')}</span></p>
+                <p>Petugas : <span className="text-blue-400 font-bold uppercase">{piketLoading || isRefreshing ? '...' : (piketData?.serviceDesk || '-')}</span></p>
               </div>
             </div>
           </div>
@@ -318,14 +374,40 @@ Terima kasih`;
         </div>
       </div>
 
+      {/* Date Picker Header */}
+      <div className="flex flex-col items-center justify-center space-y-4 animate-in fade-in slide-in-from-top-4 duration-1000">
+        <div className="relative group">
+          <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+          <div className="relative px-6 py-3 bg-white border border-slate-100 rounded-2xl flex items-center gap-4 shadow-xl">
+            <span className="text-xl">📅</span>
+            <div className="h-8 w-px bg-slate-200"></div>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="bg-transparent outline-none font-black text-slate-800 text-sm tracking-widest cursor-pointer hover:text-blue-600 transition-colors"
+            />
+            {selectedDate !== new Date().toLocaleDateString('en-CA') && (
+              <button
+                onClick={() => setSelectedDate(new Date().toLocaleDateString('en-CA'))}
+                className="text-[10px] font-black text-blue-500 uppercase tracking-widest hover:underline pl-2 border-l border-slate-100"
+              >
+                Today
+              </button>
+            )}
+          </div>
+        </div>
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Filter Data per Tanggal</p>
+      </div>
+
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className={`grid grid-cols-1 md:grid-cols-3 gap-6 transition-all duration-500 ${isRefreshing ? 'opacity-50 scale-[0.98] blur-[1px]' : 'opacity-100 scale-100'}`}>
         <div className="p-8 rounded-[2.5rem] border bg-gradient-to-br from-blue-600 to-indigo-800 text-white shadow-2xl shadow-blue-200 relative overflow-hidden group hover:scale-105 transition-all duration-300">
           <div className="absolute -top-4 -right-4 w-32 h-32 rounded-full blur-3xl opacity-20 bg-white group-hover:opacity-40 transition-opacity"></div>
           <div className="flex flex-col items-center text-center relative z-10">
-            <span className="text-3xl mb-4 group-hover:scale-110 transition-transform">📚</span>
-            <span className="text-6xl font-black mb-2 antialiased tabular-nums">{stats.total}</span>
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-100 opacity-80">Total Logbook</span>
+            <span className={`text-3xl mb-4 group-hover:scale-110 transition-transform ${isRefreshing ? 'animate-bounce' : ''}`}>🛒</span>
+            <span className={`text-6xl font-black mb-2 antialiased tabular-nums ${isRefreshing ? 'animate-pulse' : ''}`}>{orderStats.totalOrderCreated}</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-100 opacity-80">total membuat order hari ini</span>
             <div className="mt-4 w-8 h-1 bg-white/30 rounded-full"></div>
           </div>
         </div>
@@ -333,9 +415,9 @@ Terima kasih`;
         <div className="p-8 rounded-[2.5rem] border bg-gradient-to-br from-emerald-500 to-teal-700 text-white shadow-2xl shadow-emerald-200 relative overflow-hidden group hover:scale-105 transition-all duration-300">
           <div className="absolute -top-4 -right-4 w-32 h-32 rounded-full blur-3xl opacity-20 bg-white group-hover:opacity-40 transition-opacity"></div>
           <div className="flex flex-col items-center text-center relative z-10">
-            <span className="text-3xl mb-4 group-hover:scale-110 transition-transform">✅</span>
-            <span className="text-6xl font-black mb-2 antialiased tabular-nums">{stats.completed}</span>
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-100 opacity-80">Selesai Dikerjakan</span>
+            <span className={`text-3xl mb-4 group-hover:scale-110 transition-transform ${isRefreshing ? 'animate-bounce' : ''}`}>🔧</span>
+            <span className={`text-6xl font-black mb-2 antialiased tabular-nums ${isRefreshing ? 'animate-pulse' : ''}`}>{orderStats.totalReceived}</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-100 opacity-80">mengerjakan orderan</span>
             <div className="mt-4 w-8 h-1 bg-white/30 rounded-full"></div>
           </div>
         </div>
@@ -343,108 +425,102 @@ Terima kasih`;
         <div className="p-8 rounded-[2.5rem] border bg-gradient-to-br from-amber-400 to-orange-600 text-white shadow-2xl shadow-amber-200 relative overflow-hidden group hover:scale-105 transition-all duration-300">
           <div className="absolute -top-4 -right-4 w-32 h-32 rounded-full blur-3xl opacity-20 bg-white group-hover:opacity-40 transition-opacity"></div>
           <div className="flex flex-col items-center text-center relative z-10">
-            <span className="text-3xl mb-4 group-hover:scale-110 transition-transform">📝</span>
-            <span className="text-6xl font-black mb-2 antialiased tabular-nums">{stats.draft}</span>
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-100 opacity-80">Masih Draft</span>
+            <span className={`text-3xl mb-4 group-hover:scale-110 transition-transform ${isRefreshing ? 'animate-bounce' : ''}`}>🏁</span>
+            <span className={`text-6xl font-black mb-2 antialiased tabular-nums ${isRefreshing ? 'animate-pulse' : ''}`}>{orderStats.totalCompleted}</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-100 opacity-80">Menyelesaikan Orderan</span>
             <div className="mt-4 w-8 h-1 bg-white/30 rounded-full"></div>
           </div>
         </div>
       </div>
 
-      {/* Recent Logbook */}
-      <div className="bg-white rounded-[2rem] border border-slate-100 shadow-2xl overflow-hidden">
+      {/* Technician Breakdown */}
+      <div className={`bg-white rounded-[2rem] border border-slate-100 shadow-2xl overflow-hidden transition-all duration-500 ${isRefreshing ? 'opacity-50 blur-[1px]' : 'opacity-100'}`}>
         <div className="px-8 py-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
           <h2 className="text-xl font-black text-slate-800 flex items-center gap-3">
-            <span className="text-2xl">📚</span> Logbook Terbaru
+            <span className="text-2xl">📡</span> Technician Breakdown
           </h2>
           <Link
-            href="/logbook"
+            href="/monitoring"
             className="text-blue-600 hover:text-blue-700 font-black text-sm flex items-center gap-2 hover:gap-3 transition-all"
           >
-            Lihat Semua <span>→</span>
+            Lihat Lebih Lengkap <span>→</span>
           </Link>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full text-left">
             <thead className="bg-slate-50/50">
               <tr>
-                <th className="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                  Extensi
-                </th>
-                <th className="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                  Nama
-                </th>
-                <th className="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                  Lokasi
-                </th>
-                <th className="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                  Status
-                </th>
-                <th className="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                  Dibuat
-                </th>
-                <th className="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                  Aksi
-                </th>
+                <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Technician Name</th>
+                <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Orders Handled</th>
+                <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Progress</th>
+                <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {logbookEntries.slice(0, 5).length === 0 ? (
+              {piketLoading || isRefreshing ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i} className="animate-pulse">
+                    <td className="px-8 py-6"><div className="h-4 w-32 bg-slate-100 rounded"></div></td>
+                    <td className="px-8 py-6"><div className="h-4 w-8 bg-slate-100 rounded ml-auto"></div></td>
+                    <td className="px-8 py-6"><div className="h-2 w-full bg-slate-100 rounded"></div></td>
+                  </tr>
+                ))
+              ) : monitoringData?.data && monitoringData.data.length > 0 ? (
+                monitoringData.data.slice(0, 5).map((item: any) => {
+                  const maxOrder = Math.max(...(monitoringData.data.map((d: any) => d.order) || [1]));
+                  const percentage = (item.order / maxOrder) * 100;
+
+                  return (
+                    <tr key={item.teknisi} className={`hover:bg-blue-50/30 transition-colors group ${item.isOff ? 'bg-red-50/30' : ''}`}>
+                      <td className="px-8 py-5">
+                        <span className={`font-bold transition-colors ${item.isOff ? 'text-red-600' : 'text-slate-700 group-hover:text-blue-600'}`}>
+                          {item.teknisi}
+                          {item.isOff && <span className="ml-2 text-[8px] bg-red-600 text-white px-1.5 py-0.5 rounded-full uppercase">off order</span>}
+                        </span>
+                      </td>
+                      <td className="px-8 py-5 text-right font-black text-slate-900">
+                        {item.order}
+                      </td>
+                      <td className="px-8 py-5">
+                        <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                          <div
+                            className={`${item.isOff ? 'bg-red-500' : 'bg-blue-500'} h-full rounded-full transition-all duration-1000 ease-out`}
+                            style={{ width: `${percentage}%` }}
+                          ></div>
+                        </div>
+                      </td>
+                      <td className="px-8 py-5 text-center">
+                        {(user?.role === 'admin' || user?.role === 'super') && (
+                          <button
+                            onClick={() => handleToggleOffOrder(item.teknisi, item.isOff)}
+                            className={`text-[10px] font-black px-3 py-1 rounded-lg border-2 transition-all ${item.isOff
+                              ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100'
+                              : 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'}`}
+                          >
+                            {item.isOff ? 'SET ACTIVE' : 'SET OFF'}
+                          </button>
+                        )}
+                        {user?.role === 'user' && (
+                          <span className={`text-[10px] font-black uppercase ${item.isOff ? 'text-red-500' : 'text-emerald-500'}`}>
+                            {item.isOff ? 'Off Order' : 'Active'}
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
                 <tr>
-                  <td colSpan={6} className="px-8 py-16 text-center">
-                    <div className="flex flex-col items-center gap-4">
-                      <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center text-4xl">
-                        📭
+                  <td colSpan={3} className="px-8 py-20 text-center text-slate-400 font-medium">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center text-4xl shadow-sm">
+                        📡
                       </div>
-                      <p className="text-slate-400 font-medium">Belum ada data logbook</p>
+                      No data available for the selected date
                     </div>
                   </td>
                 </tr>
-              ) : (
-                logbookEntries.slice(0, 5).map((entry) => (
-                  <tr key={entry.id} className="hover:bg-blue-50/30 transition-colors group">
-                    <td className="px-8 py-5">
-                      <span className="font-black text-slate-800 bg-slate-100 px-3 py-1.5 rounded-lg text-sm border border-slate-200">
-                        {entry.extensi}
-                      </span>
-                    </td>
-                    <td className="px-8 py-5 text-sm font-bold text-slate-700">{entry.nama}</td>
-                    <td className="px-8 py-5 text-sm font-medium text-slate-600">{entry.lokasi}</td>
-                    <td className="px-8 py-5">
-                      <span
-                        className={`px-3 py-1.5 rounded-xl text-[9px] uppercase tracking-widest font-black border-2 ${entry.status === 'draft' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                            entry.status === 'pending_order' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                              'bg-emerald-50 text-emerald-700 border-emerald-200'
-                          }`}
-                      >
-                        {entry.status === 'draft' ? 'Draft' :
-                          entry.status === 'pending_order' ? 'Belum Diorderkan' :
-                            entry.status === 'ordered' ? 'Sudah Diorderkan' : 'Selesai'}
-                      </span>
-                    </td>
-                    <td className="px-8 py-5 text-sm font-medium text-slate-500">
-                      {new Date(entry.created_at).toLocaleDateString('id-ID')}
-                    </td>
-                    <td className="px-8 py-5">
-                      <div className="flex items-center gap-4">
-                        <Link
-                          href={`/monitoring/verify?logbookId=${entry.id}`}
-                          className="text-blue-600 hover:text-blue-800 font-black text-sm flex items-center gap-1 group/btn"
-                        >
-                          <span className="bg-blue-50 p-1.5 rounded-lg group-hover/btn:bg-blue-100 transition-colors">🛒</span>
-                          Create Order
-                        </Link>
-                        <Link
-                          href={`/logbook/${entry.id}`}
-                          className="text-slate-400 hover:text-slate-600 font-bold text-sm bg-slate-100 px-3 py-1.5 rounded-lg transition-all"
-                        >
-                          Detail
-                        </Link>
-                      </div>
-                    </td>
-                  </tr>
-                ))
               )}
             </tbody>
           </table>

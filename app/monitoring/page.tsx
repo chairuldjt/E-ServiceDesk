@@ -7,6 +7,7 @@ import Link from 'next/link';
 interface LeaderboardItem {
     teknisi: string;
     order: number;
+    isOff?: boolean;
 }
 
 interface MonitoringData {
@@ -18,6 +19,7 @@ interface MonitoringData {
 }
 
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { useAuth } from '@/context/AuthContext';
 
 export default function MonitoringPage() {
     return (
@@ -31,10 +33,11 @@ function MonitoringContent() {
     const [data, setData] = useState<MonitoringData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+    const [selectedDate, setSelectedDate] = useState(new Date().toLocaleDateString('en-CA'));
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [countdown, setCountdown] = useState(50);
     const [configError, setConfigError] = useState<string | null>(null);
+    const { user } = useAuth();
 
     const fetchData = useCallback(async (nocache = false, date?: string) => {
         // Only show full loading state on initial load or date change
@@ -96,6 +99,29 @@ function MonitoringContent() {
 
     const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSelectedDate(e.target.value);
+    };
+
+    const handleToggleOffOrder = async (teknisiName: string, currentStatus: boolean) => {
+        try {
+            const res = await fetch('/api/monitoring/technician-status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    technician_name: teknisiName,
+                    is_off_order: !currentStatus
+                })
+            });
+
+            if (res.ok) {
+                // Refresh data
+                fetchData(true, selectedDate);
+            } else {
+                const err = await res.json();
+                alert(err.error || 'Gagal mengubah status');
+            }
+        } catch (err) {
+            console.error('Error toggling off order:', err);
+        }
     };
 
     return (
@@ -264,6 +290,7 @@ function MonitoringContent() {
                                     <th className="px-8 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Technician Name</th>
                                     <th className="px-8 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Orders Handled</th>
                                     <th className="px-8 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Progress</th>
+                                    <th className="px-8 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-center">Status</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50">
@@ -281,10 +308,11 @@ function MonitoringContent() {
                                         const percentage = (item.order / maxOrder) * 100;
 
                                         return (
-                                            <tr key={item.teknisi} className="hover:bg-slate-50/50 transition-colors group">
+                                            <tr key={item.teknisi} className={`hover:bg-slate-50/50 transition-colors group ${item.isOff ? 'bg-red-50/30' : ''}`}>
                                                 <td className="px-8 py-5">
-                                                    <span className="font-bold text-slate-700 group-hover:text-blue-600 transition-colors">
+                                                    <span className={`font-bold transition-colors ${item.isOff ? 'text-red-600' : 'text-slate-700 group-hover:text-blue-600'}`}>
                                                         {item.teknisi}
+                                                        {item.isOff && <span className="ml-2 text-[8px] bg-red-600 text-white px-1.5 py-0.5 rounded-full uppercase">off order</span>}
                                                     </span>
                                                 </td>
                                                 <td className="px-8 py-5 text-right font-black text-slate-900 text-lg">
@@ -293,10 +321,27 @@ function MonitoringContent() {
                                                 <td className="px-8 py-5">
                                                     <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
                                                         <div
-                                                            className="bg-blue-500 h-full rounded-full transition-all duration-1000 ease-out"
+                                                            className={`${item.isOff ? 'bg-red-500' : 'bg-blue-500'} h-full rounded-full transition-all duration-1000 ease-out`}
                                                             style={{ width: `${percentage}%` }}
                                                         ></div>
                                                     </div>
+                                                </td>
+                                                <td className="px-8 py-5 text-center">
+                                                    {(user?.role === 'admin' || user?.role === 'super') && (
+                                                        <button
+                                                            onClick={() => handleToggleOffOrder(item.teknisi, !!item.isOff)}
+                                                            className={`text-[10px] font-black px-3 py-1 rounded-lg border-2 transition-all ${item.isOff
+                                                                ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100'
+                                                                : 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'}`}
+                                                        >
+                                                            {item.isOff ? 'SET ACTIVE' : 'SET OFF'}
+                                                        </button>
+                                                    )}
+                                                    {user?.role === 'user' && (
+                                                        <span className={`text-xs font-bold uppercase ${item.isOff ? 'text-red-500' : 'text-emerald-500'}`}>
+                                                            {item.isOff ? 'Off Order' : 'Active'}
+                                                        </span>
+                                                    )}
                                                 </td>
                                             </tr>
                                         );

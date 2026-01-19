@@ -84,9 +84,20 @@ export async function GET(request: NextRequest) {
             }
         });
 
-        // Sort leaderboard
+        // 6. Join with local technician status
+        const [statuses]: any = await (await import('@/lib/db')).default.query('SELECT * FROM technician_status');
+        const statusMap = statuses.reduce((acc: any, s: any) => {
+            acc[s.technician_name] = !!s.is_off_order;
+            return acc;
+        }, {});
+
+        // Sort leaderboard and include status
         const sortedData = Object.entries(rekap)
-            .map(([teknisi, count]) => ({ teknisi, order: count }))
+            .map(([teknisi, count]) => ({
+                teknisi,
+                order: count,
+                isOff: statusMap[teknisi] || false
+            }))
             .sort((a, b) => b.order - a.order);
 
         const output = {

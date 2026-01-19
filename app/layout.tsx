@@ -1,3 +1,6 @@
+// Set Timezone to WIB (Asia/Jakarta) globally
+process.env.TZ = 'Asia/Jakarta';
+
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";

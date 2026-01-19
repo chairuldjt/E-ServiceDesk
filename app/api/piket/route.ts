@@ -3,7 +3,32 @@ import axios from 'axios';
 
 export async function GET() {
     try {
-        const response = await axios.get('https://piket.teknisirsdk.my.id/dashboard', {
+        // Calculate offset time (-2 hours) in WIB
+        const now = new Date();
+        const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+        const wibTime = new Date(utc + (3600000 * 7));
+
+        // Subtract 2 hours
+        wibTime.setHours(wibTime.getHours() - 2);
+
+        const dayOfMonth = wibTime.getDate();
+        const hours = wibTime.getHours();
+
+        let shiftCode = 'P'; // Default Pagi (07.00 - 14.00)
+        let jamLabel = '07.00 - 14.00 WIB';
+
+        if (hours >= 14 && hours < 21) {
+            shiftCode = 'S'; // Siang (14.00 - 21.00)
+            jamLabel = '14.00 - 21.00 WIB';
+        } else if (hours >= 21 || hours < 7) {
+            shiftCode = 'M'; // Malam (21.00 - 07.00)
+            jamLabel = '21.00 - 07.00 WIB';
+        }
+
+        // Fetch Service Desk roster table instead of dashboard
+        const targetUrl = `https://piket.teknisirsdk.my.id/servicedesk`;
+
+        const response = await axios.get(targetUrl, {
             timeout: 10000,
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
@@ -12,46 +37,49 @@ export async function GET() {
 
         const html = response.data;
 
-        // Extract content from <div id="salin">
-        const salinMatch = html.match(/<div id="salin">([\s\S]*?)<\/div>/);
-        if (!salinMatch) {
-            return NextResponse.json({ error: 'Failed to find piket data' }, { status: 404 });
+        // Find the table and rows
+        const tableMatch = html.match(/<table[^>]*id="example3"[\s\S]*?>([\s\S]*?)<\/table>/);
+        if (!tableMatch) {
+            throw new Error('Could not find roster table');
         }
 
-        const salinContent = salinMatch[1];
+        const tableContent = tableMatch[1];
+        const rows = tableContent.match(/<tr[^>]*>([\s\S]*?)<\/tr>/g) || [];
+        const petugasList: string[] = [];
 
-        // Extract Date
-        // Looking for "Hari ini: Sabtu, 17 Januari 2026"
-        const dateMatch = salinContent.match(/Hari ini:\s*(.*?)\s*Jam/i);
-        const hariTanggal = dateMatch ? dateMatch[1].trim() : 'Unknown';
+        for (const row of rows) {
+            const cells = Array.from(row.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)).map((m: any) => m[1].trim());
+            // Header row or non-data row
+            if (cells.length < 32) continue;
 
-        // Extract Jam
-        // Looking for "Jam \n      14.00 sd 21.00"
-        const jamMatch = salinContent.match(/Jam\s*([\d.]+)\s*sd\s*([\d.]+)/i);
-        const jam = jamMatch ? `${jamMatch[1]} - ${jamMatch[2]} WIB` : '07.00 - 14.00 WIB';
+            const nama = cells[0].replace(/<[^>]+>/g, '').trim();
+            const shiftOnDay = cells[dayOfMonth].replace(/<[^>]+>/g, '').trim();
 
-        // Extract Service Desk names
-        // Get the block between "Service Desk :" and "Teknisi :"
-        const sdSectionMatch = salinContent.match(/Service Desk\s*:\s*<br>([\s\S]*?)(?:<br>\s*<br>|Teknisi\s*:)/i);
-        let serviceDesk = 'Unknown';
-
-        if (sdSectionMatch) {
-            const sdSection = sdSectionMatch[1];
-            // Match all names starting with - and before (phone number)
-            const nameMatches = Array.from(sdSection.matchAll(/-\s*([^(<\n\r]+)/g));
-            if (nameMatches.length > 0) {
-                serviceDesk = nameMatches.map((m: any) => m[1].trim()).join(', ');
+            if (shiftOnDay === shiftCode) {
+                petugasList.push(nama);
             }
         }
+
+        const serviceDesk = petugasList.length > 0 ? petugasList.join(', ') : 'Belum Terisi';
+
+        // Format Date based on the 2-hour offset (wibTime)
+        const hariTanggal = wibTime.toLocaleDateString('id-ID', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        });
 
         return NextResponse.json({
             serviceDesk,
             hariTanggal,
-            jam,
-            raw: salinContent
+            jam: jamLabel,
+            shiftFetched: shiftCode,
+            dayOfMonth: dayOfMonth,
+            offsetApplied: "-2 hours"
         });
     } catch (error: any) {
         console.error('Piket API Error:', error.message);
-        return NextResponse.json({ error: 'Failed to fetch piket data' }, { status: 500 });
+        return NextResponse.json({ error: 'Failed to fetch piket data: ' + error.message }, { status: 500 });
     }
 }
