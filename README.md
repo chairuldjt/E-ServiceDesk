@@ -7,6 +7,7 @@ Internal Service Desk System yang modern, responsif, dan mudah digunakan. Dibang
 - **📝 Notepad Interactive**: Catatan tempel digital untuk catatan cepat.
 - **🛡️ Admin Dashboard**: Manajemen user (Add, Edit, Activate/Deactivate, Reset Password) dan monitoring sistem.
 - **📊 Export CDR**: Export rekaman telepon dari Divatel langsung ke CSV.
+- **✈️ Telegram Bridge**: Integrasi dengan Telegram Bot (@Robtechbot) untuk sinkronisasi data, otomasi, dan pengiriman foto.
 - **📥 Export Excel**: Kemudahan laporan logbook dengan satu klik.
 - **🔒 Secure Auth**: Login menggunakan **Username** atau **Email** dengan JWT dan Bcrypt.
 - **🎨 Modern UI**: Antarmuka bersih dengan dukungan backdrop-blur dan micro-animations.
@@ -41,6 +42,10 @@ MYSQL_DATABASE=logbook_db
 # Security
 JWT_SECRET=rahasia_anda_yang_sangat_kuat_123!
 JWT_EXPIRES_IN=7d
+
+# Telegram API (Required for Telegram Bridge)
+TELEGRAM_API_ID=your_api_id
+TELEGRAM_API_HASH=your_api_hash
 ```
 
 ### 4. Setup & Inisialisasi Database
