@@ -9,6 +9,7 @@ Internal Service Desk System yang modern, responsif, dan mudah digunakan. Dibang
 - **📊 Export CDR**: Export rekaman telepon dari Divatel langsung ke CSV.
 - **✈️ Telegram Bridge**: Integrasi dengan Telegram Bot (@Robtechbot) untuk sinkronisasi data, otomasi, dan pengiriman foto.
 - **📥 Export Excel**: Kemudahan laporan logbook dengan satu klik.
+- **🤖 Chatbot Unlimited**: Asisten AI (GPT-4o Mini) dengan riwayat chat per user untuk membantu pekerjaan harian.
 - **🔒 Secure Auth**: Login menggunakan **Username** atau **Email** dengan JWT dan Bcrypt.
 - **🎨 Modern UI**: Antarmuka bersih dengan dukungan backdrop-blur dan micro-animations.
 
@@ -46,6 +47,9 @@ JWT_EXPIRES_IN=7d
 # Telegram API (Required for Telegram Bridge)
 TELEGRAM_API_ID=your_api_id
 TELEGRAM_API_HASH=your_api_hash
+
+# Chatbot AI (Required for Chatbot Feature)
+OPENAI_API_KEY=sk-proj-xxxx...
 ```
 
 ### 4. Setup & Inisialisasi Database

@@ -50,6 +50,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     { name: 'Monitoring', path: '/monitoring', icon: '📡' },
     { name: 'Order', path: '/order', icon: '🎫' },
     { name: 'Notepad', path: '/notepad', icon: '📝' },
+    { name: 'Chatbot', path: '/chatbot', icon: '🤖' },
   ];
 
   // Menu WhatsApp Bot (Admin & Super Only, and if visible)

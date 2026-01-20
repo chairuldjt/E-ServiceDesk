@@ -103,6 +103,32 @@ async function initDatabase() {
         `);
         console.log('   - Table "technician_status" ready');
 
+        // Chat Sessions Table
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS chat_sessions (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                title VARCHAR(255) DEFAULT 'New Chat',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        `);
+        console.log('   - Table "chat_sessions" ready');
+
+        // Chat Messages Table
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS chat_messages (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                session_id INT NOT NULL,
+                role ENUM('user', 'assistant') NOT NULL,
+                content TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        `);
+        console.log('   - Table "chat_messages" ready');
+
         // Step 3.5: Migration - Check for missing columns
         console.log('Checking for schema updates...');
 
