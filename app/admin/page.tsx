@@ -44,9 +44,7 @@ function AdminContent() {
   const router = useRouter();
   const [logbookEntries, setLogbookEntries] = useState<LogbookEntry[]>([]);
   const [users, setUsers] = useState<User[]>([]);
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'settings'>('overview');
-  const [isWhatsappVisible, setIsWhatsappVisible] = useState(true);
-  const [isSettingsLoading, setIsSettingsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'overview' | 'users'>('overview');
 
   const [stats, setStats] = useState({
     total: 0,
@@ -72,42 +70,7 @@ function AdminContent() {
     }
     fetchLogbook();
     fetchUsers();
-    fetchSettings();
   }, [user, userLoading, router]);
-
-  const fetchSettings = async () => {
-    try {
-      const res = await fetch('/api/settings/whatsapp-visibility');
-      const data = await res.json();
-      if (data.visible !== undefined) setIsWhatsappVisible(data.visible);
-    } catch (error) {
-      console.error('Error fetching settings:', error);
-    }
-  };
-
-  const handleToggleWhatsapp = async () => {
-    setIsSettingsLoading(true);
-    try {
-      const res = await fetch('/api/settings/whatsapp-visibility', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ visible: !isWhatsappVisible })
-      });
-      if (res.ok) {
-        setIsWhatsappVisible(!isWhatsappVisible);
-        showToast(`Menu WhatsApp Bot berhasil ${!isWhatsappVisible ? 'ditampilkan' : 'disembunyikan'}`, 'success');
-        // Auto refresh to update sidebar immediately
-        setTimeout(() => window.location.reload(), 1000);
-      } else {
-        showToast('Gagal mengubah pengaturan', 'error');
-      }
-    } catch (error) {
-      console.error(error);
-      showToast('Terjadi kesalahan', 'error');
-    } finally {
-      setIsSettingsLoading(false);
-    }
-  };
 
   const fetchLogbook = async () => {
     try {
@@ -296,15 +259,7 @@ function AdminContent() {
           >
             👥 Users
           </button>
-          <button
-            onClick={() => setActiveTab('settings')}
-            className={`flex-1 py-3 px-4 font-bold text-sm rounded-xl transition-all ${activeTab === 'settings'
-              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
-              : 'text-slate-600 hover:bg-slate-50'
-              }`}
-          >
-            ⚙️ Settings
-          </button>
+
         </div>
       </PremiumCard>
 
@@ -439,47 +394,7 @@ function AdminContent() {
         </div>
       )}
 
-      {activeTab === 'settings' && (
 
-        <div className="space-y-6 max-w-2xl">
-          <h2 className="text-xl font-black text-slate-900 border-b-2 border-slate-100 pb-4">
-            ⚙️ Pengaturan Sistem
-          </h2>
-
-          <PremiumCard className="p-8">
-            <div className="flex items-center justify-between gap-8">
-              <div className="space-y-1">
-                <h3 className="text-lg font-black text-slate-800">
-                  Tampilkan Menu WhatsApp Bot
-                </h3>
-                <p className="text-sm text-slate-500 font-medium leading-relaxed">
-                  Aktifkan atau nonaktifkan visibilitas menu WhatsApp Bot di Sidebar untuk role Admin & Super User.
-                </p>
-              </div>
-
-              <button
-                onClick={handleToggleWhatsapp}
-                disabled={isSettingsLoading}
-                className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 shadow-inner ${isWhatsappVisible ? 'bg-gradient-to-r from-blue-600 to-indigo-600' : 'bg-slate-300'
-                  }`}
-              >
-                <span
-                  className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-all duration-300 ${isWhatsappVisible ? 'translate-x-[24px]' : 'translate-x-1'
-                    }`}
-                />
-              </button>
-
-            </div>
-
-            <div className="mt-8 pt-6 border-t border-slate-100 flex items-start gap-3 bg-blue-50/50 p-4 rounded-2xl">
-              <span className="text-xl">💡</span>
-              <p className="text-xs text-blue-800/70 font-medium leading-relaxed">
-                Menyembunyikan menu ini hanya akan menghilangkan tautan di sidebar. Halaman <code className="bg-blue-100 px-1 rounded text-blue-900">/whatsapp</code> tetap dapat diakses secara langsung jika user memiliki akses.
-              </p>
-            </div>
-          </PremiumCard>
-        </div>
-      )}
 
 
       {/* MODAL: Add User */}

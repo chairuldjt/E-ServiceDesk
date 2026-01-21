@@ -42,6 +42,8 @@ function SettingsContent() {
         base_url: ''
     });
 
+    const [isWhatsappVisible, setIsWhatsappVisible] = useState(true);
+
     useEffect(() => {
         fetchProfile();
     }, []);
@@ -67,6 +69,15 @@ function SettingsContent() {
                     pass: webminData.pass || '',
                     base_url: webminData.base_url || ''
                 });
+            }
+
+            // Fetch WhatsApp visibility setting (only for admin & super users)
+            if (user && (user.role === 'admin' || user.role === 'super')) {
+                const whatsappResp = await fetch('/api/settings/whatsapp-visibility');
+                const whatsappData = await whatsappResp.json();
+                if (whatsappResp.ok && whatsappData.visible !== undefined) {
+                    setIsWhatsappVisible(whatsappData.visible);
+                }
             }
         } catch (error) {
             showToast('Gagal memuat profil', 'error');
@@ -181,6 +192,30 @@ function SettingsContent() {
                 showToast('Gagal menyimpan kredensial', 'error');
             }
         } catch (error) {
+            showToast('Terjadi kesalahan', 'error');
+        } finally {
+            setUpdating(false);
+        }
+    };
+
+    const handleToggleWhatsapp = async () => {
+        setUpdating(true);
+        try {
+            const res = await fetch('/api/settings/whatsapp-visibility', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ visible: !isWhatsappVisible })
+            });
+            if (res.ok) {
+                setIsWhatsappVisible(!isWhatsappVisible);
+                showToast(`Menu WhatsApp Bot berhasil ${!isWhatsappVisible ? 'ditampilkan' : 'disembunyikan'}`, 'success');
+                // Auto refresh to update sidebar immediately
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showToast('Gagal mengubah pengaturan', 'error');
+            }
+        } catch (error) {
+            console.error(error);
             showToast('Terjadi kesalahan', 'error');
         } finally {
             setUpdating(false);
@@ -415,6 +450,51 @@ function SettingsContent() {
                                 </div>
                             </form>
                         </div>
+
+                        {/* WhatsApp Bot Visibility Section (Admin & Super Only) */}
+                        {(user?.role === 'admin' || user?.role === 'super') && (
+                            <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-24 h-24 bg-green-50 rounded-full flex items-center justify-center -mr-8 -mt-8 opacity-50">
+                                    <span className="text-4xl">📱</span>
+                                </div>
+                                <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                                    <span className="text-green-600">WhatsApp</span> Menu Visibility
+                                </h3>
+                                <p className="text-sm text-gray-500 mb-8 leading-relaxed">
+                                    Kontrol visibilitas menu WhatsApp Bot di Sidebar. Pengaturan ini hanya berlaku untuk akun Anda.
+                                </p>
+
+                                <div className="flex items-center justify-between gap-8 bg-slate-50 p-6 rounded-2xl">
+                                    <div className="space-y-1">
+                                        <h4 className="text-lg font-black text-slate-800">
+                                            Tampilkan Menu WhatsApp Bot
+                                        </h4>
+                                        <p className="text-sm text-slate-500 font-medium leading-relaxed">
+                                            Aktifkan atau nonaktifkan visibilitas menu WhatsApp Bot di Sidebar.
+                                        </p>
+                                    </div>
+
+                                    <button
+                                        onClick={handleToggleWhatsapp}
+                                        disabled={updating}
+                                        className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 shadow-inner ${isWhatsappVisible ? 'bg-gradient-to-r from-green-600 to-emerald-600' : 'bg-slate-300'
+                                            }`}
+                                    >
+                                        <span
+                                            className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-all duration-300 ${isWhatsappVisible ? 'translate-x-[24px]' : 'translate-x-1'
+                                                }`}
+                                        />
+                                    </button>
+                                </div>
+
+                                <div className="mt-6 flex items-start gap-3 bg-blue-50/50 p-4 rounded-2xl">
+                                    <span className="text-xl">💡</span>
+                                    <p className="text-xs text-blue-800/70 font-medium leading-relaxed">
+                                        Menyembunyikan menu ini hanya akan menghilangkan tautan di sidebar Anda. Halaman <code className="bg-blue-100 px-1 rounded text-blue-900">/whatsapp</code> tetap dapat diakses secara langsung.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

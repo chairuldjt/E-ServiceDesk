@@ -512,12 +512,12 @@ Terima kasih`;
                 })
               ) : (
                 <tr>
-                  <td colSpan={3} className="px-8 py-20 text-center text-slate-400 font-medium">
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center text-4xl shadow-sm">
+                  <td colSpan={4} className="px-8 py-20 text-center text-slate-400 font-medium">
+                    <div className="flex flex-col items-center gap-3 w-full">
+                      <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center text-4xl shadow-sm mx-auto">
                         📡
                       </div>
-                      No data available for the selected date
+                      <span className="block mx-auto">No data available for the selected date</span>
                     </div>
                   </td>
                 </tr>

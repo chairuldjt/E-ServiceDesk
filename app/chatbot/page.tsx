@@ -492,15 +492,15 @@ export default function ChatbotPage() {
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
                                 placeholder="Tanyakan apapun pada asisten cerdas..."
-                                className="flex-1 bg-slate-900/80 backdrop-blur-3xl border border-white/10 rounded-[2rem] py-6 px-10 text-white placeholder-slate-500 focus:outline-none focus:ring-4 focus:ring-blue-600/30 focus:border-blue-500/50 transition-all shadow-3xl text-lg font-medium"
+                                className="flex-1 bg-slate-900/80 backdrop-blur-3xl border border-white/10 rounded-[2rem] py-4 md:py-6 px-6 md:px-10 text-white placeholder-slate-500 focus:outline-none focus:ring-4 focus:ring-blue-600/30 focus:border-blue-500/50 transition-all shadow-3xl text-base md:text-lg font-medium"
                                 disabled={isLoading}
                             />
                             <button
                                 type="submit"
                                 disabled={isLoading || !input.trim()}
-                                className="w-16 h-16 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 hover:from-blue-500 hover:to-indigo-700 disabled:from-slate-800 disabled:to-slate-900 disabled:opacity-50 text-white rounded-[1.8rem] flex items-center justify-center transition-all shadow-2xl hover:scale-105 active:scale-95 group shrink-0 border border-white/10"
+                                className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 hover:from-blue-500 hover:to-indigo-700 disabled:from-slate-800 disabled:to-slate-900 disabled:opacity-50 text-white rounded-[1.8rem] flex items-center justify-center transition-all shadow-2xl hover:scale-105 active:scale-95 group shrink-0 border border-white/10"
                             >
-                                <SendHorizonal size={28} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                                <SendHorizonal size={20} className="md:w-7 md:h-7 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
                             </button>
                         </div>
                     </form>
