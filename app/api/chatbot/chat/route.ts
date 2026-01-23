@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { getPayloadFromCookie } from '@/lib/jwt';
+import fs from 'fs';
+import path from 'path';
+import { writeFile } from 'fs/promises';
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
@@ -57,7 +60,13 @@ export async function POST(req: NextRequest) {
             body: JSON.stringify({
                 model: 'gpt-4o-mini',
                 messages: [
-                    { role: 'system', content: 'You are a helpful assistant.' },
+                    {
+                        role: 'system',
+                        content: `You are a helpful assistant. 
+                        If the user wants to generate or create an image/visual, start your response with '[GENERATE_IMAGE: <prompt>]' where <prompt> is a highly detailed English description for DALL-E 3. 
+                        Example: '[GENERATE_IMAGE: A futuristic city with neon lights, digital art style]'.
+                        If the user does not want an image, respond normally.`
+                    },
                     ...context
                 ]
             })
@@ -69,7 +78,60 @@ export async function POST(req: NextRequest) {
         }
 
         const aiData = await response.json();
-        const aiMessage = aiData.choices[0].message.content;
+        let aiMessage = aiData.choices[0].message.content;
+
+        // Check for image generation request
+        const imageMatch = aiMessage.match(/\[GENERATE_IMAGE:\s*(.*?)\]/i);
+        if (imageMatch) {
+            const imagePrompt = imageMatch[1];
+
+            try {
+                // Call DALL-E API
+                const dalleRes = await fetch('https://api.openai.com/v1/images/generations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${OPENAI_API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: 'dall-e-3',
+                        prompt: imagePrompt,
+                        n: 1,
+                        size: '1024x1024'
+                    })
+                });
+
+                if (dalleRes.ok) {
+                    const dalleData = await dalleRes.json();
+                    const imageUrl = dalleData.data[0].url;
+
+                    // Download and save image locally
+                    const imgResponse = await fetch(imageUrl);
+                    const arrayBuffer = await imgResponse.arrayBuffer();
+                    const buffer = Buffer.from(arrayBuffer);
+
+                    const filename = `img_${Date.now()}.png`;
+                    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'chatbot');
+                    const filePath = path.join(uploadDir, filename);
+
+                    // Ensure directory exists
+                    if (!fs.existsSync(uploadDir)) {
+                        fs.mkdirSync(uploadDir, { recursive: true });
+                    }
+
+                    await writeFile(filePath, buffer);
+
+                    const localUrl = `/uploads/chatbot/${filename}`;
+                    aiMessage = aiMessage.replace(/\[GENERATE_IMAGE:\s*.*?\]/i, `![${imagePrompt}](${localUrl})`);
+                } else {
+                    const dalleError = await dalleRes.json();
+                    aiMessage = `Maaf, saya gagal membuat gambar tersebut. Error: ${dalleError.error?.message || 'Unknown error'}`;
+                }
+            } catch (err: any) {
+                console.error('DALL-E Error:', err);
+                aiMessage = `Maaf, terjadi kesalahan saat mencoba membuat gambar: ${err.message}`;
+            }
+        }
 
         // Save assistant message
         await pool.query(

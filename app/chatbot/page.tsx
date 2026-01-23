@@ -102,6 +102,15 @@ export default function ChatbotPage() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    useEffect(() => {
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+            const scrollHeight = textareaRef.current.scrollHeight;
+            textareaRef.current.style.height = Math.min(Math.max(scrollHeight, 60), 200) + 'px';
+        }
+    }, [input]);
 
     useEffect(() => {
         fetchSessions();
@@ -181,8 +190,8 @@ export default function ChatbotPage() {
         }
     };
 
-    const handleSendMessage = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSendMessage = async (e?: React.FormEvent | React.KeyboardEvent) => {
+        e?.preventDefault();
         if (!input.trim() || isLoading) return;
 
         const userQuery = input;
@@ -443,6 +452,22 @@ export default function ChatbotPage() {
                                                         a: ({ href, children }) => (
                                                             <a href={href} className="text-blue-400 hover:text-blue-300 transition-colors underline decoration-2 underline-offset-4 font-black break-all" target="_blank" rel="noopener noreferrer">{children}</a>
                                                         ),
+                                                        img: ({ src, alt }) => (
+                                                            <div className="my-8 group relative">
+                                                                <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-[2rem] blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+                                                                <div className="relative">
+                                                                    <img
+                                                                        src={typeof src === 'string' ? src : ''}
+                                                                        alt={alt}
+                                                                        className="rounded-[1.8rem] w-full h-auto border border-white/10 shadow-3xl hover:scale-[1.02] transition-transform duration-500 cursor-zoom-in"
+                                                                        onClick={() => { if (typeof src === 'string') window.open(src, '_blank'); }}
+                                                                    />
+                                                                    <div className="absolute bottom-4 left-4 right-4 p-4 bg-black/60 backdrop-blur-md rounded-2xl border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                                                        <p className="text-[10px] font-black text-white uppercase tracking-widest truncate">{alt || 'Generated Image'}</p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ),
                                                         table: ({ children }) => (
                                                             <div className="overflow-x-auto my-8 rounded-2xl border border-white/10 w-full shadow-2xl">
                                                                 <table className="w-full text-sm text-left border-collapse">{children}</table>
@@ -487,13 +512,21 @@ export default function ChatbotPage() {
                     >
                         <div className="absolute inset-0 bg-blue-600/20 blur-[60px] rounded-full opacity-0 group-focus-within:opacity-100 transition-all duration-700"></div>
                         <div className="relative flex items-center gap-4">
-                            <input
-                                type="text"
+                            <textarea
+                                ref={textareaRef}
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                        e.preventDefault();
+                                        handleSendMessage(e);
+                                    }
+                                }}
                                 placeholder="Tanyakan apapun pada asisten cerdas..."
-                                className="flex-1 bg-slate-900/80 backdrop-blur-3xl border border-white/10 rounded-[2rem] py-4 md:py-6 px-6 md:px-10 text-white placeholder-slate-500 focus:outline-none focus:ring-4 focus:ring-blue-600/30 focus:border-blue-500/50 transition-all shadow-3xl text-base md:text-lg font-medium"
+                                className="flex-1 bg-slate-900/80 backdrop-blur-3xl border border-white/10 rounded-[2rem] py-4 px-6 md:px-10 text-white placeholder-slate-500 focus:outline-none focus:ring-4 focus:ring-blue-600/30 focus:border-blue-500/50 transition-all shadow-3xl text-base md:text-lg font-medium resize-none overflow-y-auto custom-scrollbar"
                                 disabled={isLoading}
+                                rows={1}
+                                style={{ height: '60px' }}
                             />
                             <button
                                 type="submit"
