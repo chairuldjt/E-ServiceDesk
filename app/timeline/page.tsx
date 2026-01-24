@@ -17,6 +17,11 @@ export default function TimelinePage() {
         setIsLoading(true);
         try {
             const res = await fetch(`/api/timeline?page=${page}&limit=${postsPerPage}`);
+            if (res.status === 401) {
+                // Unauthorized, redirect to login
+                window.location.href = '/login';
+                return;
+            }
             if (res.ok) {
                 const data = await res.json();
                 setPosts(data.posts);
@@ -39,6 +44,11 @@ export default function TimelinePage() {
                 try {
                     // Fetch without pagination to get all posts
                     const res = await fetch('/api/timeline?page=1&limit=1000');
+                    if (res.status === 401) {
+                        // Unauthorized, redirect to login
+                        window.location.href = '/login';
+                        return;
+                    }
                     if (res.ok) {
                         const data = await res.json();
                         setPosts(data.posts);

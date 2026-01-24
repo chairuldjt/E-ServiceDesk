@@ -36,14 +36,22 @@ export function CreatePost({ onPostCreated }: CreatePostProps) {
 
     useEffect(() => {
         fetch('/api/users/mentions')
-            .then(res => res.json())
-            .then(data => setUsers(data))
+            .then(res => {
+                if (res.status === 401) {
+                    window.location.href = '/login';
+                    return null;
+                }
+                return res.json();
+            })
+            .then(data => {
+                if (data) setUsers(data);
+            })
             .catch(console.error);
     }, []);
 
     const allSuggestions = [
         { id: 'everyone', username: 'everyone', isSpecial: true },
-        ...users
+        ...(Array.isArray(users) ? users : [])
     ];
 
     const filteredUsers = allSuggestions.filter(u =>
