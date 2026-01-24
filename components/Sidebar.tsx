@@ -46,6 +46,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   const menuItems = [
     { name: 'Dashboard', path: '/dashboard', icon: '📊' },
+    { name: 'Timeline', path: '/timeline', icon: '📱' },
     { name: 'Create Order', path: '/logbook', icon: '📔' },
     { name: 'Monitoring', path: '/monitoring', icon: '📡' },
     { name: 'Order', path: '/order', icon: '🎫' },

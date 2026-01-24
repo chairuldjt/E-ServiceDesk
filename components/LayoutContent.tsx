@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Sidebar } from '@/components/Sidebar';
+import { NotificationBell } from '@/components/NotificationBell';
 import { useAuth } from '@/hooks/useAuth';
 import Link from 'next/link';
 
@@ -57,7 +58,9 @@ export function LayoutContent({ children }: { children: React.ReactNode }) {
                         </Link>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 sm:gap-4">
+                        <NotificationBell />
+
                         <div className="text-right hidden sm:block mr-2">
                             <p className="text-sm font-semibold text-slate-900">{user.username}</p>
                             <p className="text-xs text-slate-500 capitalize">{user.role}</p>
