@@ -365,26 +365,46 @@ function VerifyOrderContent() {
         }
     };
 
-    const handleCopyOrder = (order?: UnverifiedOrder | OrderDetail) => {
+    const handleCopyOrder = async (order?: UnverifiedOrder | OrderDetail) => {
         // If passed from event handler directly, it might be an event object, check for that
-        const target = (order && !(order as any).nativeEvent) ? order : selectedOrder;
+        let target = (order && !(order as any).nativeEvent) ? order : selectedOrder;
         if (!target) return;
 
-        const serviceName = (target as any).service_name || '-';
-        const teknisiName = (target as any).nama_teknisi || (target as any).teknisi || '-';
+        let serviceName = (target as any).service_name || (target as any).detail?.service_name;
+        let teknisiName = (target as any).nama_teknisi || (target as any).teknisi || '-';
 
-        const text = `No.Order  : ${target.order_no}
-Tgl.Order : ${target.create_date}
-Service   : ${serviceName}
-Lokasi    : ${target.location_desc}
-Ext Telp  : ${target.ext_phone || '-'}
-Catatan   : ${target.catatan || '-'}
+        // If service name is missing, try to fetch detail
+        if (!serviceName && target.order_id) {
+            try {
+                const response = await fetch(`/api/monitoring/verify/${target.order_id}`);
+                const data = await response.json();
+                if (response.ok && data.result) {
+                    serviceName = data.result.service_name;
+                    teknisiName = data.result.nama_teknisi || teknisiName;
+
+                    // Update the local state if it's a list item to avoid re-fetching next time
+                    setOrders(prev => prev.map(o => o.order_id === (target as any).order_id ? { ...o, detail: data.result } : o));
+
+                    // Merge data for copy
+                    target = { ...target, ...data.result };
+                }
+            } catch (error) {
+                console.error('Failed to fetch detail for copy:', error);
+            }
+        }
+
+        const text = `No.Order  : ${target!.order_no}
+Tgl.Order : ${target!.create_date}
+Service   : ${serviceName || '-'}
+Lokasi    : ${target!.location_desc}
+Ext Telp  : ${target!.ext_phone || '-'}
+Catatan   : ${target!.catatan || '-'}
 Petugas   : ${teknisiName}
-Status    : ${target.status_desc}
+Status    : ${target!.status_desc}
 Photos    : 0
 Maintenance: Tidak`;
 
-        navigator.clipboard.writeText(text);
+        await navigator.clipboard.writeText(text);
         showToast('Detail order berhasil disalin', 'success');
     };
 
