@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Image as ImageIcon, Globe, Lock, Send, X, Paperclip } from 'lucide-react';
+import { Image as ImageIcon, Video, Globe, Lock, Send, X, Paperclip } from 'lucide-react';
 import { TimelinePost } from '@/lib/types/timeline';
 
 interface CreatePostProps {
@@ -80,11 +80,16 @@ export function CreatePost({ onPostCreated }: CreatePostProps) {
         setSelectedImages(prev => [...prev, ...files]);
 
         files.forEach(file => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setPreviews(prev => [...prev, reader.result as string]);
-            };
-            reader.readAsDataURL(file);
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    setPreviews(prev => [...prev, reader.result as string]);
+                };
+                reader.readAsDataURL(file);
+            } else if (file.type.startsWith('video/')) {
+                const url = URL.createObjectURL(file);
+                setPreviews(prev => [...prev, url]);
+            }
         });
     };
 
@@ -217,17 +222,33 @@ export function CreatePost({ onPostCreated }: CreatePostProps) {
 
                     {previews.length > 0 && (
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-4">
-                            {previews.map((preview, idx) => (
-                                <div key={idx} className="relative aspect-square rounded-xl overflow-hidden group">
-                                    <img src={preview} alt="Preview" className="w-full h-full object-cover" />
-                                    <button
-                                        onClick={() => removeImage(idx)}
-                                        className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition"
-                                    >
-                                        <X size={16} />
-                                    </button>
-                                </div>
-                            ))}
+                            {previews.map((preview, idx) => {
+                                const isVideo = selectedImages[idx]?.type.startsWith('video/') ||
+                                    selectedImages[idx]?.name.match(/\.(mp4|webm|ogg|mov)$/i);
+
+                                return (
+                                    <div key={idx} className="relative aspect-square rounded-xl overflow-hidden group">
+                                        {isVideo ? (
+                                            <video src={preview} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                                        )}
+                                        <button
+                                            onClick={() => removeImage(idx)}
+                                            className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition"
+                                        >
+                                            <X size={16} />
+                                        </button>
+                                        {isVideo && (
+                                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                                <div className="bg-black/30 rounded-full p-2">
+                                                    <Video size={16} className="text-white" />
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
                             <button
                                 onClick={() => fileInputRef.current?.click()}
                                 className="aspect-square rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400 hover:border-blue-400 hover:text-blue-500 transition"
@@ -247,12 +268,19 @@ export function CreatePost({ onPostCreated }: CreatePostProps) {
                                 <ImageIcon size={20} className="text-emerald-500" />
                                 <span className="text-sm font-medium">Foto</span>
                             </button>
+                            <button
+                                onClick={() => fileInputRef.current?.click()}
+                                className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-slate-50 text-slate-600 transition"
+                            >
+                                <Video size={20} className="text-blue-500" />
+                                <span className="text-sm font-medium">Video</span>
+                            </button>
                             <input
                                 type="file"
                                 ref={fileInputRef}
                                 onChange={handleFileChange}
                                 multiple
-                                accept="image/*"
+                                accept="image/*,video/*"
                                 className="hidden"
                             />
 

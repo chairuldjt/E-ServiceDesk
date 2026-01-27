@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { MoreHorizontal, Pin, Trash2, Globe, Lock, Heart, MessageCircle, Share2, Send, AlertTriangle, X } from 'lucide-react';
+import { MoreHorizontal, Pin, Trash2, Edit2, Globe, Lock, Heart, MessageCircle, Share2, Send, AlertTriangle, X, Check, Video, Paperclip, Image as ImageIcon } from 'lucide-react';
 import { TimelinePost } from '@/lib/types/timeline';
 import { useUI } from '@/context/UIContext';
 import { Lightbox } from '@/components/ui/Lightbox';
@@ -11,9 +11,10 @@ interface PostCardProps {
     post: TimelinePost;
     onDelete: (id: number) => void;
     onTogglePin: (id: number, current: boolean) => void;
+    onUpdate?: (updatedPost: TimelinePost) => void;
 }
 
-export function PostCard({ post, onDelete, onTogglePin }: PostCardProps) {
+export function PostCard({ post, onDelete, onTogglePin, onUpdate }: PostCardProps) {
     const { showToast } = useUI();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -28,9 +29,19 @@ export function PostCard({ post, onDelete, onTogglePin }: PostCardProps) {
     const [mentionSearch, setMentionSearch] = useState('');
     const [showMentions, setShowMentions] = useState(false);
     const [mentionIndex, setMentionIndex] = useState(0);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editContent, setEditContent] = useState(post.content);
+    const [editPrivacy, setEditPrivacy] = useState(post.privacy);
+    const [editImages, setEditImages] = useState<string[]>(JSON.parse(post.images || '[]'));
+    const [newFiles, setNewFiles] = useState<File[]>([]);
+    const [newPreviews, setNewPreviews] = useState<string[]>([]);
+    const [isUpdating, setIsUpdating] = useState(false);
+    const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
 
     const menuRef = useRef<HTMLDivElement>(null);
     const commentInputRef = useRef<HTMLInputElement>(null);
+    const editFileInputRef = useRef<HTMLInputElement>(null);
+    const privacyRef = useRef<HTMLDivElement>(null);
     const images = JSON.parse(post.images || '[]');
 
     useEffect(() => {
@@ -74,42 +85,72 @@ export function PostCard({ post, onDelete, onTogglePin }: PostCardProps) {
         commentInputRef.current?.focus();
     };
 
-    // Function to parse content for mentions
+    // Function to parse content for formatting (bold, italic, links, mentions)
     const renderContent = (content: string) => {
         if (!content) return null;
 
-        // Regex to find @username
-        const mentionRegex = /@(\w+)/g;
-        const parts = content.split(mentionRegex);
+        // Sequence of transformations:
+        // 1. URLs to links
+        // 2. Bold (**text**)
+        // 3. Italic (_text_)
+        // 4. Mentions (@user)
 
-        if (parts.length === 1) return content;
+        let parts: (string | React.ReactNode)[] = [content];
 
-        const matches = [...content.matchAll(mentionRegex)];
-        const result: (string | React.ReactNode)[] = [];
-
-        let lastIndex = 0;
-        matches.forEach((match, i) => {
-            const username = match[1];
-            const offset = match.index || 0;
-
-            // Push text before mention
-            result.push(content.substring(lastIndex, offset));
-
-            // Push styled mention
-            const isEveryone = username.toLowerCase() === 'everyone';
-            result.push(
-                <span key={i} className={`${isEveryone ? 'text-amber-600 bg-amber-50 px-1 rounded' : 'text-blue-600'} font-bold hover:underline cursor-pointer`}>
-                    @{username}
-                </span>
-            );
-
-            lastIndex = offset + match[0].length;
+        // 1. Linkify URLs
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        parts = parts.flatMap(part => {
+            if (typeof part !== 'string') return part;
+            const subparts = part.split(urlRegex);
+            return subparts.map((sub, i) => {
+                if (urlRegex.test(sub)) {
+                    return <a key={`link-${i}`} href={sub} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline break-all">{sub}</a>;
+                }
+                return sub;
+            });
         });
 
-        // Push remaining text
-        result.push(content.substring(lastIndex));
+        // 2. Bold
+        const boldRegex = /\*\*(.*?)\*\*/g;
+        parts = parts.flatMap(part => {
+            if (typeof part !== 'string') return part;
+            const subparts = part.split(boldRegex);
+            return subparts.map((sub, i) => {
+                if (i % 2 === 1) return <strong key={`bold-${i}`}>{sub}</strong>;
+                return sub;
+            });
+        });
 
-        return result;
+        // 3. Italic
+        const italicRegex = /_(.*?)_/g;
+        parts = parts.flatMap(part => {
+            if (typeof part !== 'string') return part;
+            const subparts = part.split(italicRegex);
+            return subparts.map((sub, i) => {
+                if (i % 2 === 1) return <em key={`italic-${i}`}>{sub}</em>;
+                return sub;
+            });
+        });
+
+        // 4. Mentions
+        const mentionRegex = /@(\w+)/g;
+        parts = parts.flatMap(part => {
+            if (typeof part !== 'string') return part;
+            const subparts = part.split(mentionRegex);
+            return subparts.map((sub, i) => {
+                if (i % 2 === 1) {
+                    const isEveryone = sub.toLowerCase() === 'everyone';
+                    return (
+                        <span key={`mention-${i}`} className={`${isEveryone ? 'text-amber-600 bg-amber-50 px-1 rounded' : 'text-blue-600'} font-bold hover:underline cursor-pointer`}>
+                            @{sub}
+                        </span>
+                    );
+                }
+                return sub;
+            });
+        });
+
+        return parts;
     };
 
     // Close menu when clicking outside
@@ -206,6 +247,93 @@ export function PostCard({ post, onDelete, onTogglePin }: PostCardProps) {
         }
     };
 
+    const handleUpdatePost = async () => {
+        setIsUpdating(true);
+        try {
+            let finalizedImages = [...editImages];
+
+            // Upload new files if any
+            if (newFiles.length > 0) {
+                const formData = new FormData();
+                newFiles.forEach(file => formData.append('files', file));
+
+                const uploadRes = await fetch('/api/timeline/upload', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (uploadRes.ok) {
+                    const uploadData = await uploadRes.json();
+                    finalizedImages = [...finalizedImages, ...uploadData.urls];
+                }
+            }
+
+            const res = await fetch(`/api/timeline/${post.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    content: editContent,
+                    privacy: editPrivacy,
+                    images: finalizedImages
+                })
+            });
+
+            if (res.ok) {
+                setIsEditing(false);
+                setNewFiles([]);
+                setNewPreviews([]);
+                if (onUpdate) {
+                    // We need to fetch the updated post or construct it
+                    onUpdate({
+                        ...post,
+                        content: editContent,
+                        privacy: editPrivacy,
+                        images: JSON.stringify(finalizedImages)
+                    });
+                }
+                showToast('Postingan berhasil diperbarui!', 'success');
+            }
+        } catch (error) {
+            console.error('Update failed:', error);
+            showToast('Gagal memperbarui postingan', 'error');
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+
+        setNewFiles(prev => [...prev, ...files]);
+
+        files.forEach(file => {
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    setNewPreviews(prev => [...prev, reader.result as string]);
+                };
+                reader.readAsDataURL(file);
+            } else if (file.type.startsWith('video/')) {
+                const url = URL.createObjectURL(file);
+                setNewPreviews(prev => [...prev, url]);
+            }
+        });
+    };
+
+    const removeNewFile = (index: number) => {
+        setNewFiles(prev => prev.filter((_, i) => i !== index));
+        setNewPreviews(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const removeExistingImage = (index: number) => {
+        setEditImages(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const isVideoFile = (url: string) => {
+        return url.match(/\.(mp4|webm|ogg|mov)$/i) || url.includes('video');
+    };
+
     return (
         <div id={`post-${post.id}`} className={`bg-white rounded-2xl shadow-sm border ${post.is_pinned ? 'border-blue-200 ring-1 ring-blue-50' : 'border-slate-200'} p-4 mb-6 relative transition-all duration-300`}>
             {!!post.is_pinned && (
@@ -233,13 +361,18 @@ export function PostCard({ post, onDelete, onTogglePin }: PostCardProps) {
                                 <Globe size={12} className="text-slate-400" />
                             )}
                         </div>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-slate-500 flex items-center gap-1.5">
                             {new Date(post.created_at).toLocaleDateString('id-ID', {
                                 day: 'numeric',
                                 month: 'short',
                                 hour: '2-digit',
                                 minute: '2-digit'
                             })}
+                            {new Date(post.updated_at).getTime() - new Date(post.created_at).getTime() > 60000 && (
+                                <span className="flex items-center gap-1 px-1.5 py-0.5 bg-slate-100 text-slate-400 rounded-md text-[9px] font-bold uppercase tracking-tighter">
+                                    (diubah)
+                                </span>
+                            )}
                         </p>
                     </div>
                 </div>
@@ -255,6 +388,15 @@ export function PostCard({ post, onDelete, onTogglePin }: PostCardProps) {
 
                         {isMenuOpen && (
                             <div className="absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-10 animate-fade-in-up">
+                                <button
+                                    onClick={() => {
+                                        setIsEditing(true);
+                                        setIsMenuOpen(false);
+                                    }}
+                                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 transition"
+                                >
+                                    <Edit2 size={16} /> Edit Postingan
+                                </button>
                                 <button
                                     onClick={() => {
                                         onTogglePin(post.id, !!post.is_pinned);
@@ -280,53 +422,209 @@ export function PostCard({ post, onDelete, onTogglePin }: PostCardProps) {
                 )}
             </div>
 
-            {/* Delete Modal */}
-            {isDeleteModalOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl animate-fade-in-up">
-                        <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center text-red-500 mb-4">
-                            <AlertTriangle size={24} />
-                        </div>
-                        <h4 className="text-xl font-bold text-slate-900 mb-2">Hapus Postingan?</h4>
-                        <p className="text-slate-500 text-sm mb-6">Tindakan ini tidak dapat dibatalkan. Postingan beserta fotonya akan dihapus secara permanen.</p>
-                        <div className="flex gap-3">
+            {isEditing ? (
+                <div className="space-y-4 animate-fade-in">
+                    <textarea
+                        value={editContent}
+                        onChange={(e) => setEditContent(e.target.value)}
+                        className="w-full min-h-[120px] p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-100 outline-none text-slate-800 text-lg resize-none leading-relaxed bg-slate-50/50"
+                        placeholder="Apa yang Anda pikirkan?"
+                    />
+
+                    {/* Media Management in Edit Mode */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        {/* Existing Images */}
+                        {editImages.map((img, idx) => (
+                            <div key={`existing-${idx}`} className="relative aspect-square rounded-xl overflow-hidden group">
+                                {isVideoFile(img) ? (
+                                    <video src={img} className="w-full h-full object-cover" />
+                                ) : (
+                                    <img src={img} alt="" className="w-full h-full object-cover" />
+                                )}
+                                <button
+                                    onClick={() => removeExistingImage(idx)}
+                                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition"
+                                >
+                                    <X size={14} />
+                                </button>
+                                {isVideoFile(img) && (
+                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                        <div className="bg-black/30 rounded-full p-2">
+                                            <Video size={16} className="text-white" />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+
+                        {/* New Previews */}
+                        {newPreviews.map((preview, idx) => {
+                            const isVideo = newFiles[idx]?.type.startsWith('video/') ||
+                                newFiles[idx]?.name.match(/\.(mp4|webm|ogg|mov)$/i);
+                            return (
+                                <div key={`new-${idx}`} className="relative aspect-square rounded-xl border-2 border-blue-200 overflow-hidden group">
+                                    {isVideo ? (
+                                        <video src={preview} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <img src={preview} alt="New Preview" className="w-full h-full object-cover" />
+                                    )}
+                                    <button
+                                        onClick={() => removeNewFile(idx)}
+                                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 transition"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                    <div className="absolute top-1 left-1 bg-blue-500 text-[8px] text-white px-1 rounded font-bold uppercase">Baru</div>
+                                </div>
+                            );
+                        })}
+
+                        <button
+                            onClick={() => editFileInputRef.current?.click()}
+                            className="aspect-square rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400 hover:border-blue-400 hover:text-blue-500 transition bg-white"
+                        >
+                            <Paperclip size={24} />
+                            <span className="text-xs mt-1 font-medium">Tambah Media</span>
+                        </button>
+                    </div>
+
+                    <input
+                        type="file"
+                        ref={editFileInputRef}
+                        onChange={handleFileChange}
+                        multiple
+                        accept="image/*,video/*"
+                        className="hidden"
+                    />
+
+                    <div className="flex items-center justify-between pt-2">
+                        <div className="relative" ref={privacyRef}>
                             <button
-                                onClick={() => setIsDeleteModalOpen(false)}
-                                className="flex-1 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl transition"
+                                type="button"
+                                onClick={() => setIsPrivacyOpen(!isPrivacyOpen)}
+                                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 transition hover:bg-slate-200"
+                            >
+                                {editPrivacy === 'public' ? (
+                                    <Globe size={16} className="text-blue-500" />
+                                ) : (
+                                    <Lock size={16} className="text-amber-500" />
+                                )}
+                                <span className="text-xs font-bold capitalize">{editPrivacy}</span>
+                            </button>
+                            {isPrivacyOpen && (
+                                <div className="absolute bottom-full left-0 mb-1 w-32 bg-white rounded-xl shadow-xl border border-slate-100 py-1 z-10">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setEditPrivacy('public');
+                                            setIsPrivacyOpen(false);
+                                        }}
+                                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-600 hover:bg-slate-50 transition"
+                                    >
+                                        <Globe size={14} /> Publik
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setEditPrivacy('private');
+                                            setIsPrivacyOpen(false);
+                                        }}
+                                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-600 hover:bg-slate-50 transition"
+                                    >
+                                        <Lock size={14} /> Privat
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => {
+                                    setIsEditing(false);
+                                    setEditContent(post.content);
+                                    setEditPrivacy(post.privacy);
+                                    setEditImages(JSON.parse(post.images || '[]'));
+                                    setNewFiles([]);
+                                    setNewPreviews([]);
+                                }}
+                                className="px-4 py-2 text-slate-500 font-bold text-sm hover:text-slate-800 transition"
                             >
                                 Batal
                             </button>
                             <button
-                                onClick={() => {
-                                    onDelete(post.id);
-                                    setIsDeleteModalOpen(false);
-                                }}
-                                className="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl shadow-lg shadow-red-200 transition"
+                                onClick={handleUpdatePost}
+                                disabled={isUpdating || (!editContent.trim() && editImages.length === 0 && newFiles.length === 0)}
+                                className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-200 hover:bg-blue-700 transition disabled:opacity-50"
                             >
-                                Ya, Hapus
+                                {isUpdating ? (
+                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                ) : (
+                                    <Check size={18} />
+                                )}
+                                Simpan Perubahan
                             </button>
                         </div>
                     </div>
                 </div>
-            )}
+            ) : (
+                <>
+                    <div className="text-slate-800 leading-relaxed whitespace-pre-wrap mb-4">
+                        {renderContent(post.content)}
+                    </div>
 
-            <div className="text-slate-800 leading-relaxed whitespace-pre-wrap mb-4">
-                {renderContent(post.content)}
-            </div>
+                    {images.length > 0 && (
+                        <div className={`
+                            grid gap-1 mb-4 rounded-2xl overflow-hidden
+                            ${images.length === 1 ? 'grid-cols-1' :
+                                images.length === 2 ? 'grid-cols-2' :
+                                    'grid-cols-2'}
+                        `}>
+                            {images.map((img: string, idx: number) => {
+                                // Smart Layout logic
+                                let span = '';
+                                if (images.length === 3 && idx === 0) span = 'row-span-2 aspect-[4/5]';
+                                else if (images.length === 3) span = 'aspect-square';
+                                else if (images.length === 1) span = 'aspect-auto max-h-[500px] w-auto mx-auto';
+                                else span = 'aspect-square';
 
-            {images.length > 0 && (
-                <div className={`grid ${images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'} gap-2 mb-4 rounded-xl overflow-hidden`}>
-                    {images.map((img: string, idx: number) => (
-                        <div key={idx} className="aspect-video bg-slate-100 relative group overflow-hidden">
-                            <img
-                                src={img}
-                                alt={`Post content ${idx + 1}`}
-                                className="w-full h-full object-cover transition duration-300 group-hover:scale-105 cursor-pointer"
-                                onClick={() => setLightboxData({ index: idx, open: true })}
-                            />
+                                // Max 4 shown
+                                if (idx > 3) return null;
+
+                                return (
+                                    <div
+                                        key={idx}
+                                        className={`bg-slate-100 relative group overflow-hidden ${span} ${images.length === 1 ? 'rounded-2xl border border-slate-100' : ''}`}
+                                    >
+                                        {isVideoFile(img) ? (
+                                            <video
+                                                src={img}
+                                                controls
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <>
+                                                <img
+                                                    src={img}
+                                                    alt={`Post content ${idx + 1}`}
+                                                    className="w-full h-full object-cover transition duration-300 group-hover:scale-105 cursor-pointer"
+                                                    onClick={() => setLightboxData({ index: idx, open: true })}
+                                                />
+                                                {idx === 3 && images.length > 4 && (
+                                                    <div
+                                                        className="absolute inset-0 bg-black/50 flex items-center justify-center text-white text-3xl font-black cursor-pointer"
+                                                        onClick={() => setLightboxData({ index: 3, open: true })}
+                                                    >
+                                                        +{images.length - 4}
+                                                    </div>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
-                    ))}
-                </div>
+                    )}
+                </>
             )}
 
             {/* Lightbox Gallery */}

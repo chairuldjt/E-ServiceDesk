@@ -11,23 +11,35 @@ export async function GET(request: NextRequest) {
         const { searchParams } = new URL(request.url);
         const page = parseInt(searchParams.get('page') || '1');
         const limit = parseInt(searchParams.get('limit') || '10');
+        const search = searchParams.get('search') || '';
         const offset = (page - 1) * limit;
 
         const connection = await pool.getConnection();
+
+        // Build search condition
+        let whereClause = "(t.privacy = 'public' OR t.user_id = ?)";
+        const queryParams: (string | number)[] = [payload.id];
+
+        if (search) {
+            whereClause += " AND (t.content LIKE ? OR u.username LIKE ?)";
+            queryParams.push(`%${search}%`, `%${search}%`);
+        }
 
         // Get total count
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const [countResult]: any[] = await connection.execute(`
             SELECT COUNT(*) as total
             FROM timeline t
-            WHERE t.privacy = 'public' OR t.user_id = ?
-        `, [payload.id]);
+            JOIN users u ON t.user_id = u.id
+            WHERE ${whereClause}
+        `, queryParams);
 
         const total = countResult[0].total;
 
         // Fetch posts: Pinned posts first, then newest first
         // If not the owner, only show 'public' posts
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const postQueryParams = [payload.id, payload.id, ...queryParams, limit, offset];
         const [posts]: any[] = await connection.execute(`
             SELECT 
                 t.*, 
@@ -39,10 +51,10 @@ export async function GET(request: NextRequest) {
                 EXISTS(SELECT 1 FROM timeline_likes WHERE post_id = t.id AND user_id = ?) as user_liked
             FROM timeline t
             JOIN users u ON t.user_id = u.id
-            WHERE t.privacy = 'public' OR t.user_id = ?
+            WHERE ${whereClause}
             ORDER BY t.is_pinned DESC, t.created_at DESC
             LIMIT ? OFFSET ?
-        `, [payload.id, payload.id, payload.id, limit, offset]);
+        `, postQueryParams);
 
         connection.release();
 

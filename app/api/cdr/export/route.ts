@@ -27,15 +27,21 @@ export async function POST(request: NextRequest) {
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                responseType: 'arraybuffer' // Untuk menerima file CSV/Binary
+                responseType: 'arraybuffer'
             }
         );
 
-        const fileName = `CDR_${username}_${new Date().toISOString().slice(0, 10)}.csv`;
+        // Konversi CSV ke Excel menggunakan XLSX
+        const csvContent = response.data.toString('utf-8');
+        const XLSX = await import('xlsx');
+        const workbook = XLSX.read(csvContent, { type: 'string' });
+        const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
 
-        return new NextResponse(response.data, {
+        const fileName = `CDR_${username}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+
+        return new NextResponse(excelBuffer, {
             headers: {
-                'Content-Type': 'text/csv',
+                'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                 'Content-Disposition': `attachment; filename="${fileName}"`,
             }
         });

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { CreatePost } from '@/components/timeline/CreatePost';
 import { PostCard } from '@/components/timeline/PostCard';
-import { Loader2, RefreshCw } from 'lucide-react';
+import { Loader2, RefreshCw, Search, X } from 'lucide-react';
 import { TimelinePost } from '@/lib/types/timeline';
 
 export default function TimelinePage() {
@@ -11,12 +11,22 @@ export default function TimelinePage() {
     const [isLoading, setIsLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPosts, setTotalPosts] = useState(0);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
     const postsPerPage = 10;
 
-    const fetchPosts = async (page = 1) => {
+    // Handle debouncing
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchQuery);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
+
+    const fetchPosts = async (page = 1, search = debouncedSearch) => {
         setIsLoading(true);
         try {
-            const res = await fetch(`/api/timeline?page=${page}&limit=${postsPerPage}`);
+            const res = await fetch(`/api/timeline?page=${page}&limit=${postsPerPage}&search=${encodeURIComponent(search)}`);
             if (res.status === 401) {
                 // Unauthorized, redirect to login
                 window.location.href = '/login';
@@ -77,9 +87,9 @@ export default function TimelinePage() {
             fetchAllAndScroll();
         } else {
             // Normal fetch with pagination
-            fetchPosts();
+            fetchPosts(1, debouncedSearch);
         }
-    }, []);
+    }, [debouncedSearch]);
 
     const handlePostCreated = (newPost: TimelinePost) => {
         // Find if there are already pinned posts
@@ -115,6 +125,10 @@ export default function TimelinePage() {
         }
     };
 
+    const handleUpdate = (updatedPost: TimelinePost) => {
+        setPosts(prev => prev.map(p => p.id === updatedPost.id ? updatedPost : p));
+    };
+
     const totalPages = Math.ceil(totalPosts / postsPerPage);
 
     return (
@@ -124,12 +138,34 @@ export default function TimelinePage() {
                     <h1 className="text-3xl font-black text-slate-900 tracking-tight">Timeline</h1>
                     <p className="text-slate-500 font-medium">Bagikan aktivitas dan pemikiran Anda</p>
                 </div>
-                <button
-                    onClick={() => fetchPosts(currentPage)}
-                    className="p-3 bg-white rounded-xl shadow-sm border border-slate-200 text-slate-500 hover:text-blue-600 hover:border-blue-200 transition"
-                >
-                    <RefreshCw size={20} className={isLoading ? 'animate-spin' : ''} />
-                </button>
+                <div className="flex items-center gap-2">
+                    <div className="relative group">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                            <Search size={18} />
+                        </div>
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Cari postingan..."
+                            className="pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-blue-100 focus:border-blue-400 outline-none w-48 sm:w-64 transition-all"
+                        />
+                        {searchQuery && (
+                            <button
+                                onClick={() => setSearchQuery('')}
+                                className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
+                            >
+                                <X size={16} />
+                            </button>
+                        )}
+                    </div>
+                    <button
+                        onClick={() => fetchPosts(currentPage)}
+                        className="p-2.5 bg-white rounded-xl shadow-sm border border-slate-200 text-slate-500 hover:text-blue-600 hover:border-blue-200 transition"
+                    >
+                        <RefreshCw size={20} className={isLoading ? 'animate-spin' : ''} />
+                    </button>
+                </div>
             </div>
 
             <CreatePost onPostCreated={handlePostCreated} />
@@ -154,6 +190,7 @@ export default function TimelinePage() {
                                 post={post}
                                 onDelete={handleDelete}
                                 onTogglePin={handleTogglePin}
+                                onUpdate={handleUpdate}
                             />
                         ))}
                     </div>

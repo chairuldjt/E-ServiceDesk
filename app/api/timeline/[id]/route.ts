@@ -14,7 +14,7 @@ export async function PATCH(
         if (!payload) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         const body = await request.json();
-        const { is_pinned, privacy } = body;
+        const { is_pinned, privacy, content, images } = body;
 
         const connection = await pool.getConnection();
 
@@ -42,6 +42,16 @@ export async function PATCH(
         if (privacy !== undefined) {
             updates.push('privacy = ?');
             values.push(privacy);
+        }
+
+        if (content !== undefined) {
+            updates.push('content = ?');
+            values.push(content);
+        }
+
+        if (images !== undefined) {
+            updates.push('images = ?');
+            values.push(JSON.stringify(images));
         }
 
         if (updates.length > 0) {
