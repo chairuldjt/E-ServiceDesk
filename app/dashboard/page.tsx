@@ -186,7 +186,7 @@ function DashboardContent() {
         now.getMinutes().toString().padStart(2, '0') +
         now.getSeconds().toString().padStart(2, '0');
 
-      const fileName = `CDRReport-${year}${month}${day}.${time}-${exportUsername}.xlsx`;
+      const fileName = `CDRReport-${year}${month}${day}.${time}-${exportUsername}.xls`;
 
       link.setAttribute('download', fileName);
       document.body.appendChild(link);
