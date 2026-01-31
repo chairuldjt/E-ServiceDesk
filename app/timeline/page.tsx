@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import { CreatePost } from '@/components/timeline/CreatePost';
 import { PostCard } from '@/components/timeline/PostCard';
-import { Loader2, RefreshCw, Search, X } from 'lucide-react';
+import { Loader2, RefreshCw } from 'lucide-react';
 import { TimelinePost } from '@/lib/types/timeline';
 import { useUI } from '@/context/UIContext';
+import { SearchBar } from '@/components/ui/PremiumComponents';
 
 export default function TimelinePage() {
     const { showToast } = useUI();
@@ -144,38 +145,35 @@ export default function TimelinePage() {
 
     return (
         <div className="max-w-2xl mx-auto px-4 py-8">
-            <div className="flex items-center justify-between mb-8">
-                <div>
-                    <h1 className="text-3xl font-black text-slate-900 tracking-tight">Timeline</h1>
-                    <p className="text-slate-500 font-medium">Bagikan aktivitas dan pemikiran Anda</p>
-                </div>
-                <div className="flex items-center gap-2">
-                    <div className="relative group">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
-                            <Search size={18} />
+            <div className="bg-white rounded-3xl border-2 border-slate-50 p-6 mb-8 shadow-xl shadow-slate-100/50">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div>
+                        <div className="flex items-center gap-3 mb-1">
+                            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center text-xl shadow-lg shadow-blue-100">
+                                📅
+                            </div>
+                            <h1 className="text-3xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                                Timeline
+                            </h1>
                         </div>
-                        <input
-                            type="text"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Cari postingan..."
-                            className="pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-blue-100 focus:border-blue-400 outline-none w-48 sm:w-64 transition-all"
-                        />
-                        {searchQuery && (
-                            <button
-                                onClick={() => setSearchQuery('')}
-                                className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
-                            >
-                                <X size={16} />
-                            </button>
-                        )}
+                        <p className="text-slate-500 font-medium ml-13">Bagikan aktivitas dan pemikiran Anda</p>
                     </div>
-                    <button
-                        onClick={() => fetchPosts(currentPage)}
-                        className="p-2.5 bg-white rounded-xl shadow-sm border border-slate-200 text-slate-500 hover:text-blue-600 hover:border-blue-200 transition"
-                    >
-                        <RefreshCw size={20} className={isLoading ? 'animate-spin' : ''} />
-                    </button>
+                    <div className="flex items-center gap-3 flex-1 md:flex-none">
+                        <div className="flex-1 md:w-64">
+                            <SearchBar
+                                value={searchQuery}
+                                onChange={setSearchQuery}
+                                placeholder="Cari postingan..."
+                            />
+                        </div>
+                        <button
+                            onClick={() => fetchPosts(currentPage)}
+                            className="w-12 h-12 flex items-center justify-center bg-slate-50 rounded-full border-2 border-slate-100 text-slate-500 hover:text-blue-600 hover:border-blue-200 transition shrink-0 shadow-sm"
+                            title="Refresh"
+                        >
+                            <RefreshCw size={20} className={isLoading ? 'animate-spin' : ''} />
+                        </button>
+                    </div>
                 </div>
             </div>
 

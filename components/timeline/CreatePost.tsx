@@ -259,21 +259,21 @@ export function CreatePost({ onPostCreated }: CreatePostProps) {
                         </div>
                     )}
 
-                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100">
-                        <div className="flex gap-2">
+                    <div className="flex flex-wrap items-center justify-between gap-y-4 mt-4 pt-4 border-t border-slate-100">
+                        <div className="flex flex-wrap gap-2">
                             <button
                                 onClick={() => fileInputRef.current?.click()}
                                 className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-slate-50 text-slate-600 transition"
                             >
                                 <ImageIcon size={20} className="text-emerald-500" />
-                                <span className="text-sm font-medium">Foto</span>
+                                <span className="text-sm font-medium hidden sm:inline">Foto</span>
                             </button>
                             <button
                                 onClick={() => fileInputRef.current?.click()}
                                 className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-slate-50 text-slate-600 transition"
                             >
                                 <Video size={20} className="text-blue-500" />
-                                <span className="text-sm font-medium">Video</span>
+                                <span className="text-sm font-medium hidden sm:inline">Video</span>
                             </button>
                             <input
                                 type="file"
@@ -295,7 +295,7 @@ export function CreatePost({ onPostCreated }: CreatePostProps) {
                                     ) : (
                                         <Lock size={20} className="text-amber-500" />
                                     )}
-                                    <span className="text-sm font-medium capitalize">{privacy}</span>
+                                    <span className="text-sm font-medium capitalize hidden sm:inline">{privacy}</span>
                                 </button>
                                 {isPrivacyOpen && (
                                     <div className="absolute top-full left-0 mt-1 w-32 bg-white rounded-xl shadow-xl border border-slate-100 py-1 z-10 animate-fade-in-up">
@@ -327,7 +327,7 @@ export function CreatePost({ onPostCreated }: CreatePostProps) {
                         <button
                             onClick={handlePost}
                             disabled={isUploading || (!content.trim() && selectedImages.length === 0)}
-                            className={`flex items-center gap-2 px-6 py-2 rounded-xl font-bold transition-all shadow-lg ${isUploading || (!content.trim() && selectedImages.length === 0)
+                            className={`flex items-center justify-center gap-2 px-6 py-2 rounded-xl font-bold transition-all shadow-lg min-w-[100px] ml-auto sm:ml-0 ${isUploading || (!content.trim() && selectedImages.length === 0)
                                 ? 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'
                                 : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200'
                                 }`}
@@ -337,7 +337,7 @@ export function CreatePost({ onPostCreated }: CreatePostProps) {
                             ) : (
                                 <Send size={18} />
                             )}
-                            Post
+                            <span>Post</span>
                         </button>
                     </div>
                 </div>
