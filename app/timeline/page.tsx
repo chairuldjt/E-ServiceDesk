@@ -5,8 +5,10 @@ import { CreatePost } from '@/components/timeline/CreatePost';
 import { PostCard } from '@/components/timeline/PostCard';
 import { Loader2, RefreshCw, Search, X } from 'lucide-react';
 import { TimelinePost } from '@/lib/types/timeline';
+import { useUI } from '@/context/UIContext';
 
 export default function TimelinePage() {
+    const { showToast } = useUI();
     const [posts, setPosts] = useState<TimelinePost[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
@@ -104,9 +106,14 @@ export default function TimelinePage() {
             const res = await fetch(`/api/timeline/${id}`, { method: 'DELETE' });
             if (res.ok) {
                 setPosts(prev => prev.filter(p => p.id !== id));
+                showToast('Postingan berhasil dihapus', 'success');
+            } else {
+                const data = await res.json();
+                showToast(data.error || 'Gagal menghapus postingan', 'error');
             }
         } catch (error) {
             console.error('Failed to delete post:', error);
+            showToast('Terjadi kesalahan sistem', 'error');
         }
     };
 
@@ -119,9 +126,13 @@ export default function TimelinePage() {
             });
             if (res.ok) {
                 fetchPosts(currentPage); // Refetch to handle re-sorting
+                showToast(current ? 'Pin dilepas' : 'Postingan di-pin', 'success');
+            } else {
+                showToast('Gagal mengubah status pin', 'error');
             }
         } catch (error) {
             console.error('Failed to toggle pin:', error);
+            showToast('Terjadi kesalahan sistem', 'error');
         }
     };
 

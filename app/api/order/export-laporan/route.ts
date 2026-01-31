@@ -53,6 +53,26 @@ export async function GET(request: NextRequest) {
                 (o.create_date && o.create_date.includes(dateISO));
         });
 
+        // 2.5 Sort by create_date (Earliest first)
+        allOrders.sort((a: any, b: any) => {
+            const getSortable = (s: string) => {
+                if (!s) return '';
+                if (s.includes(' - ')) {
+                    const [datePart, timePart] = s.split(' - ');
+                    const parts = datePart.split(' ');
+                    if (parts.length === 3) {
+                        const [d, mStr, y] = parts;
+                        const m = monthsStr.indexOf(mStr);
+                        return `20${y}-${String(m + 1).padStart(2, '0')}-${d.padStart(2, '0')} ${timePart}`;
+                    }
+                }
+                return s.replace('T', ' ');
+            };
+            const sortA = getSortable(a.create_date);
+            const sortB = getSortable(b.create_date);
+            return sortA.localeCompare(sortB);
+        });
+
         // 3. Create Excel
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet('Laporan Jaga');

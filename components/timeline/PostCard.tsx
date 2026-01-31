@@ -773,6 +773,40 @@ export function PostCard({ post, onDelete, onTogglePin, onUpdate }: PostCardProp
                     </form>
                 </div>
             )}
+            {/* Delete Confirmation Modal */}
+            {isDeleteModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-fade-in" onClick={() => setIsDeleteModalOpen(false)} />
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-scale-in relative z-10">
+                        <div className="p-6 text-center">
+                            <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center text-red-500 mx-auto mb-4">
+                                <AlertTriangle size={32} />
+                            </div>
+                            <h3 className="text-xl font-black text-slate-900 mb-2">Hapus Postingan?</h3>
+                            <p className="text-slate-500 text-sm leading-relaxed mb-6">
+                                Tindakan ini tidak dapat dibatalkan. Postingan Anda akan dihapus secara permanen.
+                            </p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setIsDeleteModalOpen(false)}
+                                    className="flex-1 py-3 px-4 rounded-xl font-bold text-slate-500 hover:bg-slate-50 transition"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        onDelete(post.id);
+                                        setIsDeleteModalOpen(false);
+                                    }}
+                                    className="flex-1 py-3 px-4 bg-red-500 text-white rounded-xl font-bold hover:bg-red-600 transition shadow-lg shadow-red-200"
+                                >
+                                    Ya, Hapus
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
