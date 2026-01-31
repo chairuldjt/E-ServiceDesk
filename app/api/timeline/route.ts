@@ -39,13 +39,13 @@ export async function GET(request: NextRequest) {
         // Fetch posts: Pinned posts first, then newest first
         // If not the owner, only show 'public' posts
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const postQueryParams = [payload.id, payload.id, ...queryParams, limit, offset];
+        const postQueryParams = [payload.id, payload.role, payload.id, ...queryParams, limit, offset];
         const [posts]: any[] = await connection.execute(`
             SELECT 
                 t.*, 
                 u.username, 
                 u.profile_image,
-                (t.user_id = ?) as is_owner,
+                (t.user_id = ? OR ? IN ('admin', 'super')) as is_owner,
                 (SELECT COUNT(*) FROM timeline_likes WHERE post_id = t.id) as like_count,
                 (SELECT COUNT(*) FROM timeline_comments WHERE post_id = t.id) as comment_count,
                 EXISTS(SELECT 1 FROM timeline_likes WHERE post_id = t.id AND user_id = ?) as user_liked
