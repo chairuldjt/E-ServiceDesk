@@ -1,15 +1,11 @@
-// 1. Safe Universal Fetch Polyfill (DO NOT overwrite global Response)
-const nodeFetch = require('node-fetch');
+// 1. Safe Fetch Polyfill for library compatibility (DO NOT overwrite global Response)
 if (typeof fetch === 'undefined') {
+    const nodeFetch = require('node-fetch');
     (global as any).fetch = nodeFetch;
     (global as any).Request = nodeFetch.Request;
     (global as any).Headers = nodeFetch.Headers;
+    if (typeof globalThis !== 'undefined') (globalThis as any).fetch = nodeFetch;
 }
-if (typeof globalThis !== 'undefined' && typeof globalThis.fetch === 'undefined') {
-    (globalThis as any).fetch = nodeFetch;
-}
-// Also stick it on process just in case some internal modules look there
-if (!(process as any).fetch) (process as any).fetch = nodeFetch;
 
 // 2. Type-only imports for TS (erased at runtime)
 import type { Client as ClientType, MessageMedia as MessageMediaType } from 'whatsapp-web.js';
@@ -181,23 +177,31 @@ export const initBot = async () => {
                 console.log(`[${new Date().toISOString()}] WhatsApp Bot authenticated, waiting for ready...`);
             }
 
-            // Watchdog: If authenticated but remains in LOADING for more than 2 minutes,
-            // check if we can force the 'ready' state by checking connection
-            setTimeout(async () => {
+            // Watchdog: If authenticated but remains in LOADING, check browser state manually
+            const checkReady = setInterval(async () => {
                 if (bot.state.status === 'LOADING' && bot.client) {
                     try {
-                        const isConnected = await bot.client.getState();
-                        if (isConnected === 'CONNECTED') {
-                            console.log('[Watchdog] Bot appears to be connected but "ready" event missed. Forcing READY.');
+                        const browserState = await bot.client.getState();
+                        console.log(`[Watchdog] Current Browser State: ${browserState}`);
+                        if (browserState === 'CONNECTED') {
+                            console.log('[Watchdog] Bot is actually connected! Forcing READY state.');
                             bot.state.status = 'READY';
+                            bot.state.qrCode = null;
                             bot.isInitializing = false;
+                            if (bot.initTimeout) {
+                                clearTimeout(bot.initTimeout);
+                                bot.initTimeout = null;
+                            }
                             setupCron();
+                            clearInterval(checkReady);
                         }
                     } catch (e) {
-                        // Not ready yet
+                        // Still loading or not connected yet
                     }
+                } else if (bot.state.status === 'READY' || bot.state.status === 'DISCONNECTED') {
+                    clearInterval(checkReady);
                 }
-            }, 120000);
+            }, 30000); // Check every 30 seconds
         });
 
         bot.client.on('auth_failure', (msg: string) => {
