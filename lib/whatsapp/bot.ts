@@ -116,19 +116,19 @@ export const initBot = async () => {
                     '--no-zygote',
                     '--disable-gpu',
                     '--disable-web-security',
-                    '--disable-features=SelectParser,VizDisplayCompositor',
+                    '--disable-features=VizDisplayCompositor,SelectParser,IsolateOrigins,site-per-process',
                     '--disable-extensions',
                     '--disable-default-apps',
                     '--font-render-hinting=none',
-                    '--disable-setuid-sandbox',
                     '--window-size=1280,720'
                 ],
                 executablePath: process.env.CHROME_PATH || undefined,
             },
-            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-            authTimeoutMs: 120000,
+            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            authTimeoutMs: 300000, // 5 minutes
             webVersionCache: {
-                type: 'none'
+                type: 'remote',
+                remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html'
             }
         });
 
@@ -136,6 +136,10 @@ export const initBot = async () => {
             console.log(`[${new Date().toISOString()}] WhatsApp Bot loading: ${percent}% - ${message}`);
             bot.state.status = 'LOADING';
             bot.state.error = `Loading: ${percent}% - ${message}`;
+        });
+
+        bot.client.on('change_state', (state: string) => {
+            console.log(`[${new Date().toISOString()}] WhatsApp Bot internal state: ${state}`);
         });
 
         bot.client.on('qr', async (qr: string) => {
