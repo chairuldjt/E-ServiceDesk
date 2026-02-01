@@ -139,7 +139,7 @@ export const initBot = async () => {
 
         await bot.client.initialize();
 
-        // Timeout watchdog: If not ready or QR within 40s, force reset
+        // Timeout watchdog: If not ready or QR within 120s, force reset
         setTimeout(() => {
             if (bot.client && (bot.state.status === 'CONNECTING' || bot.state.status === 'LOADING')) {
                 console.warn('Bot initialization timed out, forcing reset...');
@@ -147,7 +147,7 @@ export const initBot = async () => {
                 bot.state.status = 'DISCONNECTED';
                 bot.state.error = 'Initialization timed out. Please try again.';
             }
-        }, 40000);
+        }, 120000);
 
     } catch (err: any) {
         bot.state.status = 'DISCONNECTED';

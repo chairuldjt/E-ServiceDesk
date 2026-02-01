@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "db:init": "npx tsx init-db.ts",
+    "init:db": "npm run db:init",
     "db:reset": "npx tsx reset-db.ts",
     "db:reset-admin": "npx tsx reset-admin.ts"
   },
