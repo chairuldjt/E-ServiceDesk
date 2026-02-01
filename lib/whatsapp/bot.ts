@@ -1,6 +1,11 @@
-// 1. Robust Polyfill for global fetch (Must be absolute top for library compatibility)
+// 1. Mandatory Polyfill for global fetch (Must be at the absolute top)
+// This fixes "TypeError: fetch is not a function" in environments like Turbopack
 const nodeFetch = require('node-fetch');
-if (typeof global.fetch === 'undefined') {
+if (typeof globalThis.fetch === 'undefined') {
+    (globalThis as any).fetch = nodeFetch;
+    (globalThis as any).Headers = nodeFetch.Headers;
+    (globalThis as any).Request = nodeFetch.Request;
+    (globalThis as any).Response = nodeFetch.Response;
     (global as any).fetch = nodeFetch;
     (global as any).Headers = nodeFetch.Headers;
     (global as any).Request = nodeFetch.Request;
@@ -100,7 +105,7 @@ export const initBot = async () => {
             }),
             puppeteer: {
                 headless: true,
-                dumpio: true, // Output browser logs to terminal
+                dumpio: false, // Turn off dumpio to reduce clutter, but keep stability
                 args: [
                     '--no-sandbox',
                     '--disable-setuid-sandbox',
@@ -116,14 +121,17 @@ export const initBot = async () => {
                     '--font-render-hinting=none',
                     '--window-size=1280,720',
                     '--disable-background-networking',
-                    '--disable-sync' // Fix for Failed to write index error on Windows
+                    '--disable-sync',
+                    '--disable-translate',
+                    '--disable-publish-notifications',
+                    '--disk-cache-size=0' // Prevent "Failed to write index" on Windows
                 ],
                 executablePath: process.env.CHROME_PATH || undefined,
             },
             userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-            authTimeoutMs: 300000, // Wait up to 5 minutes
+            authTimeoutMs: 300000,
             webVersionCache: {
-                type: 'none' // Disable remote fetch to prevent TypeError and stuck loading
+                type: 'none' // Strongly disable remote fetch to prevent TypeError
             }
         });
 
