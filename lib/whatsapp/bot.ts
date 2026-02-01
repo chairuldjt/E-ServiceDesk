@@ -1,15 +1,11 @@
-// 1. Mandatory Polyfill for global fetch (Must be at the absolute top)
-// This fixes "TypeError: fetch is not a function" in environments like Turbopack
+// 1. Absolute Polyfill for global fetch
 const nodeFetch = require('node-fetch');
-if (typeof globalThis.fetch === 'undefined') {
+global.fetch = nodeFetch;
+global.Request = nodeFetch.Request;
+global.Response = nodeFetch.Response;
+global.Headers = nodeFetch.Headers;
+if (typeof globalThis !== 'undefined') {
     (globalThis as any).fetch = nodeFetch;
-    (globalThis as any).Headers = nodeFetch.Headers;
-    (globalThis as any).Request = nodeFetch.Request;
-    (globalThis as any).Response = nodeFetch.Response;
-    (global as any).fetch = nodeFetch;
-    (global as any).Headers = nodeFetch.Headers;
-    (global as any).Request = nodeFetch.Request;
-    (global as any).Response = nodeFetch.Response;
 }
 
 import { Client, LocalAuth, MessageMedia } from 'whatsapp-web.js';
@@ -129,10 +125,10 @@ export const initBot = async () => {
                 executablePath: process.env.CHROME_PATH || undefined,
             },
             userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-            authTimeoutMs: 600000, // Wait up to 10 minutes for large syncs
+            authTimeoutMs: 600000,
             webVersionCache: {
                 type: 'remote',
-                remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html'
+                remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.3000.1012170010-alpha.html'
             }
         });
 
