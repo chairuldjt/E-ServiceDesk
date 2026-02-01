@@ -6,6 +6,15 @@ import path from 'path';
 import fs from 'fs';
 const cronParser = require('cron-parser');
 
+// Polyfill fetch if missing (fixes "TypeError: fetch is not a function" in node-fetch environments)
+if (typeof fetch === 'undefined') {
+    const nodeFetch = require('node-fetch');
+    (global as any).fetch = nodeFetch;
+    (global as any).Request = nodeFetch.Request;
+    (global as any).Response = nodeFetch.Response;
+    (global as any).Headers = nodeFetch.Headers;
+}
+
 export type BotStatus = 'DISCONNECTED' | 'CONNECTING' | 'QR_CODE' | 'READY' | 'LOADING';
 
 interface BotState {
@@ -100,14 +109,15 @@ export const initBot = async () => {
                     '--no-zygote',
                     '--disable-gpu',
                     '--disable-web-security',
-                    '--disable-features=VizDisplayCompositor'
+                    '--disable-features=VizDisplayCompositor',
+                    '--disable-extensions'
                 ],
                 executablePath: process.env.CHROME_PATH || undefined,
             },
-            // Stable web version to prevent "stuck in loading" or library mismatches
+            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+            // Use none to avoid library mismatches, but fix internal fetch error
             webVersionCache: {
-                type: 'remote',
-                remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html',
+                type: 'none'
             }
         });
 
