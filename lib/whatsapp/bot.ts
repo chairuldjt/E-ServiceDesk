@@ -25,6 +25,8 @@ declare global {
         client: Client | null;
         state: BotState;
         job: ScheduledTask | null;
+        initTimeout: NodeJS.Timeout | null;
+        isInitializing: boolean;
     } | undefined;
 }
 
@@ -44,7 +46,9 @@ if (!global.whatsappBot) {
                 ? path.join(process.cwd(), 'public', 'uploads', 'auto_image.png')
                 : null
         },
-        job: null
+        job: null,
+        initTimeout: null,
+        isInitializing: false
     };
 }
 
@@ -53,6 +57,11 @@ const bot = global.whatsappBot;
 export const getBotState = () => bot.state;
 
 export const initBot = async () => {
+    if (bot.isInitializing) {
+        console.log('Bot is already in the process of initializing...');
+        return;
+    }
+
     // If client exists but is stuck in a bad state, clean it up
     if (bot.client) {
         if (bot.state.status === 'CONNECTING' || bot.state.status === 'LOADING') {
@@ -70,6 +79,7 @@ export const initBot = async () => {
     }
 
     bot.state.status = 'CONNECTING';
+    bot.isInitializing = true;
 
     try {
         bot.client = new Client({
@@ -109,6 +119,11 @@ export const initBot = async () => {
         bot.client.on('ready', () => {
             bot.state.status = 'READY';
             bot.state.qrCode = null;
+            if (bot.initTimeout) {
+                clearTimeout(bot.initTimeout);
+                bot.initTimeout = null;
+            }
+            bot.isInitializing = false;
             console.log('WhatsApp Bot is ready!');
             setupCron();
         });
@@ -137,23 +152,31 @@ export const initBot = async () => {
             bot.client = null;
         });
 
-        await bot.client.initialize();
-
         // Timeout watchdog: If not ready or QR within 120s, force reset
-        setTimeout(() => {
-            if (bot.client && (bot.state.status === 'CONNECTING' || bot.state.status === 'LOADING')) {
-                console.warn('Bot initialization timed out, forcing reset...');
+        if (bot.initTimeout) clearTimeout(bot.initTimeout);
+        bot.initTimeout = setTimeout(() => {
+            if (bot.client && (bot.state.status === 'CONNECTING' || bot.state.status === 'LOADING' || bot.state.status === 'QR_CODE')) {
+                console.warn(`[${new Date().toISOString()}] Bot initialization timed out after 120s (Status: ${bot.state.status}), forcing reset...`);
                 stopBot(); // This destroys the client
                 bot.state.status = 'DISCONNECTED';
                 bot.state.error = 'Initialization timed out. Please try again.';
             }
+            bot.initTimeout = null;
+            bot.isInitializing = false;
         }, 120000);
+
+        await bot.client.initialize();
 
     } catch (err: any) {
         bot.state.status = 'DISCONNECTED';
         bot.state.error = err.message;
         console.error('WhatsApp Bot initialization error', err);
         bot.client = null;
+        bot.isInitializing = false;
+        if (bot.initTimeout) {
+            clearTimeout(bot.initTimeout);
+            bot.initTimeout = null;
+        }
     }
 };
 
@@ -171,11 +194,17 @@ export const logoutBot = async () => {
 };
 
 export const stopBot = async () => {
+    bot.isInitializing = false;
+    if (bot.initTimeout) {
+        clearTimeout(bot.initTimeout);
+        bot.initTimeout = null;
+    }
+
     if (bot.client) {
         try {
             await bot.client.destroy();
         } catch (e) {
-            console.error('Error destroying client', e);
+            console.error('Error destroying client:', e);
         }
         bot.client = null;
         bot.state.status = 'DISCONNECTED';
