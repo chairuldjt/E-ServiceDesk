@@ -1,16 +1,10 @@
-// 1. Robust polyfill for fetch (must be at the very top)
-if (typeof fetch === 'undefined' || !global.fetch) {
-    try {
-        const nodeFetch = require('node-fetch');
-        const customFetch = (url: any, init: any) => nodeFetch(url, init);
-        (global as any).fetch = customFetch;
-        (global as any).Request = nodeFetch.Request;
-        (global as any).Response = nodeFetch.Response;
-        (global as any).Headers = nodeFetch.Headers;
-        console.log('[Polyfill] global.fetch initialized successfully');
-    } catch (e) {
-        console.error('[Polyfill] Critical: node-fetch not found. Run npm install.');
-    }
+// 1. Robust Polyfill for global fetch (Must be absolute top for library compatibility)
+const nodeFetch = require('node-fetch');
+if (typeof global.fetch === 'undefined') {
+    (global as any).fetch = nodeFetch;
+    (global as any).Headers = nodeFetch.Headers;
+    (global as any).Request = nodeFetch.Request;
+    (global as any).Response = nodeFetch.Response;
 }
 
 import { Client, LocalAuth, MessageMedia } from 'whatsapp-web.js';
@@ -106,7 +100,7 @@ export const initBot = async () => {
             }),
             puppeteer: {
                 headless: true,
-                dumpio: true, // Show browser logs in terminal
+                dumpio: true, // Output browser logs to terminal
                 args: [
                     '--no-sandbox',
                     '--disable-setuid-sandbox',
@@ -120,15 +114,16 @@ export const initBot = async () => {
                     '--disable-extensions',
                     '--disable-default-apps',
                     '--font-render-hinting=none',
-                    '--window-size=1280,720'
+                    '--window-size=1280,720',
+                    '--disable-background-networking',
+                    '--disable-sync' // Fix for Failed to write index error on Windows
                 ],
                 executablePath: process.env.CHROME_PATH || undefined,
             },
-            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            authTimeoutMs: 300000, // 5 minutes
+            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+            authTimeoutMs: 300000, // Wait up to 5 minutes
             webVersionCache: {
-                type: 'remote',
-                remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html'
+                type: 'none' // Disable remote fetch to prevent TypeError and stuck loading
             }
         });
 
