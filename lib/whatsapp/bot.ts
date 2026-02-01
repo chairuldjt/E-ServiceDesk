@@ -1,16 +1,4 @@
-// 1. Safe Polyfill for global fetch (Do NOT overwrite global Response which has .json())
-if (typeof global.fetch === 'undefined') {
-    const nodeFetch = require('node-fetch');
-    (global as any).fetch = nodeFetch;
-    if (!(global as any).Request) (global as any).Request = nodeFetch.Request;
-    if (!(global as any).Headers) (global as any).Headers = nodeFetch.Headers;
-    // Do NOT overwrite Response as Next.js/Node 18+ Response.json() is required
-}
-if (typeof globalThis !== 'undefined' && typeof globalThis.fetch === 'undefined') {
-    const nodeFetch = require('node-fetch');
-    (globalThis as any).fetch = nodeFetch;
-}
-
+// Safe imports without overwritting global Fetch/Response
 import { Client, LocalAuth, MessageMedia } from 'whatsapp-web.js';
 import qrcode from 'qrcode';
 import screenshot from 'screenshot-desktop';
