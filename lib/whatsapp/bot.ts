@@ -1,13 +1,15 @@
-// 1. Extreme Polyfill for global fetch (Must be at the absolute top)
+// 1. Safe Universal Fetch Polyfill (DO NOT overwrite global Response)
 const nodeFetch = require('node-fetch');
-Object.defineProperty(global, 'fetch', { value: nodeFetch, writable: true, configurable: true });
-Object.defineProperty(global, 'Response', { value: nodeFetch.Response, writable: true, configurable: true });
-Object.defineProperty(global, 'Request', { value: nodeFetch.Request, writable: true, configurable: true });
-Object.defineProperty(global, 'Headers', { value: nodeFetch.Headers, writable: true, configurable: true });
-
-if (typeof globalThis !== 'undefined') {
+if (typeof fetch === 'undefined') {
+    (global as any).fetch = nodeFetch;
+    (global as any).Request = nodeFetch.Request;
+    (global as any).Headers = nodeFetch.Headers;
+}
+if (typeof globalThis !== 'undefined' && typeof globalThis.fetch === 'undefined') {
     (globalThis as any).fetch = nodeFetch;
 }
+// Also stick it on process just in case some internal modules look there
+if (!(process as any).fetch) (process as any).fetch = nodeFetch;
 
 // 2. Type-only imports for TS (erased at runtime)
 import type { Client as ClientType, MessageMedia as MessageMediaType } from 'whatsapp-web.js';
