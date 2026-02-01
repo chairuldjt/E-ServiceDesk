@@ -152,18 +152,18 @@ export const initBot = async () => {
             bot.client = null;
         });
 
-        // Timeout watchdog: If not ready or QR within 120s, force reset
+        // Timeout watchdog: If not ready or QR within 10 minutes, force reset
         if (bot.initTimeout) clearTimeout(bot.initTimeout);
         bot.initTimeout = setTimeout(() => {
             if (bot.client && (bot.state.status === 'CONNECTING' || bot.state.status === 'LOADING' || bot.state.status === 'QR_CODE')) {
-                console.warn(`[${new Date().toISOString()}] Bot initialization timed out after 120s (Status: ${bot.state.status}), forcing reset...`);
+                console.warn(`[${new Date().toISOString()}] Bot initialization timed out after 10 minutes (Status: ${bot.state.status}), forcing reset...`);
                 stopBot(); // This destroys the client
                 bot.state.status = 'DISCONNECTED';
-                bot.state.error = 'Initialization timed out. Please try again.';
+                bot.state.error = 'Initialization timed out after 10 minutes. Please try again.';
             }
             bot.initTimeout = null;
             bot.isInitializing = false;
-        }, 120000);
+        }, 600000);
 
         await bot.client.initialize();
 
