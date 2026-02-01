@@ -30,29 +30,32 @@ declare global {
     } | undefined;
 }
 
-if (!global.whatsappBot) {
-    global.whatsappBot = {
-        client: null,
-        state: {
-            status: 'DISCONNECTED',
-            qrCode: null,
-            lastScreenshot: null,
-            error: null,
-            groupId: process.env.WA_GROUP_ID || null,
-            cronSchedule: process.env.WA_CRON_SCHEDULE || 'STOP',
-            nextRun: null,
-            automationMode: 'SCREENSHOT',
-            autoImagePath: fs.existsSync(path.join(process.cwd(), 'public', 'uploads', 'auto_image.png'))
-                ? path.join(process.cwd(), 'public', 'uploads', 'auto_image.png')
-                : null
-        },
-        job: null,
-        initTimeout: null,
-        isInitializing: false
-    };
-}
-
-const bot = global.whatsappBot;
+// Use globalThis for a robust singleton pattern in Next.js/Node.js
+const bot = (function () {
+    const g = globalThis as any;
+    if (!g.whatsappBot) {
+        g.whatsappBot = {
+            client: null,
+            state: {
+                status: 'DISCONNECTED',
+                qrCode: null,
+                lastScreenshot: null,
+                error: null,
+                groupId: process.env.WA_GROUP_ID || null,
+                cronSchedule: process.env.WA_CRON_SCHEDULE || 'STOP',
+                nextRun: null,
+                automationMode: 'SCREENSHOT',
+                autoImagePath: fs.existsSync(path.join(process.cwd(), 'public', 'uploads', 'auto_image.png'))
+                    ? path.join(process.cwd(), 'public', 'uploads', 'auto_image.png')
+                    : null
+            },
+            job: null,
+            initTimeout: null,
+            isInitializing: false
+        };
+    }
+    return g.whatsappBot;
+})();
 
 export const getBotState = () => bot.state;
 
@@ -101,14 +104,23 @@ export const initBot = async () => {
                 ],
                 executablePath: process.env.CHROME_PATH || undefined,
             },
-            // Disable version caching to prevent "i is not a function" error on render
+            // Stable web version to prevent "stuck in loading" or library mismatches
             webVersionCache: {
-                type: 'none'
+                type: 'remote',
+                remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html',
             }
         });
 
+        bot.client.on('loading_screen', (percent: number, message: string) => {
+            console.log(`[${new Date().toISOString()}] WhatsApp Bot loading: ${percent}% - ${message}`);
+            bot.state.status = 'LOADING';
+            bot.state.error = `Loading: ${percent}% - ${message}`;
+        });
+
         bot.client.on('qr', async (qr: string) => {
+            console.log(`[${new Date().toISOString()}] WhatsApp Bot QR Code generated`);
             bot.state.status = 'QR_CODE';
+            bot.state.error = null;
             try {
                 bot.state.qrCode = await qrcode.toDataURL(qr);
             } catch (err) {
@@ -129,8 +141,10 @@ export const initBot = async () => {
         });
 
         bot.client.on('authenticated', () => {
-            bot.state.status = 'LOADING';
-            console.log('WhatsApp Bot authenticated');
+            if (bot.state.status !== 'LOADING') {
+                bot.state.status = 'LOADING';
+                console.log(`[${new Date().toISOString()}] WhatsApp Bot authenticated, waiting for ready...`);
+            }
         });
 
         bot.client.on('auth_failure', (msg: string) => {
