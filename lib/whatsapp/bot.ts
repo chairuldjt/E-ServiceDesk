@@ -1,10 +1,17 @@
-// 1. Safe Polyfill for global fetch (fixes "fetch is not a function" in node-fetch environments)
-// We only provide fetch and Request/Headers, NOT Response to avoid breaking NextResponse.json()
-if (typeof fetch === 'undefined') {
+// 1. Extreme Polyfill for global fetch (Must be at the absolute top)
+try {
     const nodeFetch = require('node-fetch');
-    (global as any).fetch = nodeFetch;
-    if (!(global as any).Request) (global as any).Request = nodeFetch.Request;
-    if (!(global as any).Headers) (global as any).Headers = nodeFetch.Headers;
+    if (typeof global.fetch !== 'function') {
+        Object.defineProperty(global, 'fetch', { value: nodeFetch, writable: true, configurable: true });
+        Object.defineProperty(global, 'Response', { value: nodeFetch.Response, writable: true, configurable: true });
+        Object.defineProperty(global, 'Request', { value: nodeFetch.Request, writable: true, configurable: true });
+        Object.defineProperty(global, 'Headers', { value: nodeFetch.Headers, writable: true, configurable: true });
+    }
+    if (typeof globalThis !== 'undefined' && typeof globalThis.fetch !== 'function') {
+        Object.defineProperty(globalThis, 'fetch', { value: nodeFetch, writable: true, configurable: true });
+    }
+} catch (e) {
+    console.error('[Critical] Polyfill failure:', e);
 }
 
 // Safe imports without overwritting global Fetch/Response
@@ -95,13 +102,21 @@ export const initBot = async () => {
     bot.isInitializing = true;
 
     try {
+        console.log(`[Init] Checking fetch: ${typeof fetch}`);
+
         bot.client = new Client({
             authStrategy: new LocalAuth({
                 dataPath: path.join(process.cwd(), '.wwebjs_auth')
             }),
+            // Use a specific, known-working version string to bypass the remote fetcher
+            webVersion: '2.2412.54',
+            webVersionCache: {
+                type: 'remote',
+                remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html'
+            },
             puppeteer: {
                 headless: true,
-                dumpio: false, // Turn off for production-like local testing
+                dumpio: false, // Change to true if you still see issues
                 args: [
                     '--no-sandbox',
                     '--disable-setuid-sandbox',
@@ -117,16 +132,13 @@ export const initBot = async () => {
                     '--font-render-hinting=none',
                     '--window-size=1280,720',
                     '--disable-background-networking',
-                    '--disable-sync'
+                    '--disable-sync',
+                    '--disable-site-isolation-trials'
                 ],
                 executablePath: process.env.CHROME_PATH || undefined,
             },
             userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
             authTimeoutMs: 600000,
-            webVersionCache: {
-                type: 'remote',
-                remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html'
-            }
         });
 
         bot.client.on('loading_screen', (percent: number, message: string) => {
