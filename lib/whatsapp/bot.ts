@@ -1,14 +1,15 @@
-// 1. Move polyfills to the very top, before any imports
-if (typeof fetch === 'undefined') {
+// 1. Robust polyfill for fetch (must be at the very top)
+if (typeof fetch === 'undefined' || !global.fetch) {
     try {
         const nodeFetch = require('node-fetch');
-        (global as any).fetch = nodeFetch;
+        const customFetch = (url: any, init: any) => nodeFetch(url, init);
+        (global as any).fetch = customFetch;
         (global as any).Request = nodeFetch.Request;
         (global as any).Response = nodeFetch.Response;
         (global as any).Headers = nodeFetch.Headers;
-        console.log('[Polyfill] global.fetch has been initialized');
+        console.log('[Polyfill] global.fetch initialized successfully');
     } catch (e) {
-        console.error('[Polyfill] Failed to initialize global.fetch:', e);
+        console.error('[Polyfill] Critical: node-fetch not found. Run npm install.');
     }
 }
 
@@ -104,7 +105,8 @@ export const initBot = async () => {
                 dataPath: path.join(process.cwd(), '.wwebjs_auth')
             }),
             puppeteer: {
-                headless: true, // Use headless for stability
+                headless: true,
+                dumpio: true, // Show browser logs in terminal
                 args: [
                     '--no-sandbox',
                     '--disable-setuid-sandbox',
@@ -114,17 +116,17 @@ export const initBot = async () => {
                     '--no-zygote',
                     '--disable-gpu',
                     '--disable-web-security',
-                    '--disable-features=VizDisplayCompositor',
+                    '--disable-features=SelectParser,VizDisplayCompositor',
                     '--disable-extensions',
                     '--disable-default-apps',
-                    '--font-render-hinting=none'
+                    '--font-render-hinting=none',
+                    '--disable-setuid-sandbox',
+                    '--window-size=1280,720'
                 ],
                 executablePath: process.env.CHROME_PATH || undefined,
             },
             userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-            // Increase timeout for slow connections
-            authTimeoutMs: 60000,
-            // Use none but let the polyfill handle the internal library requests
+            authTimeoutMs: 120000,
             webVersionCache: {
                 type: 'none'
             }
