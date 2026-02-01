@@ -1,3 +1,17 @@
+// 1. Move polyfills to the very top, before any imports
+if (typeof fetch === 'undefined') {
+    try {
+        const nodeFetch = require('node-fetch');
+        (global as any).fetch = nodeFetch;
+        (global as any).Request = nodeFetch.Request;
+        (global as any).Response = nodeFetch.Response;
+        (global as any).Headers = nodeFetch.Headers;
+        console.log('[Polyfill] global.fetch has been initialized');
+    } catch (e) {
+        console.error('[Polyfill] Failed to initialize global.fetch:', e);
+    }
+}
+
 import { Client, LocalAuth, MessageMedia } from 'whatsapp-web.js';
 import qrcode from 'qrcode';
 import screenshot from 'screenshot-desktop';
@@ -5,15 +19,6 @@ import cron, { ScheduledTask } from 'node-cron';
 import path from 'path';
 import fs from 'fs';
 const cronParser = require('cron-parser');
-
-// Polyfill fetch if missing (fixes "TypeError: fetch is not a function" in node-fetch environments)
-if (typeof fetch === 'undefined') {
-    const nodeFetch = require('node-fetch');
-    (global as any).fetch = nodeFetch;
-    (global as any).Request = nodeFetch.Request;
-    (global as any).Response = nodeFetch.Response;
-    (global as any).Headers = nodeFetch.Headers;
-}
 
 export type BotStatus = 'DISCONNECTED' | 'CONNECTING' | 'QR_CODE' | 'READY' | 'LOADING';
 
@@ -110,12 +115,16 @@ export const initBot = async () => {
                     '--disable-gpu',
                     '--disable-web-security',
                     '--disable-features=VizDisplayCompositor',
-                    '--disable-extensions'
+                    '--disable-extensions',
+                    '--disable-default-apps',
+                    '--font-render-hinting=none'
                 ],
                 executablePath: process.env.CHROME_PATH || undefined,
             },
             userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-            // Use none to avoid library mismatches, but fix internal fetch error
+            // Increase timeout for slow connections
+            authTimeoutMs: 60000,
+            // Use none but let the polyfill handle the internal library requests
             webVersionCache: {
                 type: 'none'
             }
