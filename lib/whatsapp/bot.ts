@@ -105,7 +105,7 @@ export const initBot = async () => {
             }),
             puppeteer: {
                 headless: true,
-                dumpio: false, // Turn off dumpio to reduce clutter, but keep stability
+                dumpio: false, // Set to false to use custom console logger below
                 args: [
                     '--no-sandbox',
                     '--disable-setuid-sandbox',
@@ -124,14 +124,15 @@ export const initBot = async () => {
                     '--disable-sync',
                     '--disable-translate',
                     '--disable-publish-notifications',
-                    '--disk-cache-size=0' // Prevent "Failed to write index" on Windows
+                    '--disk-cache-size=0'
                 ],
                 executablePath: process.env.CHROME_PATH || undefined,
             },
             userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-            authTimeoutMs: 300000,
+            authTimeoutMs: 600000, // Wait up to 10 minutes for large syncs
             webVersionCache: {
-                type: 'none' // Strongly disable remote fetch to prevent TypeError
+                type: 'remote',
+                remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html'
             }
         });
 
@@ -208,6 +209,17 @@ export const initBot = async () => {
         }, 600000);
 
         await bot.client.initialize();
+
+        // Optional: Listen to browser console to debug "stuck" state
+        const pupPage = (bot.client as any).pupPage;
+        if (pupPage) {
+            pupPage.on('console', (msg: any) => {
+                const text = msg.text();
+                if (text.includes('Loading') || text.includes('Error') || text.includes('Sync')) {
+                    console.log(`[Browser Console] ${text}`);
+                }
+            });
+        }
 
     } catch (err: any) {
         bot.state.status = 'DISCONNECTED';
