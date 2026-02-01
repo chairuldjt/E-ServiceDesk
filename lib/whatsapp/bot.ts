@@ -109,6 +109,11 @@ export const initBot = async () => {
             authStrategy: new LocalAuth({
                 dataPath: path.join(process.cwd(), '.wwebjs_auth')
             }),
+            // Explicitly set the web version to avoid remote fetching and newsletter errors
+            webVersion: '2.3000.1017054665',
+            webVersionCache: {
+                type: 'none'
+            },
             puppeteer: {
                 headless: true,
                 dumpio: false,
@@ -127,15 +132,14 @@ export const initBot = async () => {
                     '--font-render-hinting=none',
                     '--window-size=1280,720',
                     '--disable-background-networking',
-                    '--disable-sync'
+                    '--disable-sync',
+                    '--disable-setuid-sandbox',
+                    '--no-pings'
                 ],
                 executablePath: process.env.CHROME_PATH || undefined,
             },
             userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
             authTimeoutMs: 600000,
-            webVersionCache: {
-                type: 'none' // Use the bundled version to avoid fetch issues entirely
-            }
         });
 
         bot.client.on('loading_screen', (percent: number, message: string) => {
@@ -176,6 +180,24 @@ export const initBot = async () => {
                 bot.state.status = 'LOADING';
                 console.log(`[${new Date().toISOString()}] WhatsApp Bot authenticated, waiting for ready...`);
             }
+
+            // Watchdog: If authenticated but remains in LOADING for more than 2 minutes,
+            // check if we can force the 'ready' state by checking connection
+            setTimeout(async () => {
+                if (bot.state.status === 'LOADING' && bot.client) {
+                    try {
+                        const isConnected = await bot.client.getState();
+                        if (isConnected === 'CONNECTED') {
+                            console.log('[Watchdog] Bot appears to be connected but "ready" event missed. Forcing READY.');
+                            bot.state.status = 'READY';
+                            bot.isInitializing = false;
+                            setupCron();
+                        }
+                    } catch (e) {
+                        // Not ready yet
+                    }
+                }
+            }, 120000);
         });
 
         bot.client.on('auth_failure', (msg: string) => {
