@@ -1,10 +1,13 @@
-// 1. Absolute Polyfill for global fetch
-const nodeFetch = require('node-fetch');
-global.fetch = nodeFetch;
-global.Request = nodeFetch.Request;
-global.Response = nodeFetch.Response;
-global.Headers = nodeFetch.Headers;
-if (typeof globalThis !== 'undefined') {
+// 1. Safe Polyfill for global fetch (Do NOT overwrite global Response which has .json())
+if (typeof global.fetch === 'undefined') {
+    const nodeFetch = require('node-fetch');
+    (global as any).fetch = nodeFetch;
+    if (!(global as any).Request) (global as any).Request = nodeFetch.Request;
+    if (!(global as any).Headers) (global as any).Headers = nodeFetch.Headers;
+    // Do NOT overwrite Response as Next.js/Node 18+ Response.json() is required
+}
+if (typeof globalThis !== 'undefined' && typeof globalThis.fetch === 'undefined') {
+    const nodeFetch = require('node-fetch');
     (globalThis as any).fetch = nodeFetch;
 }
 
@@ -101,7 +104,7 @@ export const initBot = async () => {
             }),
             puppeteer: {
                 headless: true,
-                dumpio: false, // Set to false to use custom console logger below
+                dumpio: false, // Turn off for production-like local testing
                 args: [
                     '--no-sandbox',
                     '--disable-setuid-sandbox',
@@ -117,18 +120,14 @@ export const initBot = async () => {
                     '--font-render-hinting=none',
                     '--window-size=1280,720',
                     '--disable-background-networking',
-                    '--disable-sync',
-                    '--disable-translate',
-                    '--disable-publish-notifications',
-                    '--disk-cache-size=0'
+                    '--disable-sync'
                 ],
                 executablePath: process.env.CHROME_PATH || undefined,
             },
             userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
             authTimeoutMs: 600000,
             webVersionCache: {
-                type: 'remote',
-                remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.3000.1012170010-alpha.html'
+                type: 'none' // Use the bundled version to avoid fetch issues entirely
             }
         });
 
