@@ -1,3 +1,12 @@
+// 1. Safe Polyfill for global fetch (fixes "fetch is not a function" in node-fetch environments)
+// We only provide fetch and Request/Headers, NOT Response to avoid breaking NextResponse.json()
+if (typeof fetch === 'undefined') {
+    const nodeFetch = require('node-fetch');
+    (global as any).fetch = nodeFetch;
+    if (!(global as any).Request) (global as any).Request = nodeFetch.Request;
+    if (!(global as any).Headers) (global as any).Headers = nodeFetch.Headers;
+}
+
 // Safe imports without overwritting global Fetch/Response
 import { Client, LocalAuth, MessageMedia } from 'whatsapp-web.js';
 import qrcode from 'qrcode';
@@ -112,10 +121,11 @@ export const initBot = async () => {
                 ],
                 executablePath: process.env.CHROME_PATH || undefined,
             },
-            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
             authTimeoutMs: 600000,
             webVersionCache: {
-                type: 'none' // Use the bundled version to avoid fetch issues entirely
+                type: 'remote',
+                remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html'
             }
         });
 
