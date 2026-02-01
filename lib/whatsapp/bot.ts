@@ -1,26 +1,25 @@
 // 1. Extreme Polyfill for global fetch (Must be at the absolute top)
-try {
-    const nodeFetch = require('node-fetch');
-    if (typeof global.fetch !== 'function') {
-        Object.defineProperty(global, 'fetch', { value: nodeFetch, writable: true, configurable: true });
-        Object.defineProperty(global, 'Response', { value: nodeFetch.Response, writable: true, configurable: true });
-        Object.defineProperty(global, 'Request', { value: nodeFetch.Request, writable: true, configurable: true });
-        Object.defineProperty(global, 'Headers', { value: nodeFetch.Headers, writable: true, configurable: true });
-    }
-    if (typeof globalThis !== 'undefined' && typeof globalThis.fetch !== 'function') {
-        Object.defineProperty(globalThis, 'fetch', { value: nodeFetch, writable: true, configurable: true });
-    }
-} catch (e) {
-    console.error('[Critical] Polyfill failure:', e);
+const nodeFetch = require('node-fetch');
+Object.defineProperty(global, 'fetch', { value: nodeFetch, writable: true, configurable: true });
+Object.defineProperty(global, 'Response', { value: nodeFetch.Response, writable: true, configurable: true });
+Object.defineProperty(global, 'Request', { value: nodeFetch.Request, writable: true, configurable: true });
+Object.defineProperty(global, 'Headers', { value: nodeFetch.Headers, writable: true, configurable: true });
+
+if (typeof globalThis !== 'undefined') {
+    (globalThis as any).fetch = nodeFetch;
 }
 
-// Safe imports without overwritting global Fetch/Response
-import { Client, LocalAuth, MessageMedia } from 'whatsapp-web.js';
-import qrcode from 'qrcode';
-import screenshot from 'screenshot-desktop';
-import cron, { ScheduledTask } from 'node-cron';
-import path from 'path';
-import fs from 'fs';
+// 2. Type-only imports for TS (erased at runtime)
+import type { Client as ClientType, MessageMedia as MessageMediaType } from 'whatsapp-web.js';
+import type { ScheduledTask } from 'node-cron';
+
+// 3. Use require for values to ensure polyfill runs FIRST
+const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
+const qrcode = require('qrcode');
+const screenshot = require('screenshot-desktop');
+const cron = require('node-cron');
+const path = require('path');
+const fs = require('fs');
 const cronParser = require('cron-parser');
 
 export type BotStatus = 'DISCONNECTED' | 'CONNECTING' | 'QR_CODE' | 'READY' | 'LOADING';
@@ -39,7 +38,7 @@ interface BotState {
 
 declare global {
     var whatsappBot: {
-        client: Client | null;
+        client: ClientType | null;
         state: BotState;
         job: ScheduledTask | null;
         initTimeout: NodeJS.Timeout | null;
@@ -108,15 +107,9 @@ export const initBot = async () => {
             authStrategy: new LocalAuth({
                 dataPath: path.join(process.cwd(), '.wwebjs_auth')
             }),
-            // Use a specific, known-working version string to bypass the remote fetcher
-            webVersion: '2.2412.54',
-            webVersionCache: {
-                type: 'remote',
-                remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html'
-            },
             puppeteer: {
                 headless: true,
-                dumpio: false, // Change to true if you still see issues
+                dumpio: false,
                 args: [
                     '--no-sandbox',
                     '--disable-setuid-sandbox',
@@ -126,19 +119,21 @@ export const initBot = async () => {
                     '--no-zygote',
                     '--disable-gpu',
                     '--disable-web-security',
-                    '--disable-features=VizDisplayCompositor,SelectParser,IsolateOrigins,site-per-process',
+                    '--disable-features=SelectParser,VizDisplayCompositor,IsolateOrigins,site-per-process',
                     '--disable-extensions',
                     '--disable-default-apps',
                     '--font-render-hinting=none',
                     '--window-size=1280,720',
                     '--disable-background-networking',
-                    '--disable-sync',
-                    '--disable-site-isolation-trials'
+                    '--disable-sync'
                 ],
                 executablePath: process.env.CHROME_PATH || undefined,
             },
             userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
             authTimeoutMs: 600000,
+            webVersionCache: {
+                type: 'none' // Use the bundled version to avoid fetch issues entirely
+            }
         });
 
         bot.client.on('loading_screen', (percent: number, message: string) => {
