@@ -3,67 +3,77 @@ import axios from 'axios';
 
 export async function GET() {
     try {
-        // Calculate offset time (-2 hours) in WIB
+        // Calculate current WIB time
         const now = new Date();
         const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
         const wibTime = new Date(utc + (3600000 * 7));
 
-        // Subtract 2 hours
-        wibTime.setHours(wibTime.getHours() - 2);
-
-        const dayOfMonth = wibTime.getDate();
         const hours = wibTime.getHours();
+        const minutes = wibTime.getMinutes();
+        const totalMinutes = (hours * 60) + minutes;
 
-        let shiftCode = 'P'; // Default Pagi (07.00 - 14.00)
-        let jamLabel = '07.00 - 14.00 WIB';
+        let targetDate = new Date(wibTime);
+        let shiftCodes: string[] = [];
+        let jamLabel = '';
 
-        if (hours >= 14 && hours < 21) {
-            shiftCode = 'S'; // Siang (14.00 - 21.00)
+        /**
+         * Shift Logic:
+         * 21:30 - 23:59 > shift M hari ini
+         * 00:00 - 07:30 > shift M hari sebelumnya
+         * 07:30 - 14:30 > shift P dan RK hari ini
+         * 14:30 - 21:30 > shift S hari ini
+         */
+        if (totalMinutes < (7 * 60 + 30)) {
+            // 00:00 - 07:30: shift M hari sebelumnya
+            targetDate.setDate(targetDate.getDate() - 1);
+            shiftCodes = ['M'];
+            jamLabel = '21.00 - 07.00 WIB';
+        } else if (totalMinutes < (14 * 60 + 30)) {
+            // 07:30 - 14:30: shift P dan RK hari ini
+            shiftCodes = ['P', 'RK'];
+            jamLabel = '07.00 - 14.00 WIB';
+        } else if (totalMinutes < (21 * 60 + 30)) {
+            // 14:30 - 21:30: shift S hari ini
+            shiftCodes = ['S'];
             jamLabel = '14.00 - 21.00 WIB';
-        } else if (hours >= 21 || hours < 7) {
-            shiftCode = 'M'; // Malam (21.00 - 07.00)
+        } else {
+            // 21:30 - 23:59: shift M hari ini
+            shiftCodes = ['M'];
             jamLabel = '21.00 - 07.00 WIB';
         }
 
-        // Fetch Service Desk roster table instead of dashboard
-        const targetUrl = `https://piket.teknisirsdk.my.id/servicedesk`;
+        const dayToLookup = targetDate.getDate().toString();
+
+        // Fetch Service Desk roster JSON API
+        const targetUrl = `https://piket.teknisirsdk.my.id/api/schedule/servicedesk`;
 
         const response = await axios.get(targetUrl, {
             timeout: 10000,
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Accept': 'application/json'
             }
         });
 
-        const html = response.data;
-
-        // Find the table and rows
-        const tableMatch = html.match(/<table[^>]*id="example3"[\s\S]*?>([\s\S]*?)<\/table>/);
-        if (!tableMatch) {
-            throw new Error('Could not find roster table');
+        const data = response.data.data;
+        if (!data || !Array.isArray(data)) {
+            throw new Error('Invalid response structure from schedule API');
         }
 
-        const tableContent = tableMatch[1];
-        const rows = tableContent.match(/<tr[^>]*>([\s\S]*?)<\/tr>/g) || [];
         const petugasList: string[] = [];
 
-        for (const row of rows) {
-            const cells = Array.from(row.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)).map((m: any) => m[1].trim());
-            // Header row or non-data row
-            if (cells.length < 32) continue;
+        for (const item of data) {
+            const shiftOnDay = item[dayToLookup];
 
-            const nama = cells[0].replace(/<[^>]+>/g, '').trim();
-            const shiftOnDay = cells[dayOfMonth].replace(/<[^>]+>/g, '').trim();
-
-            if (shiftOnDay === shiftCode) {
-                petugasList.push(nama);
+            if (shiftCodes.includes(shiftOnDay)) {
+                petugasList.push(item.name);
             }
         }
 
         const serviceDesk = petugasList.length > 0 ? petugasList.join(', ') : 'Belum Terisi';
 
-        // Format Date based on the 2-hour offset (wibTime)
-        const hariTanggal = wibTime.toLocaleDateString('id-ID', {
+        // Format Date based on the targetDate
+        const hariTanggal = targetDate.toLocaleDateString('id-ID', {
             weekday: 'long',
             day: 'numeric',
             month: 'long',
@@ -74,9 +84,10 @@ export async function GET() {
             serviceDesk,
             hariTanggal,
             jam: jamLabel,
-            shiftFetched: shiftCode,
-            dayOfMonth: dayOfMonth,
-            offsetApplied: "-2 hours"
+            shiftFetched: shiftCodes.join(', '),
+            dayOfMonth: parseInt(dayToLookup),
+            currentTime: `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`,
+            isPreviousDay: targetDate.getDate() !== wibTime.getDate()
         });
     } catch (error: any) {
         console.error('Piket API Error:', error.message);
