@@ -143,16 +143,18 @@ export async function GET(request: NextRequest) {
         worksheet.mergeCells('A2:I2');
         const titleCell = worksheet.getCell('A2');
         titleCell.value = `LAPORAN ORDER SIMRS TANGGAL ${dateTitle}`.toUpperCase();
-        titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
         titleCell.font = { bold: true, size: 14 };
-        titleCell.protection = { locked: false };
+        // Apply alignment to the entire merged range
+        for (let i = 1; i <= 9; i++) {
+            worksheet.getRow(2).getCell(i).alignment = { horizontal: 'center', vertical: 'middle' };
+        }
 
         // Move headers to Row 4 (leaving Row 3 empty as spacing)
         const headerRow = worksheet.getRow(4);
         headerRow.values = ['NO', 'NO ORDER', 'TANGGAL', 'TELEPON', 'USER', 'ORDER', 'SERVICE DESK', 'KETERANGAN', 'TEKNISI'];
         headerRow.eachCell((cell) => {
             cell.font = { bold: true };
-            cell.alignment = { horizontal: 'center', vertical: 'middle' };
+            cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
             cell.border = {
                 top: { style: 'thin' },
                 left: { style: 'thin' },
@@ -184,13 +186,12 @@ export async function GET(request: NextRequest) {
             ]);
 
             row.eachCell((cell, colNumber) => {
-                // Default alignment
-                cell.alignment = { vertical: 'middle', wrapText: true };
-
-                // Center alignment for specific columns: NO (1), O-NO (2), TGL (3), TELP (4), SD (7), STATUS (8)
-                if ([1, 2, 3, 4, 7, 8].includes(colNumber)) {
-                    cell.alignment = { ...cell.alignment, horizontal: 'center' };
-                }
+                const shouldCenter = [1, 2, 3, 4, 7, 8].includes(colNumber);
+                cell.alignment = {
+                    vertical: 'middle',
+                    horizontal: shouldCenter ? 'center' : 'left',
+                    wrapText: true
+                };
 
                 cell.border = {
                     top: { style: 'thin' },
@@ -222,10 +223,7 @@ export async function GET(request: NextRequest) {
         worksheet.getCell(`G${namesRow}`).font = { bold: true, underline: true };
         worksheet.getCell(`G${namesRow + 1}`).value = 'NIP. 198607142023211019';
 
-        // Final Styles
-        worksheet.eachRow((row) => {
-            row.alignment = { ...row.alignment, vertical: 'middle' };
-        });
+        // Final cleanup - Removed global alignment adjustment to avoid overwriting cell-level settings
 
         const buffer = await workbook.xlsx.writeBuffer();
 
