@@ -332,8 +332,8 @@ function LogbookListContent() {
         title="Create Order"
         subtitle="Kelola catatan pekerjaan dan service desk"
         actions={
-          <div className="flex flex-col md:flex-row gap-3">
-            <div className="flex items-center gap-1 bg-white rounded-xl border-2 border-slate-100 shadow-sm overflow-hidden p-1">
+          <div className="flex flex-wrap items-center gap-3 md:justify-end">
+            <div className="flex items-center gap-1 bg-white rounded-xl border-2 border-slate-100 shadow-sm overflow-hidden p-1 min-w-fit">
               <button
                 onClick={() => changeDate(-1)}
                 className="p-2 hover:bg-slate-50 text-slate-400 hover:text-blue-600 transition-colors"
@@ -347,7 +347,7 @@ function LogbookListContent() {
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="px-2 py-1 outline-none font-bold text-slate-700 bg-transparent border-none focus:ring-0 cursor-pointer"
+                className="px-2 py-1 outline-none font-bold text-slate-700 bg-transparent border-none focus:ring-0 cursor-pointer text-sm"
               />
               <button
                 onClick={() => changeDate(1)}
@@ -359,23 +359,29 @@ function LogbookListContent() {
                 </svg>
               </button>
             </div>
-            <PremiumButton
-              variant="secondary"
-              onClick={() => fetchLogbook(selectedDate)}
-            >
-              <span className="text-lg">🔄</span> Refresh
-            </PremiumButton>
-            <PremiumButton
-              variant="secondary"
-              onClick={handleOpenExportModal}
-            >
-              <span className="text-lg">📂</span> Export Laporan Jaga
-            </PremiumButton>
-            <Link href="/logbook/create">
-              <PremiumButton>
-                <span className="text-lg">➕</span> Tambah Order
+            <div className="flex flex-wrap gap-3">
+              <PremiumButton
+                variant="secondary"
+                size="sm"
+                onClick={() => fetchLogbook(selectedDate)}
+                className="whitespace-nowrap"
+              >
+                <span className="text-base">🔄</span> Refresh
               </PremiumButton>
-            </Link>
+              <PremiumButton
+                variant="secondary"
+                size="sm"
+                onClick={handleOpenExportModal}
+                className="whitespace-nowrap"
+              >
+                <span className="text-base">📂</span> Export
+              </PremiumButton>
+              <Link href="/logbook/create" className="w-full sm:w-auto">
+                <PremiumButton size="sm" className="w-full sm:w-auto whitespace-nowrap">
+                  <span className="text-base">➕</span> Tambah Order
+                </PremiumButton>
+              </Link>
+            </div>
           </div>
         }
       />
