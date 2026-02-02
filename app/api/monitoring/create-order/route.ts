@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
 
         const result = await postExternalOrder(payload.id, externalPayload);
 
-        // Update logbook status to 'ordered' if logbookId is provided
+        // Update eservicedesk status to 'ordered' if logbookId is provided
         if (logbookId) {
             try {
                 const pool = (await import('@/lib/db')).default;

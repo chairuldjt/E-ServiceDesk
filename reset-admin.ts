@@ -25,13 +25,13 @@ async function resetAdmin() {
 
         const [result]: any = await connection.execute(
             'UPDATE users SET password_hash = ? WHERE email = ? OR username = ?',
-            [hashedPassword, 'admin@logbook.com', 'admin']
+            [hashedPassword, 'admin@eservicedesk.com', 'admin']
         );
 
         if (result.affectedRows > 0) {
             console.log('✅ Success! Admin password has been reset to: admin123');
             console.log('You can now login with:');
-            console.log('Email: admin@logbook.com');
+            console.log('Email: admin@eservicedesk.com');
             console.log('Password: admin123');
         } else {
             console.log('❌ Error: Admin user not found in database.');

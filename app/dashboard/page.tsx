@@ -70,7 +70,7 @@ function DashboardContent() {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const logbookRes = await fetch('/api/logbook');
+        const logbookRes = await fetch('/api/eservicedesk');
         const logbookData = await logbookRes.json();
         setLogbookEntries(logbookData.data || []);
 
@@ -250,10 +250,10 @@ Terima kasih`;
 
         <div className="flex gap-3">
           <Link
-            href="/logbook/create"
+            href="/eservicedesk/create"
             className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-2xl hover:shadow-xl hover:shadow-blue-200 transition-all font-bold flex items-center gap-2 active:scale-95"
           >
-            <span className="text-lg">➕</span> Tambah Logbook
+            <span className="text-lg">➕</span> Tambah Catatan
           </Link>
         </div>
       </div>

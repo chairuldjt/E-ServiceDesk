@@ -31,17 +31,17 @@ export async function GET(
       );
     }
 
-    const logbook = rows[0];
+    const eservicedesk = rows[0];
 
     // Check authorization
-    if (payload.role !== 'admin' && logbook.user_id !== payload.id) {
+    if (payload.role !== 'admin' && eservicedesk.user_id !== payload.id) {
       return NextResponse.json(
         { error: 'Forbidden' },
         { status: 403 }
       );
     }
 
-    return NextResponse.json({ data: logbook }, { status: 200 });
+    return NextResponse.json({ data: eservicedesk }, { status: 200 });
   } catch (error) {
     console.error('Get logbook detail error:', error);
     return NextResponse.json(
@@ -82,10 +82,10 @@ export async function PUT(
       );
     }
 
-    const logbook = existingLogbook[0];
+    const eservicedesk = existingLogbook[0];
 
     // Check authorization
-    if (payload.role !== 'admin' && logbook.user_id !== payload.id) {
+    if (payload.role !== 'admin' && eservicedesk.user_id !== payload.id) {
       connection.release();
       return NextResponse.json(
         { error: 'Forbidden' },
@@ -100,8 +100,8 @@ export async function PUT(
         nama,
         lokasi,
         catatan,
-        solusi || logbook.solusi || 'belum ada',
-        penyelesaian || logbook.penyelesaian || 'belum ada',
+        solusi || eservicedesk.solusi || 'belum ada',
+        penyelesaian || eservicedesk.penyelesaian || 'belum ada',
         status,
         id
       ]
@@ -114,7 +114,7 @@ export async function PUT(
     connection.release();
 
     return NextResponse.json(
-      { message: 'Logbook berhasil diupdate', data: updated[0] },
+      { message: 'Data berhasil diupdate', data: updated[0] },
       { status: 200 }
     );
   } catch (error) {
@@ -155,10 +155,10 @@ export async function DELETE(
       );
     }
 
-    const logbook = existingLogbook[0];
+    const eservicedesk = existingLogbook[0];
 
     // Check authorization
-    if (payload.role !== 'admin' && logbook.user_id !== payload.id) {
+    if (payload.role !== 'admin' && eservicedesk.user_id !== payload.id) {
       connection.release();
       return NextResponse.json(
         { error: 'Forbidden' },
@@ -170,7 +170,7 @@ export async function DELETE(
     connection.release();
 
     return NextResponse.json(
-      { message: 'Logbook berhasil dihapus' },
+      { message: 'Data berhasil dihapus' },
       { status: 200 }
     );
   } catch (error) {

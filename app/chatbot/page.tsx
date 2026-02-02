@@ -353,7 +353,7 @@ export default function ChatbotPage() {
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-3xl px-4">
                                     {[
                                         { icon: '📝', text: 'Buat draf laporan logbook hari ini' },
-                                        { icon: '💻', text: 'Update query SQL untuk tabel logbook' },
+                                        { icon: '💻', text: 'Update query SQL untuk tabel eservicedesk' },
                                         { icon: '📊', text: 'Analisis statistik order bulanan' },
                                         { icon: '✉️', text: 'Tulis email balasan untuk teknisi' }
                                     ].map((item, idx) => (

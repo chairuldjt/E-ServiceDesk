@@ -57,7 +57,7 @@ function CreateLogbookContent() {
 
     setLoading(true);
     try {
-      const response = await fetch('/api/logbook', {
+      const response = await fetch('/api/eservicedesk', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...entry, nama: entry.lokasi }),
@@ -69,7 +69,7 @@ function CreateLogbookContent() {
           setEntries(entries.filter((_, i) => i !== index));
         } else {
           // If it was the last row, redirect
-          router.push('/logbook');
+          router.push('/eservicedesk');
         }
       } else {
         const data = await response.json();
@@ -94,7 +94,7 @@ function CreateLogbookContent() {
         nama: entry.lokasi
       }));
 
-      const response = await fetch('/api/logbook', {
+      const response = await fetch('/api/eservicedesk', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -109,8 +109,8 @@ function CreateLogbookContent() {
         return;
       }
 
-      showToast(`${entries.length} Logbook berhasil dibuat`, 'success');
-      router.push('/logbook');
+      showToast(`${entries.length} Catatan berhasil dibuat`, 'success');
+      router.push('/eservicedesk');
     } catch (error) {
       setError('Terjadi kesalahan: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
@@ -125,7 +125,7 @@ function CreateLogbookContent() {
         title="Tambah Order Baru"
         subtitle="Buat beberapa catatan pekerjaan sekaligus"
         actions={
-          <Link href="/logbook">
+          <Link href="/eservicedesk">
             <PremiumButton variant="secondary" className="px-6 text-xs uppercase tracking-widest">
               ← Kembali
             </PremiumButton>

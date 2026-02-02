@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     let query = 'SELECT id, extensi, nama, lokasi, catatan, solusi, penyelesaian, status, created_at, updated_at FROM logbook';
     const params: any[] = [];
 
-    // Admin dapat export semua logbook, user hanya logbook mereka sendiri
+    // Admin dapat export semua data, user hanya data mereka sendiri
     if (payload.role !== 'admin') {
       query += ' WHERE user_id = ?';
       params.push(payload.id);
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     // Buat workbook
     const ws = utils.json_to_sheet(formattedData);
     const wb = utils.book_new();
-    utils.book_append_sheet(wb, ws, 'Logbook');
+    utils.book_append_sheet(wb, ws, 'E-ServiceDesk');
 
     // Set column widths
     ws['!cols'] = [
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
 
     // Send response
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
-    const filename = `logbook-export-${timestamp}.xlsx`;
+    const filename = `eservicedesk-export-${timestamp}.xlsx`;
 
     return new NextResponse(buffer, {
       status: 200,
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Export logbook error:', error);
+    console.error('Export eservicedesk error:', error);
     return NextResponse.json(
       { error: 'Terjadi kesalahan pada server' },
       { status: 500 }

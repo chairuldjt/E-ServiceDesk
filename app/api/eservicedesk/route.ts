@@ -56,15 +56,15 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const isBulk = Array.isArray(body);
-    const logbooks = isBulk ? body : [body];
+    const entries = isBulk ? body : [body];
 
     const connection = await pool.getConnection();
 
     try {
       await connection.beginTransaction();
 
-      for (const logbook of logbooks) {
-        const { extensi, nama, lokasi, catatan, solusi, penyelesaian } = logbook;
+      for (const entry of entries) {
+        const { extensi, nama, lokasi, catatan, solusi, penyelesaian } = entry;
 
         if (!extensi || !nama || !lokasi) {
           throw new Error('Extensi, nama, dan lokasi harus diisi');
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
       connection.release();
 
       return NextResponse.json(
-        { message: `${logbooks.length} Logbook berhasil dibuat` },
+        { message: `${entries.length} Catatan berhasil dibuat` },
         { status: 201 }
       );
     } catch (error: any) {

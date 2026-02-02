@@ -31,15 +31,15 @@ const getStatusBadge = (status: string) => {
   }
 };
 
-export default function LogbookListPage() {
+export default function EServiceDeskListPage() {
   return (
     <ProtectedRoute>
-      <LogbookListContent />
+      <EServiceDeskListContent />
     </ProtectedRoute>
   );
 }
 
-function LogbookListContent() {
+function EServiceDeskListContent() {
   const { showToast, confirm } = useUI();
   const [logbookEntries, setLogbookEntries] = useState<LogbookEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -90,7 +90,7 @@ function LogbookListContent() {
   const fetchLogbook = async (date?: string) => {
     try {
       setLoading(true);
-      let url = '/api/logbook';
+      let url = '/api/eservicedesk';
       if (date) url += `?date=${date}`;
       const response = await fetch(url);
       const data = await response.json();
@@ -107,7 +107,7 @@ function LogbookListContent() {
   const handleDelete = (id: number) => {
     confirm('Hapus Order?', 'Apakah Anda yakin ingin menghapus data order ini?', async () => {
       try {
-        const response = await fetch(`/api/logbook/${id}`, {
+        const response = await fetch(`/api/eservicedesk/${id}`, {
           method: 'DELETE',
         });
 
@@ -129,7 +129,7 @@ function LogbookListContent() {
 
     confirm(`Ubah Status?`, `Ubah status order ke ${getStatusBadge(newStatus).label}?`, async () => {
       try {
-        const response = await fetch(`/api/logbook/${entry.id}`, {
+        const response = await fetch(`/api/eservicedesk/${entry.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -329,8 +329,8 @@ function LogbookListContent() {
     <div className="min-h-screen p-4 md:p-8 space-y-6 animate-in fade-in duration-700">
       <PageHeader
         icon="📚"
-        title="Create Order"
-        subtitle="Kelola catatan pekerjaan dan service desk"
+        title="E-ServiceDesk"
+        subtitle="Kelola catatan pekerjaan dan internal hub"
         actions={
           <div className="flex flex-wrap items-center gap-3 md:justify-end">
             <div className="flex items-center gap-1 bg-white rounded-xl border-2 border-slate-100 shadow-sm overflow-hidden p-1 min-w-fit">
@@ -376,7 +376,7 @@ function LogbookListContent() {
               >
                 <span className="text-base">📂</span> Export
               </PremiumButton>
-              <Link href="/logbook/create" className="w-full sm:w-auto">
+              <Link href="/eservicedesk/create" className="w-full sm:w-auto">
                 <PremiumButton size="sm" className="w-full sm:w-auto whitespace-nowrap">
                   <span className="text-base">➕</span> Tambah Order
                 </PremiumButton>
@@ -498,7 +498,7 @@ function LogbookListContent() {
                           </button>
 
                           <Link
-                            href={`/logbook/${entry.id}`}
+                            href={`/eservicedesk/${entry.id}`}
                             className="flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-100 text-[9px] font-black uppercase tracking-widest"
                           >
                             <span>✏️</span>

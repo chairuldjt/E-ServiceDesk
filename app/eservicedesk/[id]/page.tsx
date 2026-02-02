@@ -73,11 +73,11 @@ function DetailLogbookContent() {
   const fetchLogbook = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/logbook/${id}`);
+      const response = await fetch(`/api/eservicedesk/${id}`);
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || 'Gagal memuat logbook');
+        setError(data.error || 'Gagal memuat data');
         return;
       }
 
@@ -110,7 +110,7 @@ function DetailLogbookContent() {
     setError('');
 
     try {
-      const response = await fetch(`/api/logbook/${id}`, {
+      const response = await fetch(`/api/eservicedesk/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -128,7 +128,7 @@ function DetailLogbookContent() {
 
       setLogbook(data.data);
       setIsEditing(false);
-      showToast('Logbook berhasil diperbarui', 'success');
+      showToast('Data berhasil diperbarui', 'success');
     } catch (error) {
       setError('Terjadi kesalahan: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
@@ -185,7 +185,7 @@ function DetailLogbookContent() {
         title={isEditing ? 'Edit Order' : 'Detail Order'}
         subtitle={isEditing ? 'Perbarui informasi catatan pekerjaan' : 'Informasi lengkap catatan order'}
         actions={
-          <Link href="/logbook">
+          <Link href="/eservicedesk">
             <PremiumButton variant="secondary" className="text-xs uppercase tracking-widest px-6">
               ← Kembali
             </PremiumButton>

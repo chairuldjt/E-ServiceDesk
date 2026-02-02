@@ -193,10 +193,8 @@ async function initDatabase() {
         // Step 3.5: Migration - Check for missing columns
         console.log('Checking for schema updates...');
 
-        // Update logbook status enum
-        console.log('   - Updating "logbook" status ENUM...');
         try {
-            await connection.query("ALTER TABLE logbook MODIFY COLUMN status ENUM('draft', 'pending_order', 'ordered', 'completed') DEFAULT 'draft'");
+            await connection.query("ALTER TABLE eservicedesk MODIFY COLUMN status ENUM('draft', 'pending_order', 'ordered', 'completed') DEFAULT 'draft'");
             console.log('   - Status ENUM updated successfully');
         } catch (e: any) {
             console.log('   - Skipping status ENUM update (maybe already updated)');
@@ -261,9 +259,9 @@ async function initDatabase() {
             const adminPasswordHash = await bcrypt.hash(adminPassword, 10);
             await connection.query(
                 'INSERT INTO users (username, email, password_hash, role) VALUES (?, ?, ?, ?)',
-                ['admin', 'admin@logbook.com', adminPasswordHash, 'admin']
+                ['admin', 'admin@eservicedesk.com', adminPasswordHash, 'admin']
             );
-            console.log(`✅ Admin user created (admin@logbook.com / ${adminPassword})`);
+            console.log(`✅ Admin user created (admin@eservicedesk.com / ${adminPassword})`);
         } else {
             console.log('ℹ️ Admin user already exists');
         }

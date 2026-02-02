@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { useUI } from '@/context/UIContext';
 import { PageHeader, PremiumCard, PremiumButton, PremiumModal, PremiumInput, PremiumBadge } from '@/components/ui/PremiumComponents';
 
-interface LogbookEntry {
+interface EServiceDeskEntry {
   id: number;
   user_id: number;
   extensi: string;
@@ -42,7 +42,7 @@ function AdminContent() {
   const { user, isLoading: userLoading } = useAuth();
   const { showToast, confirm } = useUI();
   const router = useRouter();
-  const [logbookEntries, setLogbookEntries] = useState<LogbookEntry[]>([]);
+  const [eservicedeskEntries, setEServiceDeskEntries] = useState<EServiceDeskEntry[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [activeTab, setActiveTab] = useState<'overview' | 'users'>('overview');
 
@@ -74,16 +74,16 @@ function AdminContent() {
 
   const fetchLogbook = async () => {
     try {
-      const response = await fetch('/api/logbook');
+      const response = await fetch('/api/eservicedesk');
       const data = await response.json();
-      setLogbookEntries(data.data);
+      setEServiceDeskEntries(data.data);
       const total = data.data.length;
-      const completed = data.data.filter((entry: LogbookEntry) => entry.status === 'completed').length;
-      const draft = data.data.filter((entry: LogbookEntry) => entry.status === 'draft').length;
+      const completed = data.data.filter((entry: EServiceDeskEntry) => entry.status === 'completed').length;
+      const draft = data.data.filter((entry: EServiceDeskEntry) => entry.status === 'draft').length;
       setStats(prev => ({ ...prev, total, completed, draft }));
     } catch (error) {
-      console.error('Error fetching logbook:', error);
-      showToast('Gagal memuat logbook', 'error');
+      console.error('Error fetching data:', error);
+      showToast('Gagal memuat data', 'error');
     }
   };
 
