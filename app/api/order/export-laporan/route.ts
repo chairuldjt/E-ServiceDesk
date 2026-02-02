@@ -69,7 +69,8 @@ export async function GET(request: NextRequest) {
         if (requestedDate === currentWIBDate && currentHourWIB < 7) {
             const yesterday = new Date(filterDate);
             yesterday.setDate(yesterday.getDate() - 1);
-            targetDates.push(yesterday.toISOString().split('T')[0]);
+            const yesterdayISO = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(yesterday);
+            targetDates.push(yesterdayISO);
             targetPHPDates.push(getPHPFormat(yesterday));
         }
 
