@@ -224,7 +224,7 @@ export async function GET(request: NextRequest) {
         return new NextResponse(buffer as any, {
             status: 200,
             headers: {
-                'Content-Disposition': `attachment; filename="laporan-jaga-${requestedDateISO}.xlsx"`,
+                'Content-Disposition': `attachment; filename="laporan-jaga-${targetDates.length > 1 ? `${targetDates[1]}-to-${targetDates[0]}` : requestedDateISO}.xlsx"`,
                 'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             },
         });

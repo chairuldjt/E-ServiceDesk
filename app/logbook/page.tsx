@@ -666,7 +666,24 @@ function LogbookListContent() {
               <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-xl shadow-sm">📋</div>
               <div>
                 <p className="text-[10px] font-black text-blue-700 uppercase tracking-widest">Data Order</p>
-                <p className="text-sm font-bold text-slate-800">Tanggal: {selectedDate}</p>
+                <p className="text-sm font-bold text-slate-800">
+                  Tanggal: {(() => {
+                    const now = new Date();
+                    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+                    const wib = new Date(utc + (3600000 * 7));
+                    const currentWIBDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(now);
+
+                    if (selectedDate === currentWIBDate && wib.getHours() < 7) {
+                      const yesterday = new Date(wib);
+                      yesterday.setDate(yesterday.getDate() - 1);
+                      const formatDate = (d: Date) => d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+                      return `${formatDate(yesterday)} - Sekarang`;
+                    }
+
+                    const [y, m, d] = selectedDate.split('-').map(Number);
+                    return new Date(y, m - 1, d).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+                  })()}
+                </p>
               </div>
             </div>
             <div className="text-right">
