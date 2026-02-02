@@ -739,13 +739,13 @@ Maintenance: Tidak`;
 
             {/* Detail Modal */}
             {isDetailModalOpen && (
-                <div className="fixed inset-0 backdrop-blur-md bg-slate-900/60 flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
-                    <div className="bg-white rounded-[3rem] shadow-2xl w-full max-w-4xl overflow-hidden animate-in zoom-in-95 duration-300 border border-white/20">
+                <div className="fixed inset-0 backdrop-blur-md bg-slate-900/60 flex items-center justify-center z-50 p-2 md:p-4 animate-in fade-in duration-300">
+                    <div className="bg-white rounded-[2rem] md:rounded-[3rem] shadow-2xl w-full max-w-4xl overflow-hidden animate-in zoom-in-95 duration-300 border border-white/20 max-h-[95vh] flex flex-col">
                         {(() => {
                             const statusStyle = STATUS_LEVELS.find(s => s.code === currentStatus) || STATUS_LEVELS[0];
                             return (
                                 <>
-                                    <div className={`bg-gradient-to-r ${statusStyle.gradient} p-10 text-white relative`}>
+                                    <div className={`bg-gradient-to-r ${statusStyle.gradient} p-6 md:p-10 text-white relative shrink-0`}>
                                         <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
                                         <div className="flex flex-col sm:flex-row justify-between items-start gap-6 relative z-10">
                                             <div className="w-full sm:w-auto">
@@ -777,7 +777,7 @@ Maintenance: Tidak`;
                                         </div>
 
                                         {/* Fast Stats Row */}
-                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 mt-10">
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-6 mt-6 md:mt-10">
                                             <div className="bg-white/5 p-4 md:p-5 rounded-3xl border border-white/10 backdrop-blur-sm">
                                                 <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-1 md:mb-2">Kategori</p>
                                                 <p className="font-black text-sm">{selectedOrder?.service_name || '-'}</p>
@@ -806,7 +806,7 @@ Maintenance: Tidak`;
                                                 <p className="font-black text-slate-300 uppercase tracking-widest text-xs">Authenticating Order History...</p>
                                             </div>
                                         ) : selectedOrder && (
-                                            <div className="p-10 lg:p-12 max-h-[60vh] overflow-y-auto custom-scrollbar bg-slate-50/30">
+                                            <div className="p-6 lg:p-12 flex-1 overflow-y-auto custom-scrollbar bg-slate-50/30 min-h-0">
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                                                     {/* Left Column: Reports */}
                                                     <div className="space-y-8">
