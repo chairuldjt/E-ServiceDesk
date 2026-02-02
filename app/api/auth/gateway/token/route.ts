@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
 
         // 1. Verify Gateway Credentials
         const validUser = process.env.GATEWAY_USER || 'teknisi';
-        const validPass = process.env.GATEWAY_PASS || 'rsdk201';
+        const validPass = process.env.GATEWAY_PASS || 'rsdk2021';
 
         if (gateway_user !== validUser || gateway_pass !== validPass) {
             return NextResponse.json({ error: 'Invalid gateway credentials' }, { status: 401 });
