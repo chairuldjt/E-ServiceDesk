@@ -256,6 +256,29 @@ function VerifyOrderContent() {
         });
     };
 
+    const handleCancelOrderQuick = (order: any) => {
+        confirm('Delete Order?', `Apakah Anda yakin ingin membatalkan/menghapus order #${order.order_no}?`, async () => {
+            try {
+                const response = await fetch('/api/monitoring/cancel-order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ order_id: order.order_id })
+                });
+
+                if (response.ok) {
+                    showToast('Order berhasil dibatalkan', 'success');
+                    fetchOrders(currentStatus);
+                    fetchSummary();
+                } else {
+                    const data = await response.json();
+                    showToast(data.error || 'Gagal membatalkan order', 'error');
+                }
+            } catch (err) {
+                showToast('Gagal membatalkan order', 'error');
+            }
+        });
+    };
+
     const handleEditOrder = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
@@ -282,11 +305,12 @@ function VerifyOrderContent() {
         }
     };
 
-    const fetchAssignList = async () => {
-        if (!selectedOrder) return;
+    const fetchAssignList = async (orderId?: number) => {
+        const id = orderId || selectedOrder?.order_id;
+        if (!id) return;
         setLoadingAssign(true);
         try {
-            const res = await fetch(`/api/monitoring/assign-list?orderId=${selectedOrder.order_id}`);
+            const res = await fetch(`/api/monitoring/assign-list?orderId=${id}`);
             const data = await res.json();
             if (res.ok) {
                 setAssignList(data.result || []);
@@ -649,7 +673,7 @@ Maintenance: Tidak`;
                                             </div>
                                         </td>
                                         <td className="px-4 py-4 text-right sticky right-0 bg-white/90 backdrop-blur-md z-10 group-hover:bg-blue-50/90 shadow-[-12px_0_15px_-3px_rgba(0,0,0,0.05)] transition-colors">
-                                            <div className="flex items-center justify-end gap-2 ml-auto">
+                                            <div className="flex items-center justify-end gap-1.5 ml-auto">
                                                 <button
                                                     onClick={() => handleCopyOrder(order)}
                                                     className="w-8 h-8 flex items-center justify-center bg-white text-slate-400 rounded-lg border border-slate-200 hover:text-blue-600 hover:border-blue-200 shadow-sm transition-all active:scale-95"
@@ -657,16 +681,40 @@ Maintenance: Tidak`;
                                                 >
                                                     📋
                                                 </button>
+
+                                                {(currentStatus === 10 || currentStatus === 11 || currentStatus === 12) && (
+                                                    <>
+                                                        <button
+                                                            onClick={() => { setSelectedOrder(order as any); setIsDelegasiModalOpen(true); fetchAssignList(order.order_id); }}
+                                                            className="w-8 h-8 flex items-center justify-center bg-white text-blue-600 rounded-lg border border-blue-100 hover:bg-blue-50 shadow-sm transition-all active:scale-95"
+                                                            title="Delegasi"
+                                                        >
+                                                            👥
+                                                        </button>
+                                                        <button
+                                                            onClick={() => { setSelectedOrder(order as any); setPendingReason(''); setIsPendingModalOpen(true); }}
+                                                            className="w-8 h-8 flex items-center justify-center bg-white text-amber-600 rounded-lg border border-amber-100 hover:bg-amber-50 shadow-sm transition-all active:scale-95"
+                                                            title="Pending"
+                                                        >
+                                                            ⏳
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleCancelOrderQuick(order)}
+                                                            className="w-8 h-8 flex items-center justify-center bg-white text-red-600 rounded-lg border border-red-100 hover:bg-red-50 shadow-sm transition-all active:scale-95"
+                                                            title="Batal/Hapus"
+                                                        >
+                                                            🗑️
+                                                        </button>
+                                                    </>
+                                                )}
+
                                                 <button
                                                     onClick={() => handleViewDetail(order.order_id)}
-                                                    className={`${currentStatus === 15 ? 'bg-blue-600 shadow-blue-200' : 'bg-slate-800 shadow-slate-200'
-                                                        } text-white px-4 py-2 rounded-xl text-xs font-black hover:opacity-90 shadow-lg transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap`}
+                                                    className={`w-8 h-8 flex items-center justify-center rounded-lg shadow-lg transition-all active:scale-95 ${currentStatus === 15 ? 'bg-blue-600 shadow-blue-200' : 'bg-slate-800 shadow-slate-200'
+                                                        } text-white`}
+                                                    title={currentStatus === 15 ? "Verifikasi" : "Detail"}
                                                 >
-                                                    {currentStatus === 15 ? (
-                                                        <><span className="text-base">🛡️</span> Verifikasi</>
-                                                    ) : (
-                                                        <><span className="text-base">👁️</span> Detail</>
-                                                    )}
+                                                    {currentStatus === 15 ? "🛡️" : "👁️"}
                                                 </button>
                                             </div>
                                         </td>
@@ -1091,7 +1139,7 @@ Maintenance: Tidak`;
                     <div className="flex justify-between items-center">
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pilih Teknisi Tujuan</p>
                         <button
-                            onClick={fetchAssignList}
+                            onClick={() => fetchAssignList()}
                             className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:underline"
                         >
                             🔄 Refresh List
