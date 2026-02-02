@@ -145,6 +145,7 @@ export async function GET(request: NextRequest) {
         titleCell.value = `LAPORAN ORDER SIMRS TANGGAL ${dateTitle}`.toUpperCase();
         titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
         titleCell.font = { bold: true, size: 14 };
+        titleCell.protection = { locked: false };
 
         // Move headers to Row 4 (leaving Row 3 empty as spacing)
         const headerRow = worksheet.getRow(4);
@@ -182,8 +183,15 @@ export async function GET(request: NextRequest) {
                 teknisi || '-'
             ]);
 
-            row.eachCell((cell) => {
+            row.eachCell((cell, colNumber) => {
+                // Default alignment
                 cell.alignment = { vertical: 'middle', wrapText: true };
+
+                // Center alignment for specific columns: NO (1), O-NO (2), TGL (3), TELP (4), SD (7), STATUS (8)
+                if ([1, 2, 3, 4, 7, 8].includes(colNumber)) {
+                    cell.alignment = { ...cell.alignment, horizontal: 'center' };
+                }
+
                 cell.border = {
                     top: { style: 'thin' },
                     left: { style: 'thin' },
