@@ -131,11 +131,13 @@ export async function GET(request: NextRequest) {
         // Format Date for Title
         const monthsFull = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
         let dateTitle = `${filterDate.getDate()} ${monthsFull[filterDate.getMonth()]} ${filterDate.getFullYear()}`;
+        let filenameDate = requestedDateISO;
 
         if (targetDates.length > 1) {
-            // If showing 2 days, reflect in title
+            // If before 07:00 WIB shift logic is active, use Yesterday as the report date
             const prevDate = getLocalShiftDate(targetDates[1]);
-            dateTitle = `${prevDate.getDate()} ${monthsFull[prevDate.getMonth()]} - ${dateTitle}`;
+            dateTitle = `${prevDate.getDate()} ${monthsFull[prevDate.getMonth()]} ${prevDate.getFullYear()}`;
+            filenameDate = targetDates[1];
         }
 
         // Add Title
@@ -230,7 +232,7 @@ export async function GET(request: NextRequest) {
         return new NextResponse(buffer as any, {
             status: 200,
             headers: {
-                'Content-Disposition': `attachment; filename="laporan-jaga-${targetDates.length > 1 ? `${targetDates[1]}-to-${targetDates[0]}` : requestedDateISO}.xlsx"`,
+                'Content-Disposition': `attachment; filename="laporan-jaga-${filenameDate}.xlsx"`,
                 'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             },
         });
