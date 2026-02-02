@@ -599,18 +599,18 @@ Maintenance: Tidak`;
                     </button>
                 </div>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left">
+                <div className="overflow-x-auto custom-scrollbar">
+                    <table className="w-full text-left min-w-[1000px]">
                         <thead>
                             <tr className="bg-slate-50/30">
-                                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">No Order</th>
-                                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Waktu</th>
+                                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest sticky left-0 bg-slate-50/90 backdrop-blur-md z-20 shadow-[10px_0_15px_-3px_rgba(0,0,0,0.05)] border-r border-slate-100">Aksi</th>
+                                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">No Order</th>
+                                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Waktu</th>
                                 <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Pelapor & Lokasi</th>
                                 <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Ext</th>
                                 <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Keluhan</th>
-                                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
-                                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Teknisi</th>
-                                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right sticky right-0 bg-slate-50/90 backdrop-blur-md z-20 shadow-[-12px_0_15px_-3px_rgba(0,0,0,0.05)]">Aksi</th>
+                                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Status</th>
+                                <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Teknisi</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -625,58 +625,11 @@ Maintenance: Tidak`;
                             ) : paginatedOrders.length > 0 ? (
                                 paginatedOrders.map((order) => (
                                     <tr key={order.order_id} className="hover:bg-blue-50/20 transition-colors group">
-                                        <td className="px-4 py-4">
-                                            <span className="font-black text-slate-800 bg-white px-3 py-1.5 rounded-lg text-xs border border-slate-100 shadow-sm group-hover:border-blue-200 transition-colors">
-                                                {order.order_no}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-4 text-xs font-bold text-slate-500 whitespace-nowrap">
-                                            {order.create_date}
-                                        </td>
-                                        <td className="px-4 py-4">
-                                            <div className="flex flex-col min-w-[120px]">
-                                                <span className="font-black text-slate-700 text-sm">{order.order_by}</span>
-                                                <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1 mt-0.5">
-                                                    <span className="text-blue-500">📍</span> {order.location_desc}
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-4">
-                                            <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-100 italic whitespace-nowrap">
-                                                {order.ext_phone || '-'}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-4">
-                                            <p className="text-xs text-slate-600 line-clamp-2 max-w-[200px] leading-relaxed italic font-medium bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 group-hover:bg-white transition-colors">
-                                                "{order.catatan}"
-                                            </p>
-                                        </td>
-                                        <td className="px-4 py-4">
-                                            <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wider border whitespace-nowrap ${order.status_desc.includes('DONE') ? 'bg-purple-50 text-purple-600 border-purple-100' :
-                                                order.status_desc.includes('FOLLOW UP') ? 'bg-indigo-50 text-indigo-600 border-indigo-100' :
-                                                    order.status_desc.includes('PENDING') ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                                                        order.status_desc.includes('RUNNING') ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-                                                            order.status_desc.includes('VERIFIED') ? 'bg-slate-50 text-slate-600 border-slate-100' :
-                                                                'bg-blue-50 text-blue-600 border-blue-100'
-                                                }`}>
-                                                {order.status_desc}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-4">
-                                            <div className="flex items-center gap-2 bg-white px-2 py-1.5 rounded-xl border border-slate-100 shadow-sm group-hover:border-blue-100 transition-all max-w-[150px]">
-                                                <div className="w-8 h-8 shrink-0 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center text-[10px] font-black shadow-md">
-                                                    {order.teknisi.charAt(0)}
-                                                </div>
-                                                <span className="text-xs font-black text-slate-700 truncate">
-                                                    {order.teknisi.replace(/\|/g, '')}
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-4 text-right sticky right-0 bg-white/90 backdrop-blur-md z-10 group-hover:bg-blue-50/90 shadow-[-12px_0_15px_-3px_rgba(0,0,0,0.05)] transition-colors">
-                                            <div className="flex items-center justify-end gap-2 ml-auto">
+                                        <td className="px-4 py-4 sticky left-0 bg-white/95 backdrop-blur-md z-10 group-hover:bg-blue-50/95 shadow-[10px_0_15px_-3px_rgba(0,0,0,0.05)] transition-colors border-r border-slate-100">
+                                            <div className="flex items-center gap-1.5">
                                                 <button
                                                     onClick={() => handleCopyOrder(order)}
-                                                    className="w-10 h-10 flex items-center justify-center bg-white text-slate-400 rounded-xl border border-slate-200 hover:text-blue-600 hover:border-blue-200 shadow-sm transition-all active:scale-95"
+                                                    className="w-10 h-10 shrink-0 flex items-center justify-center bg-white text-slate-400 rounded-xl border border-slate-200 hover:text-blue-600 hover:border-blue-200 shadow-sm transition-all active:scale-95"
                                                     title="Copy Order"
                                                 >
                                                     <span className="text-lg">📋</span>
@@ -714,6 +667,53 @@ Maintenance: Tidak`;
                                                         ] : [])
                                                     ]}
                                                 />
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-4">
+                                            <span className="font-black text-slate-800 bg-white px-3 py-1.5 rounded-lg text-xs border border-slate-100 shadow-sm group-hover:border-blue-200 transition-colors whitespace-nowrap">
+                                                {order.order_no}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-4 text-xs font-bold text-slate-500 whitespace-nowrap">
+                                            {order.create_date}
+                                        </td>
+                                        <td className="px-4 py-4">
+                                            <div className="flex flex-col min-w-[200px]">
+                                                <span className="font-black text-slate-700 text-sm whitespace-nowrap truncate">{order.order_by}</span>
+                                                <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1 mt-0.5 whitespace-nowrap">
+                                                    <span className="text-blue-500">📍</span> {order.location_desc}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-4">
+                                            <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-100 italic whitespace-nowrap">
+                                                {order.ext_phone || '-'}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-4">
+                                            <p className="text-xs text-slate-600 line-clamp-2 min-w-[300px] leading-relaxed italic font-medium bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 group-hover:bg-white transition-colors">
+                                                "{order.catatan}"
+                                            </p>
+                                        </td>
+                                        <td className="px-4 py-4">
+                                            <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wider border whitespace-nowrap ${order.status_desc.includes('DONE') ? 'bg-purple-50 text-purple-600 border-purple-100' :
+                                                order.status_desc.includes('FOLLOW UP') ? 'bg-indigo-50 text-indigo-600 border-indigo-100' :
+                                                    order.status_desc.includes('PENDING') ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                                        order.status_desc.includes('RUNNING') ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                                                            order.status_desc.includes('VERIFIED') ? 'bg-slate-50 text-slate-600 border-slate-100' :
+                                                                'bg-blue-50 text-blue-600 border-blue-100'
+                                                }`}>
+                                                {order.status_desc}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-4">
+                                            <div className="flex items-center gap-2 bg-white px-2 py-1.5 rounded-xl border border-slate-100 shadow-sm group-hover:border-blue-100 transition-all min-w-[150px]">
+                                                <div className="w-8 h-8 shrink-0 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center text-[10px] font-black shadow-md">
+                                                    {order.teknisi.charAt(0)}
+                                                </div>
+                                                <span className="text-xs font-black text-slate-700 truncate whitespace-nowrap">
+                                                    {order.teknisi.replace(/\|/g, '')}
+                                                </span>
                                             </div>
                                         </td>
                                     </tr>
@@ -784,286 +784,287 @@ Maintenance: Tidak`;
             </div>
 
             {/* Detail Modal */}
-            {isDetailModalOpen && (
-                <div className="fixed inset-0 backdrop-blur-md bg-slate-900/60 flex items-center justify-center z-50 p-2 md:p-4 animate-in fade-in duration-300">
-                    <div className="bg-white rounded-[2rem] md:rounded-[3rem] shadow-2xl w-full max-w-4xl overflow-hidden animate-in zoom-in-95 duration-300 border border-white/20 max-h-[95vh] flex flex-col">
-                        {(() => {
-                            const statusStyle = STATUS_LEVELS.find(s => s.code === currentStatus) || STATUS_LEVELS[0];
-                            return (
-                                <>
-                                    <div className={`bg-gradient-to-r ${statusStyle.gradient} p-6 md:p-10 text-white relative shrink-0`}>
-                                        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
-                                        <div className="flex flex-col sm:flex-row justify-between items-start gap-6 relative z-10">
-                                            <div className="w-full sm:w-auto">
-                                                <span className="bg-white/10 text-[10px] font-black uppercase tracking-[0.3em] px-4 py-1.5 rounded-full border border-white/20 flex items-center gap-2 w-fit">
-                                                    <span className={`w-1.5 h-1.5 ${statusStyle.glow.replace('bg-', 'bg-')} rounded-full animate-pulse`}></span>
-                                                    Order Details
-                                                </span>
-                                                <h2 className="text-2xl md:text-4xl font-black mt-4 flex flex-wrap items-center gap-x-3 gap-y-1">
-                                                    #{selectedOrder?.order_no || '...'}
-                                                    <span className="text-white/30 font-light hidden sm:inline">/</span>
-                                                    <span className="text-base md:text-lg font-bold text-blue-300 tracking-wider">TICKET</span>
-                                                </h2>
-                                            </div>
-                                            <div className="flex items-center gap-2 self-end sm:self-start">
-                                                <button
-                                                    onClick={() => handleCopyOrder()}
-                                                    className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-white/10 flex items-center justify-center hover:bg-white/20 transition-all text-lg md:text-xl border border-white/10 group active:scale-90"
-                                                    title="Copy Order Details"
-                                                >
-                                                    <span className="group-hover:scale-110 transition-transform">📋</span>
-                                                </button>
-                                                <button
-                                                    onClick={() => setIsDetailModalOpen(false)}
-                                                    className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-white/10 flex items-center justify-center hover:bg-white/20 transition-all text-xl md:text-2xl border border-white/10 group active:scale-90"
-                                                >
-                                                    <span className="group-hover:rotate-90 transition-transform">&times;</span>
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        {/* Fast Stats Row */}
-                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-6 mt-6 md:mt-10">
-                                            <div className="bg-white/5 p-4 md:p-5 rounded-3xl border border-white/10 backdrop-blur-sm">
-                                                <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-1 md:mb-2">Kategori</p>
-                                                <p className="font-black text-sm">{selectedOrder?.service_name || '-'}</p>
-                                            </div>
-                                            <div className="bg-white/5 p-4 md:p-5 rounded-3xl border border-white/10 backdrop-blur-sm">
-                                                <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-1 md:mb-2">Teknisi</p>
-                                                <p className="font-black text-sm">{selectedOrder?.nama_teknisi || '-'}</p>
-                                            </div>
-                                            <div className="bg-white/5 p-4 md:p-5 rounded-3xl border border-white/10 backdrop-blur-sm">
-                                                <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-1 md:mb-2">Status</p>
-                                                <p className="font-black text-sm flex items-center gap-2">
-                                                    <span className={`w-2.5 h-2.5 rounded-full ${statusStyle.glow.replace('bg-', 'bg-')} animate-pulse shadow-lg`}></span>
-                                                    {selectedOrder?.status_desc || '-'}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div >
-
-                                    {
-                                        fetchingDetail ? (
-                                            <div className="p-32 flex flex-col items-center justify-center gap-6 text-center" >
-                                                <div className="relative">
-                                                    <div className="w-16 h-16 border-4 border-slate-100 rounded-full animate-pulse"></div>
-                                                    <div className="absolute inset-0 w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            {
+                isDetailModalOpen && (
+                    <div className="fixed inset-0 backdrop-blur-md bg-slate-900/60 flex items-center justify-center z-50 p-2 md:p-4 animate-in fade-in duration-300">
+                        <div className="bg-white rounded-[2rem] md:rounded-[3rem] shadow-2xl w-full max-w-4xl overflow-hidden animate-in zoom-in-95 duration-300 border border-white/20 max-h-[95vh] flex flex-col">
+                            {(() => {
+                                const statusStyle = STATUS_LEVELS.find(s => s.code === currentStatus) || STATUS_LEVELS[0];
+                                return (
+                                    <>
+                                        <div className={`bg-gradient-to-r ${statusStyle.gradient} p-6 md:p-10 text-white relative shrink-0`}>
+                                            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
+                                            <div className="flex flex-col sm:flex-row justify-between items-start gap-6 relative z-10">
+                                                <div className="w-full sm:w-auto">
+                                                    <span className="bg-white/10 text-[10px] font-black uppercase tracking-[0.3em] px-4 py-1.5 rounded-full border border-white/20 flex items-center gap-2 w-fit">
+                                                        <span className={`w-1.5 h-1.5 ${statusStyle.glow.replace('bg-', 'bg-')} rounded-full animate-pulse`}></span>
+                                                        Order Details
+                                                    </span>
+                                                    <h2 className="text-2xl md:text-4xl font-black mt-4 flex flex-wrap items-center gap-x-3 gap-y-1">
+                                                        #{selectedOrder?.order_no || '...'}
+                                                        <span className="text-white/30 font-light hidden sm:inline">/</span>
+                                                        <span className="text-base md:text-lg font-bold text-blue-300 tracking-wider">TICKET</span>
+                                                    </h2>
                                                 </div>
-                                                <p className="font-black text-slate-300 uppercase tracking-widest text-xs">Authenticating Order History...</p>
+                                                <div className="flex items-center gap-2 self-end sm:self-start">
+                                                    <button
+                                                        onClick={() => handleCopyOrder()}
+                                                        className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-white/10 flex items-center justify-center hover:bg-white/20 transition-all text-lg md:text-xl border border-white/10 group active:scale-90"
+                                                        title="Copy Order Details"
+                                                    >
+                                                        <span className="group-hover:scale-110 transition-transform">📋</span>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setIsDetailModalOpen(false)}
+                                                        className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-white/10 flex items-center justify-center hover:bg-white/20 transition-all text-xl md:text-2xl border border-white/10 group active:scale-90"
+                                                    >
+                                                        <span className="group-hover:rotate-90 transition-transform">&times;</span>
+                                                    </button>
+                                                </div>
                                             </div>
-                                        ) : selectedOrder && (
-                                            <div className="p-6 lg:p-12 flex-1 overflow-y-auto custom-scrollbar bg-slate-50/30 min-h-0">
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                                                    {/* Left Column: Reports */}
-                                                    <div className="space-y-8">
-                                                        <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
-                                                            <h4 className="text-xs font-black text-blue-600 uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
-                                                                <span className="w-8 h-8 bg-blue-50 flex items-center justify-center rounded-xl">📝</span>
-                                                                Laporan Keluhan
-                                                            </h4>
-                                                            <div className="space-y-6">
-                                                                <div>
-                                                                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1.5">User, Lokasi & Ext</p>
-                                                                    <p className="font-black text-slate-800 text-lg">{selectedOrder.order_by || 'Unknown'}</p>
-                                                                    <div className="flex flex-wrap gap-4 mt-1">
-                                                                        <p className="text-sm font-bold text-slate-400 flex items-center gap-2">
-                                                                            <span className="text-blue-500">📍</span> {selectedOrder.location_desc}
-                                                                        </p>
-                                                                        <p className="text-sm font-bold text-indigo-500 flex items-center gap-2">
-                                                                            <span className="text-indigo-500">📞</span> Ext: {selectedOrder.ext_phone || '-'}
-                                                                        </p>
-                                                                    </div>
-                                                                </div>
-                                                                <div className="bg-slate-50 p-6 rounded-[2rem] border border-blue-100/50 relative">
-                                                                    <div className="absolute top-4 right-6 text-blue-100 text-4xl font-serif">"</div>
-                                                                    <p className="text-[10px] font-black text-blue-300 uppercase tracking-widest mb-2">Deskripsi Tiket</p>
-                                                                    <p className="text-sm text-slate-700 font-bold leading-relaxed italic">
-                                                                        {selectedOrder.catatan || 'Tidak ada catatan keluhan.'}
-                                                                    </p>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
 
-                                                    {/* Right Column: Technical Details */}
-                                                    <div className="space-y-8">
-                                                        <div className={`bg-white border-slate-100 shadow-xl p-8 rounded-[2.5rem] border`}>
-                                                            <h4 className={`text-xs font-black ${statusStyle.gradient.split(' ')[0].replace('from-', 'text-')} uppercase tracking-[0.2em] mb-6 flex items-center gap-3`}>
-                                                                <span className={`w-8 h-8 ${statusStyle.glow.replace('bg-', 'bg-')}/10 ${statusStyle.gradient.split(' ')[0].replace('from-', 'text-')} flex items-center justify-center rounded-xl`}>🛠️</span>
-                                                                {(currentStatus === 15 || currentStatus === 30) ? 'Hasil Penanganan' : 'Progres Penanganan'}
-                                                            </h4>
-                                                            <div className="space-y-6">
-                                                                <div className="flex justify-between items-center bg-slate-50/50 p-4 rounded-2xl border border-slate-50">
+                                            {/* Fast Stats Row */}
+                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-6 mt-6 md:mt-10">
+                                                <div className="bg-white/5 p-4 md:p-5 rounded-3xl border border-white/10 backdrop-blur-sm">
+                                                    <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-1 md:mb-2">Kategori</p>
+                                                    <p className="font-black text-sm">{selectedOrder?.service_name || '-'}</p>
+                                                </div>
+                                                <div className="bg-white/5 p-4 md:p-5 rounded-3xl border border-white/10 backdrop-blur-sm">
+                                                    <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-1 md:mb-2">Teknisi</p>
+                                                    <p className="font-black text-sm">{selectedOrder?.nama_teknisi || '-'}</p>
+                                                </div>
+                                                <div className="bg-white/5 p-4 md:p-5 rounded-3xl border border-white/10 backdrop-blur-sm">
+                                                    <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-1 md:mb-2">Status</p>
+                                                    <p className="font-black text-sm flex items-center gap-2">
+                                                        <span className={`w-2.5 h-2.5 rounded-full ${statusStyle.glow.replace('bg-', 'bg-')} animate-pulse shadow-lg`}></span>
+                                                        {selectedOrder?.status_desc || '-'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div >
+
+                                        {
+                                            fetchingDetail ? (
+                                                <div className="p-32 flex flex-col items-center justify-center gap-6 text-center" >
+                                                    <div className="relative">
+                                                        <div className="w-16 h-16 border-4 border-slate-100 rounded-full animate-pulse"></div>
+                                                        <div className="absolute inset-0 w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                                                    </div>
+                                                    <p className="font-black text-slate-300 uppercase tracking-widest text-xs">Authenticating Order History...</p>
+                                                </div>
+                                            ) : selectedOrder && (
+                                                <div className="p-6 lg:p-12 flex-1 overflow-y-auto custom-scrollbar bg-slate-50/30 min-h-0">
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                                        {/* Left Column: Reports */}
+                                                        <div className="space-y-8">
+                                                            <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+                                                                <h4 className="text-xs font-black text-blue-600 uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
+                                                                    <span className="w-8 h-8 bg-blue-50 flex items-center justify-center rounded-xl">📝</span>
+                                                                    Laporan Keluhan
+                                                                </h4>
+                                                                <div className="space-y-6">
                                                                     <div>
-                                                                        <p className={`text-[10px] font-black opacity-30 uppercase tracking-widest mb-1`}>Kunjungan</p>
-                                                                        <p className="text-sm font-black text-slate-700">{selectedOrder.tgl_kunjungan || '-'}</p>
-                                                                    </div>
-                                                                    {(currentStatus === 15 || currentStatus === 30) && (
-                                                                        <div className="text-right border-l border-slate-200 pl-6">
-                                                                            <p className="text-[10px] font-black opacity-30 uppercase tracking-widest mb-1">Selesai</p>
-                                                                            <p className="text-sm font-black text-slate-700">{selectedOrder.tgl_selesai || '-'}</p>
+                                                                        <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1.5">User, Lokasi & Ext</p>
+                                                                        <p className="font-black text-slate-800 text-lg">{selectedOrder.order_by || 'Unknown'}</p>
+                                                                        <div className="flex flex-wrap gap-4 mt-1">
+                                                                            <p className="text-sm font-bold text-slate-400 flex items-center gap-2">
+                                                                                <span className="text-blue-500">📍</span> {selectedOrder.location_desc}
+                                                                            </p>
+                                                                            <p className="text-sm font-bold text-indigo-500 flex items-center gap-2">
+                                                                                <span className="text-indigo-500">📞</span> Ext: {selectedOrder.ext_phone || '-'}
+                                                                            </p>
                                                                         </div>
-                                                                    )}
-                                                                </div>
-                                                                <div>
-                                                                    <p className={`text-[10px] font-black opacity-30 uppercase tracking-widest mb-2`}>
-                                                                        {currentStatus === 13 ? 'Keterangan Pending' : 'Update Deskripsi'}
-                                                                    </p>
-                                                                    <div className={`text-sm font-bold ${statusStyle.glow.replace('bg-', 'bg-')}/5 ${statusStyle.gradient.split(' ')[1].replace('to-', 'border-')}/20 p-6 rounded-[2rem] border min-h-[100px]`}>
-                                                                        {currentStatus === 13
-                                                                            ? (selectedOrder.ket_pending || 'Tidak ada keterangan pending')
-                                                                            : (currentStatus === 10 || currentStatus === 11 || currentStatus === 12)
-                                                                                ? (orderHistory[0]?.status_note || 'Menunggu update teknisi di lapangan...')
-                                                                                : (selectedOrder.ket_penyelesaian || 'Penyelesaian telah dikonfirmasi.')
-                                                                        }
+                                                                    </div>
+                                                                    <div className="bg-slate-50 p-6 rounded-[2rem] border border-blue-100/50 relative">
+                                                                        <div className="absolute top-4 right-6 text-blue-100 text-4xl font-serif">"</div>
+                                                                        <p className="text-[10px] font-black text-blue-300 uppercase tracking-widest mb-2">Deskripsi Tiket</p>
+                                                                        <p className="text-sm text-slate-700 font-bold leading-relaxed italic">
+                                                                            {selectedOrder.catatan || 'Tidak ada catatan keluhan.'}
+                                                                        </p>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                    </div>
 
-                                                    {/* History/Log Section */}
-                                                    <div className="md:col-span-2 bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden">
-                                                        <h4 className="text-xs font-black text-slate-400 uppercase tracking-[0.3em] mb-10 flex items-center gap-4">
-                                                            <span className="w-10 h-10 bg-slate-50 flex items-center justify-center rounded-2xl">📜</span>
-                                                            Timeline Tiket / Audit Log
-                                                        </h4>
-                                                        <div className="relative space-y-10 pl-4 before:absolute before:inset-y-0 before:left-9 before:w-0.5 before:bg-gradient-to-b before:from-blue-100 before:via-blue-500 before:to-transparent">
-                                                            {orderHistory.length > 0 ? orderHistory.map((log, idx) => (
-                                                                <div key={idx} className="relative flex gap-8 group">
-                                                                    <div className={`relative z-10 w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-125 duration-500 ${idx === 0
-                                                                        ? 'bg-blue-600 border-4 border-blue-100 text-white'
-                                                                        : 'bg-white border-2 border-slate-100 text-slate-300'
-                                                                        }`}>
-                                                                        <div className={`w-2 h-2 rounded-full ${idx === 0 ? 'bg-white animate-ping' : 'bg-slate-300'}`}></div>
-                                                                    </div>
-                                                                    <div className="flex-1 bg-slate-50/80 p-6 rounded-[2rem] border border-slate-100 transition-all hover:bg-white hover:shadow-xl hover:border-blue-100">
-                                                                        <div className="flex flex-wrap items-center justify-between gap-4 mb-3">
-                                                                            <div className="font-black text-slate-800 tracking-tight uppercase">{log.status_desc}</div>
-                                                                            <div className="flex items-center gap-2 font-black text-[10px] text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full border border-blue-100">
-                                                                                🕒 {log.status_date}
-                                                                            </div>
+                                                        {/* Right Column: Technical Details */}
+                                                        <div className="space-y-8">
+                                                            <div className={`bg-white border-slate-100 shadow-xl p-8 rounded-[2.5rem] border`}>
+                                                                <h4 className={`text-xs font-black ${statusStyle.gradient.split(' ')[0].replace('from-', 'text-')} uppercase tracking-[0.2em] mb-6 flex items-center gap-3`}>
+                                                                    <span className={`w-8 h-8 ${statusStyle.glow.replace('bg-', 'bg-')}/10 ${statusStyle.gradient.split(' ')[0].replace('from-', 'text-')} flex items-center justify-center rounded-xl`}>🛠️</span>
+                                                                    {(currentStatus === 15 || currentStatus === 30) ? 'Hasil Penanganan' : 'Progres Penanganan'}
+                                                                </h4>
+                                                                <div className="space-y-6">
+                                                                    <div className="flex justify-between items-center bg-slate-50/50 p-4 rounded-2xl border border-slate-50">
+                                                                        <div>
+                                                                            <p className={`text-[10px] font-black opacity-30 uppercase tracking-widest mb-1`}>Kunjungan</p>
+                                                                            <p className="text-sm font-black text-slate-700">{selectedOrder.tgl_kunjungan || '-'}</p>
                                                                         </div>
-                                                                        <div className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-3">
-                                                                            Petugas: <span className="text-slate-900 ml-1">{log.nama_petugas || 'System Automated'}</span>
-                                                                        </div>
-                                                                        {log.status_note && (
-                                                                            <div className="text-sm text-slate-600 bg-white/60 p-5 rounded-2xl border border-blue-50/50 italic font-semibold leading-relaxed">
-                                                                                "{log.status_note}"
+                                                                        {(currentStatus === 15 || currentStatus === 30) && (
+                                                                            <div className="text-right border-l border-slate-200 pl-6">
+                                                                                <p className="text-[10px] font-black opacity-30 uppercase tracking-widest mb-1">Selesai</p>
+                                                                                <p className="text-sm font-black text-slate-700">{selectedOrder.tgl_selesai || '-'}</p>
                                                                             </div>
                                                                         )}
                                                                     </div>
+                                                                    <div>
+                                                                        <p className={`text-[10px] font-black opacity-30 uppercase tracking-widest mb-2`}>
+                                                                            {currentStatus === 13 ? 'Keterangan Pending' : 'Update Deskripsi'}
+                                                                        </p>
+                                                                        <div className={`text-sm font-bold ${statusStyle.glow.replace('bg-', 'bg-')}/5 ${statusStyle.gradient.split(' ')[1].replace('to-', 'border-')}/20 p-6 rounded-[2rem] border min-h-[100px]`}>
+                                                                            {currentStatus === 13
+                                                                                ? (selectedOrder.ket_pending || 'Tidak ada keterangan pending')
+                                                                                : (currentStatus === 10 || currentStatus === 11 || currentStatus === 12)
+                                                                                    ? (orderHistory[0]?.status_note || 'Menunggu update teknisi di lapangan...')
+                                                                                    : (selectedOrder.ket_penyelesaian || 'Penyelesaian telah dikonfirmasi.')
+                                                                            }
+                                                                        </div>
+                                                                    </div>
                                                                 </div>
-                                                            )) : (
-                                                                <p className="text-center py-10 text-slate-300 font-black uppercase tracking-widest text-[10px]">No History Log Found</p>
-                                                            )}
+                                                            </div>
                                                         </div>
-                                                    </div>
 
-                                                    {/* Action Footer */}
-                                                    {currentStatus === 15 ? (
-                                                        <div className="md:col-span-2 pt-10 border-t border-slate-100">
-                                                            <form onSubmit={handleVerifySubmit} className="space-y-6">
-                                                                <div className="flex items-center gap-4 mb-2">
-                                                                    <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center font-bold text-xl">✅</div>
-                                                                    <label className="text-sm font-black text-slate-800 uppercase tracking-[0.2em]">
-                                                                        Final Verification
-                                                                    </label>
-                                                                </div>
-                                                                <textarea
-                                                                    required
-                                                                    placeholder="Berikan catatan terakhir untuk menutup tiket ini (Contoh: Pekerjaan telah kami cek & sesuai)"
-                                                                    value={verifyNote}
-                                                                    onChange={(e) => setVerifyNote(e.target.value)}
-                                                                    className="w-full bg-slate-50 border border-slate-200 rounded-[2rem] p-8 focus:ring-8 focus:ring-emerald-50 focus:border-emerald-500 outline-none transition-all min-h-[150px] text-sm font-bold shadow-inner"
-                                                                />
-                                                                <div className="flex gap-6">
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => setIsDetailModalOpen(false)}
-                                                                        className="flex-1 py-5 text-slate-400 font-black uppercase tracking-widest hover:bg-slate-50 rounded-[2rem] transition active:scale-95"
-                                                                    >
-                                                                        Cancel
-                                                                    </button>
-                                                                    <button
-                                                                        type="submit"
-                                                                        disabled={isSubmitting}
-                                                                        className="flex-[2] bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black py-5 rounded-[2rem] shadow-2xl shadow-emerald-200 hover:shadow-emerald-300 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-4 tracking-widest uppercase text-sm"
-                                                                    >
-                                                                        {isSubmitting ? (
-                                                                            <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
-                                                                        ) : (
-                                                                            <><span className="text-xl">✅</span> Confirm & Verify Ticket</>
-                                                                        )}
-                                                                    </button>
-                                                                </div>
-                                                            </form>
+                                                        {/* History/Log Section */}
+                                                        <div className="md:col-span-2 bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden">
+                                                            <h4 className="text-xs font-black text-slate-400 uppercase tracking-[0.3em] mb-10 flex items-center gap-4">
+                                                                <span className="w-10 h-10 bg-slate-50 flex items-center justify-center rounded-2xl">📜</span>
+                                                                Timeline Tiket / Audit Log
+                                                            </h4>
+                                                            <div className="relative space-y-10 pl-4 before:absolute before:inset-y-0 before:left-9 before:w-0.5 before:bg-gradient-to-b before:from-blue-100 before:via-blue-500 before:to-transparent">
+                                                                {orderHistory.length > 0 ? orderHistory.map((log, idx) => (
+                                                                    <div key={idx} className="relative flex gap-8 group">
+                                                                        <div className={`relative z-10 w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-125 duration-500 ${idx === 0
+                                                                            ? 'bg-blue-600 border-4 border-blue-100 text-white'
+                                                                            : 'bg-white border-2 border-slate-100 text-slate-300'
+                                                                            }`}>
+                                                                            <div className={`w-2 h-2 rounded-full ${idx === 0 ? 'bg-white animate-ping' : 'bg-slate-300'}`}></div>
+                                                                        </div>
+                                                                        <div className="flex-1 bg-slate-50/80 p-6 rounded-[2rem] border border-slate-100 transition-all hover:bg-white hover:shadow-xl hover:border-blue-100">
+                                                                            <div className="flex flex-wrap items-center justify-between gap-4 mb-3">
+                                                                                <div className="font-black text-slate-800 tracking-tight uppercase">{log.status_desc}</div>
+                                                                                <div className="flex items-center gap-2 font-black text-[10px] text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full border border-blue-100">
+                                                                                    🕒 {log.status_date}
+                                                                                </div>
+                                                                            </div>
+                                                                            <div className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-3">
+                                                                                Petugas: <span className="text-slate-900 ml-1">{log.nama_petugas || 'System Automated'}</span>
+                                                                            </div>
+                                                                            {log.status_note && (
+                                                                                <div className="text-sm text-slate-600 bg-white/60 p-5 rounded-2xl border border-blue-50/50 italic font-semibold leading-relaxed">
+                                                                                    "{log.status_note}"
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                )) : (
+                                                                    <p className="text-center py-10 text-slate-300 font-black uppercase tracking-widest text-[10px]">No History Log Found</p>
+                                                                )}
+                                                            </div>
                                                         </div>
-                                                    ) : (currentStatus === 10 || currentStatus === 11 || currentStatus === 12) ? (
-                                                        <div className="md:col-span-2 pt-10 border-t border-slate-100 flex flex-wrap gap-4 justify-end">
-                                                            <PremiumButton
-                                                                onClick={() => {
-                                                                    setEditFormData({ ...selectedOrder });
-                                                                    setIsEditModalOpen(true);
-                                                                }}
-                                                                className="px-8 py-4 bg-amber-500 hover:bg-amber-600 text-white font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-amber-100 transition-all active:scale-95 text-xs"
-                                                            >
-                                                                ✏️ Edit Order
-                                                            </PremiumButton>
 
-                                                            {(currentStatus === 11 || currentStatus === 12) && (
+                                                        {/* Action Footer */}
+                                                        {currentStatus === 15 ? (
+                                                            <div className="md:col-span-2 pt-10 border-t border-slate-100">
+                                                                <form onSubmit={handleVerifySubmit} className="space-y-6">
+                                                                    <div className="flex items-center gap-4 mb-2">
+                                                                        <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center font-bold text-xl">✅</div>
+                                                                        <label className="text-sm font-black text-slate-800 uppercase tracking-[0.2em]">
+                                                                            Final Verification
+                                                                        </label>
+                                                                    </div>
+                                                                    <textarea
+                                                                        required
+                                                                        placeholder="Berikan catatan terakhir untuk menutup tiket ini (Contoh: Pekerjaan telah kami cek & sesuai)"
+                                                                        value={verifyNote}
+                                                                        onChange={(e) => setVerifyNote(e.target.value)}
+                                                                        className="w-full bg-slate-50 border border-slate-200 rounded-[2rem] p-8 focus:ring-8 focus:ring-emerald-50 focus:border-emerald-500 outline-none transition-all min-h-[150px] text-sm font-bold shadow-inner"
+                                                                    />
+                                                                    <div className="flex gap-6">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => setIsDetailModalOpen(false)}
+                                                                            className="flex-1 py-5 text-slate-400 font-black uppercase tracking-widest hover:bg-slate-50 rounded-[2rem] transition active:scale-95"
+                                                                        >
+                                                                            Cancel
+                                                                        </button>
+                                                                        <button
+                                                                            type="submit"
+                                                                            disabled={isSubmitting}
+                                                                            className="flex-[2] bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black py-5 rounded-[2rem] shadow-2xl shadow-emerald-200 hover:shadow-emerald-300 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-4 tracking-widest uppercase text-sm"
+                                                                        >
+                                                                            {isSubmitting ? (
+                                                                                <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+                                                                            ) : (
+                                                                                <><span className="text-xl">✅</span> Confirm & Verify Ticket</>
+                                                                            )}
+                                                                        </button>
+                                                                    </div>
+                                                                </form>
+                                                            </div>
+                                                        ) : (currentStatus === 10 || currentStatus === 11 || currentStatus === 12) ? (
+                                                            <div className="md:col-span-2 pt-10 border-t border-slate-100 flex flex-wrap gap-4 justify-end">
                                                                 <PremiumButton
                                                                     onClick={() => {
-                                                                        setPendingReason('');
-                                                                        setIsPendingModalOpen(true);
+                                                                        setEditFormData({ ...selectedOrder });
+                                                                        setIsEditModalOpen(true);
                                                                     }}
-                                                                    className="px-8 py-4 bg-rose-500 hover:bg-rose-600 text-white font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-rose-100 transition-all active:scale-95 text-xs"
+                                                                    className="px-8 py-4 bg-amber-500 hover:bg-amber-600 text-white font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-amber-100 transition-all active:scale-95 text-xs"
                                                                 >
-                                                                    ⏳ Pending Order
+                                                                    ✏️ Edit Order
                                                                 </PremiumButton>
-                                                            )}
 
-                                                            <PremiumButton
-                                                                onClick={() => {
-                                                                    setIsDelegasiModalOpen(true);
-                                                                    fetchAssignList();
-                                                                }}
-                                                                className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-blue-100 transition-all active:scale-95 text-xs"
-                                                            >
-                                                                👥 Delegasi
-                                                            </PremiumButton>
-                                                            <PremiumButton
-                                                                onClick={handleCancelOrder}
-                                                                className="px-8 py-4 bg-red-600 hover:bg-red-700 text-white font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-red-100 transition-all active:scale-95 text-xs"
-                                                            >
-                                                                🗑️ Delete Order
-                                                            </PremiumButton>
-                                                            <button
-                                                                onClick={() => setIsDetailModalOpen(false)}
-                                                                className="px-8 py-4 bg-slate-100 text-slate-600 font-black uppercase tracking-widest rounded-2xl hover:bg-slate-200 transition active:scale-95 shadow-lg border border-slate-200 text-xs"
-                                                            >
-                                                                Close
-                                                            </button>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="md:col-span-2 pt-10 border-t border-slate-100 text-right">
-                                                            <button
-                                                                onClick={() => setIsDetailModalOpen(false)}
-                                                                className="px-12 py-5 bg-slate-100 text-slate-600 font-black uppercase tracking-widest rounded-[2rem] hover:bg-slate-200 transition active:scale-95 shadow-lg border border-slate-200"
-                                                            >
-                                                                Close Detail
-                                                            </button>
-                                                        </div>
-                                                    )}
+                                                                {(currentStatus === 11 || currentStatus === 12) && (
+                                                                    <PremiumButton
+                                                                        onClick={() => {
+                                                                            setPendingReason('');
+                                                                            setIsPendingModalOpen(true);
+                                                                        }}
+                                                                        className="px-8 py-4 bg-rose-500 hover:bg-rose-600 text-white font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-rose-100 transition-all active:scale-95 text-xs"
+                                                                    >
+                                                                        ⏳ Pending Order
+                                                                    </PremiumButton>
+                                                                )}
+
+                                                                <PremiumButton
+                                                                    onClick={() => {
+                                                                        setIsDelegasiModalOpen(true);
+                                                                        fetchAssignList();
+                                                                    }}
+                                                                    className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-blue-100 transition-all active:scale-95 text-xs"
+                                                                >
+                                                                    👥 Delegasi
+                                                                </PremiumButton>
+                                                                <PremiumButton
+                                                                    onClick={handleCancelOrder}
+                                                                    className="px-8 py-4 bg-red-600 hover:bg-red-700 text-white font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-red-100 transition-all active:scale-95 text-xs"
+                                                                >
+                                                                    🗑️ Delete Order
+                                                                </PremiumButton>
+                                                                <button
+                                                                    onClick={() => setIsDetailModalOpen(false)}
+                                                                    className="px-8 py-4 bg-slate-100 text-slate-600 font-black uppercase tracking-widest rounded-2xl hover:bg-slate-200 transition active:scale-95 shadow-lg border border-slate-200 text-xs"
+                                                                >
+                                                                    Close
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="md:col-span-2 pt-10 border-t border-slate-100 text-right">
+                                                                <button
+                                                                    onClick={() => setIsDetailModalOpen(false)}
+                                                                    className="px-12 py-5 bg-slate-100 text-slate-600 font-black uppercase tracking-widest rounded-[2rem] hover:bg-slate-200 transition active:scale-95 shadow-lg border border-slate-200"
+                                                                >
+                                                                    Close Detail
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        )}
-                                </>
-                            );
-                        })()}
-                    </div>
-                </div >
-            )
+                                            )}
+                                    </>
+                                );
+                            })()}
+                        </div>
+                    </div >
+                )
             }
 
             {/* Edit Modal */}
