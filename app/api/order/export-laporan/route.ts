@@ -14,6 +14,8 @@ export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
         const requestedDate = searchParams.get('date'); // YYYY-MM-DD
+        const type = searchParams.get('type'); // 'json' or 'excel'
+        const orderNos = searchParams.get('order_nos')?.split(',').filter(id => id.trim() !== ''); // comma separated order numbers
 
         const { jwt, BASE } = await getExternalToken(payload.id);
 
@@ -36,21 +38,52 @@ export async function GET(request: NextRequest) {
         const results = await Promise.all(STATUSES.map(fetchStatus));
         let allOrders = results.flat();
 
-        // 2. Filter by Date
-        const today = new Date();
-        const filterDate = requestedDate ? new Date(requestedDate) : today;
+        // 2. Filter by Date & Shift Logic (WIB)
+        const nowServer = new Date();
+        const utcServer = nowServer.getTime() + (nowServer.getTimezoneOffset() * 60000);
+        const nowWIB = new Date(utcServer + (3600000 * 7));
+        const currentWIBDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(nowServer);
+        const currentHourWIB = nowWIB.getHours();
 
-        const day = String(filterDate.getDate()).padStart(2, '0');
+        const getLocalShiftDate = (ds: string) => {
+            const [y, m, d] = ds.split('-').map(Number);
+            return new Date(y, m - 1, d);
+        };
+
+        const filterDate = requestedDate ? getLocalShiftDate(requestedDate) : nowWIB;
+        const requestedDateISO = requestedDate || currentWIBDate;
+
         const monthsStr = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        const monthShort = monthsStr[filterDate.getMonth()];
-        const yearShort = String(filterDate.getFullYear()).slice(-2);
-        const dateStringPHP = `${day} ${monthShort} ${yearShort}`;
 
-        const dateISO = filterDate.toISOString().split('T')[0];
+        const getPHPFormat = (d: Date) => {
+            const day = String(d.getDate()).padStart(2, '0');
+            const monthShort = monthsStr[d.getMonth()];
+            const yearShort = String(d.getFullYear()).slice(-2);
+            return `${day} ${monthShort} ${yearShort}`;
+        };
+
+        const targetDates = [requestedDateISO];
+        const targetPHPDates = [getPHPFormat(filterDate)];
+
+        // If today is requested and it's before 07:00 WIB, include yesterday
+        if (requestedDate === currentWIBDate && currentHourWIB < 7) {
+            const yesterday = new Date(filterDate);
+            yesterday.setDate(yesterday.getDate() - 1);
+            targetDates.push(yesterday.toISOString().split('T')[0]);
+            targetPHPDates.push(getPHPFormat(yesterday));
+        }
 
         allOrders = allOrders.filter((o: any) => {
-            return (o.create_date && o.create_date.includes(dateStringPHP)) ||
-                (o.create_date && o.create_date.includes(dateISO));
+            const matchesDate = targetPHPDates.some(phpDate => o.create_date && o.create_date.includes(phpDate)) ||
+                targetDates.some(isoDate => o.create_date && o.create_date.includes(isoDate));
+
+            if (!matchesDate) return false;
+
+            if (orderNos && orderNos.length > 0) {
+                return orderNos.includes(String(o.order_no));
+            }
+
+            return true;
         });
 
         // 2.5 Sort by create_date (Earliest first)
@@ -73,6 +106,11 @@ export async function GET(request: NextRequest) {
             return sortA.localeCompare(sortB);
         });
 
+        // 2.6 Return JSON if requested
+        if (type === 'json') {
+            return NextResponse.json({ data: allOrders }, { status: 200 });
+        }
+
         // 3. Create Excel
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet('Laporan Jaga');
@@ -92,7 +130,13 @@ export async function GET(request: NextRequest) {
 
         // Format Date for Title
         const monthsFull = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-        const dateTitle = `${filterDate.getDate()} ${monthsFull[filterDate.getMonth()]} ${filterDate.getFullYear()}`;
+        let dateTitle = `${filterDate.getDate()} ${monthsFull[filterDate.getMonth()]} ${filterDate.getFullYear()}`;
+
+        if (targetDates.length > 1) {
+            // If showing 2 days, reflect in title
+            const prevDate = getLocalShiftDate(targetDates[1]);
+            dateTitle = `${prevDate.getDate()} ${monthsFull[prevDate.getMonth()]} - ${dateTitle}`;
+        }
 
         // Add Title
         worksheet.insertRow(1, []);
@@ -180,7 +224,7 @@ export async function GET(request: NextRequest) {
         return new NextResponse(buffer as any, {
             status: 200,
             headers: {
-                'Content-Disposition': `attachment; filename="laporan-jaga-${dateISO}.xlsx"`,
+                'Content-Disposition': `attachment; filename="laporan-jaga-${requestedDateISO}.xlsx"`,
                 'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             },
         });

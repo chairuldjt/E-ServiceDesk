@@ -45,7 +45,9 @@ function LogbookListContent() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]); // Default to today
+  const [selectedDate, setSelectedDate] = useState(() => {
+    return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
+  });
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -64,6 +66,12 @@ function LogbookListContent() {
   const [isBulkOrderModalOpen, setIsBulkOrderModalOpen] = useState(false);
   const [bulkOrderData, setBulkOrderData] = useState<{ [key: number]: string }>({});
   const [isSubmittingBulk, setIsSubmittingBulk] = useState(false);
+
+  // Export Modal State
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [externalOrders, setExternalOrders] = useState<any[]>([]);
+  const [selectedExportOrderNos, setSelectedExportOrderNos] = useState<string[]>([]);
+  const [isFetchingExternalOrders, setIsFetchingExternalOrders] = useState(false);
 
 
   useEffect(() => {
@@ -246,6 +254,39 @@ function LogbookListContent() {
     setIsSubmittingBulk(false);
   };
 
+  const handleOpenExportModal = async () => {
+    setIsFetchingExternalOrders(true);
+    setIsExportModalOpen(true);
+    try {
+      const response = await fetch(`/api/order/export-laporan?date=${selectedDate}&type=json`);
+      const result = await response.json();
+      if (response.ok) {
+        setExternalOrders(result.data);
+        // Default select all
+        setSelectedExportOrderNos(result.data.map((o: any) => o.order_no));
+      } else {
+        showToast('Gagal mengambil data order eksternal', 'error');
+        setIsExportModalOpen(false);
+      }
+    } catch (error) {
+      console.error('Error fetching external orders:', error);
+      showToast('Terjadi kesalahan saat mengambil data', 'error');
+      setIsExportModalOpen(false);
+    } finally {
+      setIsFetchingExternalOrders(false);
+    }
+  };
+
+  const handleDownloadExcel = () => {
+    if (selectedExportOrderNos.length === 0) {
+      showToast('Pilih minimal satu order untuk di-export', 'error');
+      return;
+    }
+    const orderNos = selectedExportOrderNos.join(',');
+    window.open(`/api/order/export-laporan?date=${selectedDate}&order_nos=${orderNos}`, '_blank');
+    setIsExportModalOpen(false);
+  };
+
   const filteredEntries = logbookEntries.filter((entry) => {
     const matchSearch =
       (entry.nama || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -297,7 +338,7 @@ function LogbookListContent() {
             </PremiumButton>
             <PremiumButton
               variant="secondary"
-              onClick={() => window.open(`/api/order/export-laporan?date=${selectedDate}`, '_blank')}
+              onClick={handleOpenExportModal}
             >
               <span className="text-lg">📂</span> Export Laporan Jaga
             </PremiumButton>
@@ -610,6 +651,107 @@ function LogbookListContent() {
             </button>
           </div>
         </form>
+      </PremiumModal>
+
+      {/* Export Selection Modal */}
+      <PremiumModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        title="📂 Pilih Order untuk Export"
+        size="lg"
+      >
+        <div className="space-y-6">
+          <div className="flex justify-between items-center bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-xl shadow-sm">📋</div>
+              <div>
+                <p className="text-[10px] font-black text-blue-700 uppercase tracking-widest">Data Order</p>
+                <p className="text-sm font-bold text-slate-800">Tanggal: {selectedDate}</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] font-black text-blue-700 uppercase tracking-widest italic">{externalOrders.length} Order ditemukan</p>
+              <button
+                onClick={() => {
+                  if (selectedExportOrderNos.length === externalOrders.length) setSelectedExportOrderNos([]);
+                  else setSelectedExportOrderNos(externalOrders.map(o => o.order_no));
+                }}
+                className="text-[10px] font-black text-blue-600 hover:text-blue-800 underline transition uppercase tracking-tighter"
+              >
+                {selectedExportOrderNos.length === externalOrders.length ? 'Batalkan Semua' : 'Pilih Semua'}
+              </button>
+            </div>
+          </div>
+
+          <div className="max-h-[50vh] overflow-y-auto px-2 space-y-3 custom-scrollbar">
+            {isFetchingExternalOrders ? (
+              <div className="py-20 text-center">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p className="text-slate-400 font-bold">Mengambil data order SIMRS...</p>
+              </div>
+            ) : externalOrders.length === 0 ? (
+              <div className="py-20 text-center">
+                <div className="text-4xl mb-4">📭</div>
+                <p className="text-slate-400 font-bold">Tidak ada data order untuk tanggal ini</p>
+              </div>
+            ) : (
+              externalOrders.map((order) => (
+                <div
+                  key={order.order_no}
+                  onClick={() => {
+                    setSelectedExportOrderNos(prev =>
+                      prev.includes(order.order_no)
+                        ? prev.filter(no => no !== order.order_no)
+                        : [...prev, order.order_no]
+                    );
+                  }}
+                  className={`flex items-start gap-4 p-4 rounded-2xl border-2 transition-all cursor-pointer ${selectedExportOrderNos.includes(order.order_no)
+                    ? 'bg-blue-50/80 border-blue-200 shadow-md shadow-blue-100'
+                    : 'bg-slate-50 border-slate-100 opacity-70 hover:opacity-100'
+                    }`}
+                >
+                  <div className={`mt-1 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${selectedExportOrderNos.includes(order.order_no)
+                    ? 'bg-blue-600 border-blue-600 text-white'
+                    : 'bg-white border-slate-300'
+                    }`}>
+                    {selectedExportOrderNos.includes(order.order_no) && <span className="text-[10px]">✓</span>}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex justify-between items-start mb-1">
+                      <p className="text-xs font-black text-slate-800 uppercase tracking-tight">#{order.order_no}</p>
+                      <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-slate-200 text-slate-600 uppercase tracking-widest">
+                        {order.status_desc}
+                      </span>
+                    </div>
+                    <p className="text-xs font-bold text-slate-700 mb-1 leading-tight">{order.catatan}</p>
+                    <div className="flex items-center gap-3 text-[9px] text-slate-400 font-bold">
+                      <span>📍 {order.location_desc}</span>
+                      <span>📞 {order.ext_phone || '-'}</span>
+                      <span>⏰ {order.create_date}</span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="pt-4 border-t border-slate-100 flex flex-col gap-3">
+            <PremiumButton
+              onClick={handleDownloadExcel}
+              disabled={isFetchingExternalOrders || selectedExportOrderNos.length === 0}
+              variant="primary"
+              className="py-4 shadow-xl shadow-blue-100 text-xs font-black tracking-widest uppercase"
+            >
+              🚀 Download Excel ({selectedExportOrderNos.length} Selected)
+            </PremiumButton>
+            <button
+              onClick={() => setIsExportModalOpen(false)}
+              className="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-600 transition py-2"
+            >
+              Batal
+            </button>
+          </div>
+        </div>
       </PremiumModal>
     </div>
   );
