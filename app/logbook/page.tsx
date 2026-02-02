@@ -645,22 +645,17 @@ function LogbookListContent() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-                      <div>
-                        <label className="block text-[10px] font-black text-emerald-600 label uppercase tracking-widest mb-2 px-1">
-                          Service Catalog
-                        </label>
-                        <select
+                      <div className="w-full">
+                        <CustomDropdown
+                          label="Service Catalog"
                           value={bulkOrderData[entry.id]}
-                          onChange={(e) => setBulkOrderData({ ...bulkOrderData, [entry.id]: e.target.value })}
-                          className="w-full bg-white border-2 border-emerald-100 rounded-2xl px-4 py-3 text-xs font-bold text-slate-700 focus:ring-4 focus:ring-emerald-100 focus:border-emerald-600 outline-none transition-all appearance-none"
-                          style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%2310b981\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\' /%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', backgroundSize: '1.2em' }}
-                        >
-                          {EXTERNAL_CATALOGS.map(cat => (
-                            <option key={cat.id} value={cat.id}>
-                              {cat.name}
-                            </option>
-                          ))}
-                        </select>
+                          onChange={(val) => setBulkOrderData({ ...bulkOrderData, [entry.id]: val })}
+                          options={EXTERNAL_CATALOGS.map(cat => ({
+                            value: cat.id.toString(),
+                            label: cat.name
+                          }))}
+                          className="w-full"
+                        />
                       </div>
                     </div>
                   </div>
