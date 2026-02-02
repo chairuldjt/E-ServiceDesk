@@ -23,6 +23,7 @@ export function CustomDropdown({
     placeholder = 'Pilih...',
 }: CustomDropdownProps) {
     const [isOpen, setIsOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
     const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
     const dropdownRef = useRef<HTMLDivElement>(null);
     const buttonRef = useRef<HTMLButtonElement>(null);
@@ -53,10 +54,15 @@ export function CustomDropdown({
         };
 
         if (isOpen) {
+            setSearchTerm(''); // Reset search when opening
             document.addEventListener('mousedown', handleClickOutside);
             return () => document.removeEventListener('mousedown', handleClickOutside);
         }
     }, [isOpen]);
+
+    const filteredOptions = options.filter(opt =>
+        opt.label.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     const selectedOption = options.find(opt => opt.value === value);
 
@@ -107,26 +113,52 @@ export function CustomDropdown({
                             }}
                             className="bg-white border border-slate-200 rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
                         >
-                            <div className="max-h-[240px] overflow-y-auto custom-scrollbar py-1">
-                                {options.map((option) => (
-                                    <button
-                                        key={option.value}
-                                        type="button"
-                                        onClick={() => {
-                                            onChange(String(option.value));
-                                            setIsOpen(false);
-                                        }}
-                                        className={`w-full px-6 py-3 text-left font-medium transition-all text-sm ${option.value === value
-                                                ? 'bg-blue-50 text-blue-700'
-                                                : 'text-slate-700 hover:bg-slate-50'
-                                            } first:rounded-t-3xl last:rounded-b-3xl`}
-                                    >
-                                        {option.label}
-                                        {option.value === value && (
-                                            <span className="float-right text-blue-600">✓</span>
-                                        )}
-                                    </button>
-                                ))}
+                            <div className="flex flex-col max-h-[350px]">
+                                <div className="p-3 border-b border-slate-100 bg-slate-50/50">
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                                            <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                            </svg>
+                                        </div>
+                                        <input
+                                            autoFocus
+                                            type="text"
+                                            placeholder="Cari item..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            className="w-full bg-white border border-slate-200 rounded-xl py-2 pl-9 pr-3 text-sm focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium"
+                                            onClick={(e) => e.stopPropagation()}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="overflow-y-auto custom-scrollbar flex-1 py-1">
+                                    {filteredOptions.length > 0 ? (
+                                        filteredOptions.map((option) => (
+                                            <button
+                                                key={option.value}
+                                                type="button"
+                                                onClick={() => {
+                                                    onChange(String(option.value));
+                                                    setIsOpen(false);
+                                                }}
+                                                className={`w-full px-6 py-3 text-left font-medium transition-all text-sm ${option.value === value
+                                                    ? 'bg-blue-50 text-blue-700'
+                                                    : 'text-slate-700 hover:bg-slate-50'
+                                                    } first:rounded-t-3xl last:rounded-b-3xl`}
+                                            >
+                                                {option.label}
+                                                {option.value === value && (
+                                                    <span className="float-right text-blue-600">✓</span>
+                                                )}
+                                            </button>
+                                        ))
+                                    ) : (
+                                        <div className="px-6 py-10 text-center">
+                                            <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Tidak ada hasil</p>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>,
                         document.body
@@ -148,6 +180,6 @@ export function CustomDropdown({
                     background: #94a3b8;
                 }
             `}</style>
-        </div>
+        </div >
     );
 }
