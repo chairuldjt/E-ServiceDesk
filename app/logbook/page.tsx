@@ -78,6 +78,15 @@ function LogbookListContent() {
     fetchLogbook(selectedDate);
   }, [selectedDate]);
 
+  const changeDate = (days: number) => {
+    const [y, m, d] = selectedDate.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
+    date.setDate(date.getDate() + days);
+    // Simple yyyy-mm-dd format in Jakarta time
+    const newDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(date);
+    setSelectedDate(newDate);
+  };
+
   const fetchLogbook = async (date?: string) => {
     try {
       setLoading(true);
@@ -324,12 +333,32 @@ function LogbookListContent() {
         subtitle="Kelola catatan pekerjaan dan service desk"
         actions={
           <div className="flex flex-col md:flex-row gap-3">
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="px-4 py-2 rounded-xl border-2 border-slate-100 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 bg-white transition-all shadow-sm font-bold text-slate-700"
-            />
+            <div className="flex items-center gap-1 bg-white rounded-xl border-2 border-slate-100 shadow-sm overflow-hidden p-1">
+              <button
+                onClick={() => changeDate(-1)}
+                className="p-2 hover:bg-slate-50 text-slate-400 hover:text-blue-600 transition-colors"
+                title="Hari Sebelumnya"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="C15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="px-2 py-1 outline-none font-bold text-slate-700 bg-transparent border-none focus:ring-0 cursor-pointer"
+              />
+              <button
+                onClick={() => changeDate(1)}
+                className="p-2 hover:bg-slate-50 text-slate-400 hover:text-blue-600 transition-colors"
+                title="Hari Berikutnya"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
             <PremiumButton
               variant="secondary"
               onClick={() => fetchLogbook(selectedDate)}
