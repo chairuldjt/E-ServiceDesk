@@ -747,48 +747,47 @@ Maintenance: Tidak`;
                                 <>
                                     <div className={`bg-gradient-to-r ${statusStyle.gradient} p-10 text-white relative`}>
                                         <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
-                                        <div className="flex justify-between items-start relative z-10">
-                                            <div>
+                                        <div className="flex flex-col sm:flex-row justify-between items-start gap-6 relative z-10">
+                                            <div className="w-full sm:w-auto">
                                                 <span className="bg-white/10 text-[10px] font-black uppercase tracking-[0.3em] px-4 py-1.5 rounded-full border border-white/20 flex items-center gap-2 w-fit">
                                                     <span className={`w-1.5 h-1.5 ${statusStyle.glow.replace('bg-', 'bg-')} rounded-full animate-pulse`}></span>
                                                     Order Details
                                                 </span>
-                                                <h2 className="text-4xl font-black mt-4 flex items-center gap-3">
+                                                <h2 className="text-2xl md:text-4xl font-black mt-4 flex flex-wrap items-center gap-x-3 gap-y-1">
                                                     #{selectedOrder?.order_no || '...'}
-                                                    <span className="text-white/30 font-light">/</span>
-                                                    <span className="text-lg font-bold text-blue-300 tracking-wider">TICKET</span>
+                                                    <span className="text-white/30 font-light hidden sm:inline">/</span>
+                                                    <span className="text-base md:text-lg font-bold text-blue-300 tracking-wider">TICKET</span>
                                                 </h2>
                                             </div>
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex items-center gap-2 self-end sm:self-start">
                                                 <button
                                                     onClick={() => handleCopyOrder()}
-                                                    className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center hover:bg-white/20 transition-all text-xl border border-white/10 group active:scale-90"
+                                                    className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-white/10 flex items-center justify-center hover:bg-white/20 transition-all text-lg md:text-xl border border-white/10 group active:scale-90"
                                                     title="Copy Order Details"
                                                 >
                                                     <span className="group-hover:scale-110 transition-transform">📋</span>
                                                 </button>
                                                 <button
                                                     onClick={() => setIsDetailModalOpen(false)}
-                                                    className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center hover:bg-white/20 transition-all text-2xl border border-white/10 group active:scale-90"
+                                                    className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-white/10 flex items-center justify-center hover:bg-white/20 transition-all text-xl md:text-2xl border border-white/10 group active:scale-90"
                                                 >
                                                     <span className="group-hover:rotate-90 transition-transform">&times;</span>
                                                 </button>
-
                                             </div>
                                         </div>
 
                                         {/* Fast Stats Row */}
-                                        <div className="grid grid-cols-3 gap-6 mt-10">
-                                            <div className="bg-white/5 p-5 rounded-3xl border border-white/10 backdrop-blur-sm">
-                                                <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-2">Kategori</p>
-                                                <p className="font-black text-sm truncate">{selectedOrder?.service_name || '-'}</p>
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 mt-10">
+                                            <div className="bg-white/5 p-4 md:p-5 rounded-3xl border border-white/10 backdrop-blur-sm">
+                                                <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-1 md:mb-2">Kategori</p>
+                                                <p className="font-black text-sm">{selectedOrder?.service_name || '-'}</p>
                                             </div>
-                                            <div className="bg-white/5 p-5 rounded-3xl border border-white/10 backdrop-blur-sm">
-                                                <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-2">Teknisi</p>
-                                                <p className="font-black text-sm truncate">{selectedOrder?.nama_teknisi || '-'}</p>
+                                            <div className="bg-white/5 p-4 md:p-5 rounded-3xl border border-white/10 backdrop-blur-sm">
+                                                <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-1 md:mb-2">Teknisi</p>
+                                                <p className="font-black text-sm">{selectedOrder?.nama_teknisi || '-'}</p>
                                             </div>
-                                            <div className="bg-white/5 p-5 rounded-3xl border border-white/10 backdrop-blur-sm">
-                                                <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-2">Status</p>
+                                            <div className="bg-white/5 p-4 md:p-5 rounded-3xl border border-white/10 backdrop-blur-sm">
+                                                <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-1 md:mb-2">Status</p>
                                                 <p className="font-black text-sm flex items-center gap-2">
                                                     <span className={`w-2.5 h-2.5 rounded-full ${statusStyle.glow.replace('bg-', 'bg-')} animate-pulse shadow-lg`}></span>
                                                     {selectedOrder?.status_desc || '-'}
