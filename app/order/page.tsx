@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { useUI } from '@/context/UIContext';
-import { PremiumAlert, PremiumButton, PremiumModal, PremiumInput, PremiumTextarea, CustomDropdown } from '@/components/ui/PremiumComponents';
+import { PremiumAlert, PremiumButton, PremiumModal, PremiumInput, PremiumTextarea, CustomDropdown, PremiumActionDropdown } from '@/components/ui/PremiumComponents';
 import Link from 'next/link';
 import { EXTERNAL_CATALOGS } from '@/lib/constants';
 
@@ -673,49 +673,47 @@ Maintenance: Tidak`;
                                             </div>
                                         </td>
                                         <td className="px-4 py-4 text-right sticky right-0 bg-white/90 backdrop-blur-md z-10 group-hover:bg-blue-50/90 shadow-[-12px_0_15px_-3px_rgba(0,0,0,0.05)] transition-colors">
-                                            <div className="flex items-center justify-end gap-1.5 ml-auto">
+                                            <div className="flex items-center justify-end gap-2 ml-auto">
                                                 <button
                                                     onClick={() => handleCopyOrder(order)}
-                                                    className="w-8 h-8 flex items-center justify-center bg-white text-slate-400 rounded-lg border border-slate-200 hover:text-blue-600 hover:border-blue-200 shadow-sm transition-all active:scale-95"
+                                                    className="w-10 h-10 flex items-center justify-center bg-white text-slate-400 rounded-xl border border-slate-200 hover:text-blue-600 hover:border-blue-200 shadow-sm transition-all active:scale-95"
                                                     title="Copy Order"
                                                 >
-                                                    📋
+                                                    <span className="text-lg">📋</span>
                                                 </button>
 
-                                                {(currentStatus === 10 || currentStatus === 11 || currentStatus === 12) && (
-                                                    <>
-                                                        <button
-                                                            onClick={() => { setSelectedOrder(order as any); setIsDelegasiModalOpen(true); fetchAssignList(order.order_id); }}
-                                                            className="w-8 h-8 flex items-center justify-center bg-white text-blue-600 rounded-lg border border-blue-100 hover:bg-blue-50 shadow-sm transition-all active:scale-95"
-                                                            title="Delegasi"
-                                                        >
-                                                            👥
+                                                <PremiumActionDropdown
+                                                    trigger={
+                                                        <button className="w-10 h-10 flex items-center justify-center bg-slate-800 text-white rounded-xl shadow-lg shadow-slate-200 hover:bg-slate-700 transition-all active:scale-95">
+                                                            <span className="text-lg">⚙️</span>
                                                         </button>
-                                                        <button
-                                                            onClick={() => { setSelectedOrder(order as any); setPendingReason(''); setIsPendingModalOpen(true); }}
-                                                            className="w-8 h-8 flex items-center justify-center bg-white text-amber-600 rounded-lg border border-amber-100 hover:bg-amber-50 shadow-sm transition-all active:scale-95"
-                                                            title="Pending"
-                                                        >
-                                                            ⏳
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleCancelOrderQuick(order)}
-                                                            className="w-8 h-8 flex items-center justify-center bg-white text-red-600 rounded-lg border border-red-100 hover:bg-red-50 shadow-sm transition-all active:scale-95"
-                                                            title="Batal/Hapus"
-                                                        >
-                                                            🗑️
-                                                        </button>
-                                                    </>
-                                                )}
-
-                                                <button
-                                                    onClick={() => handleViewDetail(order.order_id)}
-                                                    className={`w-8 h-8 flex items-center justify-center rounded-lg shadow-lg transition-all active:scale-95 ${currentStatus === 15 ? 'bg-blue-600 shadow-blue-200' : 'bg-slate-800 shadow-slate-200'
-                                                        } text-white`}
-                                                    title={currentStatus === 15 ? "Verifikasi" : "Detail"}
-                                                >
-                                                    {currentStatus === 15 ? "🛡️" : "👁️"}
-                                                </button>
+                                                    }
+                                                    items={[
+                                                        {
+                                                            label: currentStatus === 15 ? 'Verifikasi Pekerjaan' : 'Lihat Detail Tiket',
+                                                            icon: currentStatus === 15 ? '🛡️' : '👁️',
+                                                            onClick: () => handleViewDetail(order.order_id)
+                                                        },
+                                                        ...((currentStatus === 10 || currentStatus === 11 || currentStatus === 12) ? [
+                                                            {
+                                                                label: 'Delegasikan Tugas',
+                                                                icon: '👥',
+                                                                onClick: () => { setSelectedOrder(order as any); setIsDelegasiModalOpen(true); fetchAssignList(order.order_id); }
+                                                            },
+                                                            {
+                                                                label: 'Pending Pekerjaan',
+                                                                icon: '⏳',
+                                                                onClick: () => { setSelectedOrder(order as any); setPendingReason(''); setIsPendingModalOpen(true); }
+                                                            },
+                                                            {
+                                                                label: 'Batalkan / Hapus',
+                                                                icon: '🗑️',
+                                                                onClick: () => handleCancelOrderQuick(order),
+                                                                variant: 'danger' as const
+                                                            }
+                                                        ] : [])
+                                                    ]}
+                                                />
                                             </div>
                                         </td>
                                     </tr>

@@ -1,6 +1,103 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 export { CustomDropdown } from './CustomDropdown';
 
+export interface ActionItem {
+    label: string;
+    icon: string;
+    onClick: () => void;
+    variant?: 'default' | 'danger';
+}
+
+interface PremiumActionDropdownProps {
+    trigger: React.ReactNode;
+    items: ActionItem[];
+    className?: string;
+}
+
+export function PremiumActionDropdown({ trigger, items, className = '' }: PremiumActionDropdownProps) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+    const dropdownRef = useRef<HTMLDivElement>(null);
+    const triggerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (isOpen && triggerRef.current) {
+            const rect = triggerRef.current.getBoundingClientRect();
+            // Try to align to the right of the trigger
+            setDropdownPosition({
+                top: rect.bottom + window.scrollY + 8,
+                left: rect.right + window.scrollX - 200,
+            });
+        }
+    }, [isOpen]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (
+                dropdownRef.current &&
+                !dropdownRef.current.contains(event.target as Node) &&
+                triggerRef.current &&
+                !triggerRef.current.contains(event.target as Node)
+            ) {
+                setIsOpen(false);
+            }
+        };
+
+        if (isOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+            return () => document.removeEventListener('mousedown', handleClickOutside);
+        }
+    }, [isOpen]);
+
+    return (
+        <div className={`relative inline-block ${className}`} ref={triggerRef}>
+            <div onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }} className="cursor-pointer">
+                {trigger}
+            </div>
+
+            {isOpen &&
+                createPortal(
+                    <div
+                        ref={dropdownRef}
+                        style={{
+                            position: 'absolute',
+                            top: `${dropdownPosition.top}px`,
+                            left: `${dropdownPosition.left}px`,
+                            width: '200px',
+                            zIndex: 9999,
+                        }}
+                        className="bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="py-1">
+                            {items.map((item, idx) => (
+                                <button
+                                    key={idx}
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        item.onClick();
+                                        setIsOpen(false);
+                                    }}
+                                    className={`w-full px-5 py-3 text-left text-sm font-bold flex items-center gap-3 transition-colors ${item.variant === 'danger'
+                                        ? 'text-red-600 hover:bg-red-50'
+                                        : 'text-slate-700 hover:bg-slate-50'
+                                        }`}
+                                >
+                                    <span className="text-lg">{item.icon}</span>
+                                    {item.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>,
+                    document.body
+                )}
+        </div>
+    );
+}
 
 interface PremiumCardProps {
     children: React.ReactNode;
