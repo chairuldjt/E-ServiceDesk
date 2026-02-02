@@ -29,7 +29,7 @@ export function PremiumActionDropdown({ trigger, items, className = '' }: Premiu
             // Try to align to the right of the trigger
             setDropdownPosition({
                 top: rect.bottom + window.scrollY + 8,
-                left: rect.right + window.scrollX - 200,
+                left: rect.left + window.scrollX,
             });
         }
     }, [isOpen]);
