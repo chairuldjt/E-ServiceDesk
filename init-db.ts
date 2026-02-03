@@ -15,6 +15,70 @@ const {
     MYSQL_DATABASE
 } = process.env;
 
+const EXTERNAL_USERS = [
+    { id: 7, login: "dale", name: "DaleHabiby" },
+    { id: 8, login: "dadi", name: "Dadi Susanto" },
+    { id: 12, login: "agman", name: "agman" },
+    { id: 13, login: "mek", name: "Mike Kumara Adhitama" },
+    { id: 14, login: "guntur", name: "guntur pahlawan" },
+    { id: 15, login: "trimardiati", name: "tri mardiati" },
+    { id: 16, login: "cutmutia", name: "Cut mutia" },
+    { id: 17, login: "rifki", name: "Rifki" },
+    { id: 18, login: "nova", name: "Nova Oktaviani Hadinata" },
+    { id: 20, login: "ken", name: "Ken Sutejo Widyantoro" },
+    { id: 22, login: "dina", name: "Dina Fina Aulia" },
+    { id: 23, login: null, name: "Adit Setiawan" },
+    { id: 24, login: "joko", name: "Joko Wimpuno" },
+    { id: 29, login: null, name: "Muhammad Hanif Zuhri" },
+    { id: 31, login: "fitri", name: "Fitri Yuliasanti" },
+    { id: 33, login: "arifin", name: "Arifin" },
+    { id: 34, login: "adjisugiyanto", name: "Adji Sugiyanto" },
+    { id: 35, login: null, name: "Adhi" },
+    { id: 38, login: "iwan", name: "Iwan apriyanto" },
+    { id: 39, login: "heru", name: "Heru Haryanto" },
+    { id: 41, login: "yosep", name: "Yosep AW" },
+    { id: 42, login: "lukman", name: "Lukman" },
+    { id: 47, login: "mita", name: "Mita" },
+    { id: 48, login: null, name: "Lanang Rizky" },
+    { id: 49, login: "balam", name: "Balam Proyoga" },
+    { id: 50, login: null, name: "Eruidf" },
+    { id: 54, login: "triadi", name: "Tri Adi" },
+    { id: 55, login: null, name: "Bella" },
+    { id: 57, login: "donyk", name: "Dony K" },
+    { id: 58, login: null, name: "Nino" },
+    { id: 61, login: null, name: "Arditya Rama Saputra" },
+    { id: 62, login: null, name: "Ardian Adi Saputra" },
+    { id: 63, login: null, name: "Quvonch" },
+    { id: 64, login: "nugrohochairul", name: "Nugroho Chairul Djati" },
+    { id: 65, login: null, name: "Ahmad Joni Siswanto" },
+    { id: 67, login: null, name: "Farizky Juniarto Pratama" },
+    { id: 69, login: null, name: "Memey" },
+    { id: 70, login: "ridwanrisky", name: "Ridwan Risky R" },
+    { id: 71, login: "prihanantojoko", name: "Prihananto Joko TL" },
+    { id: 73, login: "mhafidz", name: "Mohammad Hafidz" },
+    { id: 74, login: "naditacandra", name: "Nadita Candra" },
+    { id: 75, login: "edorizky", name: "Edo rizky saputro" },
+    { id: 76, login: "mhuda", name: "Miftakhul Huda" },
+    { id: 77, login: "alimuhtas", name: "ALI MUHTAS" },
+    { id: 78, login: "ryanaffandi", name: "Ryan Affandi Saputra" },
+    { id: 79, login: "johantaufik", name: "Johan Taufik" },
+    { id: 80, login: "agusedy", name: "Agus Edy Cahyono" },
+    { id: 81, login: "dessyannayumita", name: "Dessyanna Yumita Rachmawaty" },
+    { id: 82, login: "afrizalrizqi", name: "Afrizal Rizqi Pranata" },
+    { id: 83, login: "gilangheavy", name: "Gilang Heavy Pradana" },
+    { id: 84, login: "agustadecky", name: "Agusta Decky Permana" },
+    { id: 85, login: "arifjatmiko", name: "Arif Jatmiko" },
+    { id: 86, login: "srihandayani", name: "Sri Handayani" },
+    { id: 87, login: "tricahyani", name: "Tri cahyani atmojo" },
+    { id: 89, login: "mokhammadiqbal", name: "Mokhammad Iqbal" },
+    { id: 90, login: "wawan", name: "sulistyawan" },
+    { id: 91, login: null, name: "Wawan" },
+    { id: 92, login: null, name: "Caesar Kurnia Akbar" },
+    { id: 93, login: null, name: "Anjas kusuma" },
+    { id: 94, login: "adrianoyunas", name: "Adriano Yunas Supriyanto" },
+    { id: 95, login: "windydwi", name: "Windy Dwi" }
+];
+
 async function initDatabase() {
     console.log('--- Database Initialization Started ---');
     console.log(`Connecting to: ${MYSQL_HOST} as ${MYSQL_USER}`);
@@ -189,6 +253,53 @@ async function initDatabase() {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         `);
         console.log('   - Table "notifications" ready');
+
+        // Webmin Users Table
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS webmin_users (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                webmin_id INT NOT NULL,
+                username VARCHAR(100) DEFAULT NULL,
+                full_name VARCHAR(255) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                UNIQUE KEY unique_username (username)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        `);
+        console.log('   - Table "webmin_users" ready');
+
+        // Check and Seed Webmin Users
+        const [webminRows]: any = await connection.query('SELECT COUNT(*) as count FROM webmin_users');
+        if (webminRows[0].count === 0) {
+            console.log('   - Seeding webmin users...');
+            for (const user of EXTERNAL_USERS) {
+                if (user.login) {
+                    try {
+                        await connection.query(
+                            'INSERT IGNORE INTO webmin_users (webmin_id, username, full_name) VALUES (?, ?, ?)',
+                            [user.id, user.login, user.name]
+                        );
+                    } catch (err: any) {
+                        console.log(`     Failed to insert ${user.login}: ${err.message}`);
+                    }
+                }
+            }
+            console.log('   - Webmin users seeded');
+        } else {
+            // Ensure windydwi exists or is updated
+            try {
+                const windydwi: any = EXTERNAL_USERS.find(u => u.login === 'windydwi');
+                if (windydwi) {
+                    await connection.query(
+                        'INSERT INTO webmin_users (webmin_id, username, full_name) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE webmin_id = VALUES(webmin_id)',
+                        [windydwi.id, windydwi.login, windydwi.name]
+                    );
+                    console.log(`   - Ensured windydwi has ID ${windydwi.id}`);
+                }
+            } catch (err) {
+                console.log('Error updating windydwi:', err);
+            }
+        }
 
         // Step 3.5: Migration - Check for missing columns
         console.log('Checking for schema updates...');
