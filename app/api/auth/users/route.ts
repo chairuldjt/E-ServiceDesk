@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
-import { getPayloadFromCookie } from '@/lib/jwt';
+import { checkAdminAccess } from '@/lib/adminAuth';
 import bcrypt from 'bcryptjs';
 
 // GET all users
 export async function GET(request: NextRequest) {
   try {
-    const payload = await getPayloadFromCookie();
+    const payload = await checkAdminAccess();
 
     // Only admin can access this endpoint
-    if (!payload || payload.role !== 'admin') {
+    if (!payload) {
       return NextResponse.json(
         { error: 'Unauthorized - Admin access required' },
         { status: 403 }
@@ -37,9 +37,9 @@ export async function GET(request: NextRequest) {
 // CREATE new user
 export async function POST(request: NextRequest) {
   try {
-    const payload = await getPayloadFromCookie();
+    const payload = await checkAdminAccess();
 
-    if (!payload || payload.role !== 'admin') {
+    if (!payload) {
       return NextResponse.json(
         { error: 'Unauthorized - Admin access required' },
         { status: 403 }

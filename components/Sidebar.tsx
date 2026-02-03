@@ -14,9 +14,24 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { user } = useAuth();
   const [isWhatsappVisible, setIsWhatsappVisible] = useState(true);
+  const [permissions, setPermissions] = useState<string[]>([]);
+  const [isLoadingPerms, setIsLoadingPerms] = useState(true);
 
   useEffect(() => {
-    if (user && (user.role === 'admin' || user.role === 'super')) {
+    if (user) {
+      fetch('/api/auth/permissions')
+        .then(res => res.json())
+        .then(data => {
+          if (data.permissions) setPermissions(data.permissions);
+        })
+        .catch(console.error)
+        .finally(() => setIsLoadingPerms(false));
+    }
+  }, [user]);
+
+  useEffect(() => {
+    const hasWhatsappPermission = user && (user.role === 'admin' || permissions.includes('/whatsapp'));
+    if (hasWhatsappPermission) {
       fetch('/api/settings/whatsapp-visibility')
         .then(res => res.json())
         .then(data => {
@@ -24,10 +39,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         })
         .catch(console.error);
     }
-  }, [user]);
+  }, [user, permissions]);
 
   if (!user) return null;
-
 
   const isActive = (path: string) => {
     // Priority 1: Exact Match
@@ -35,7 +49,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
     // Priority 2: Sub-path match, but ONLY if there isn't a better match in menuItems
     if (path !== '/' && pathname?.startsWith(path + '/')) {
-      const isBetterMatchExist = menuItems.some(item =>
+      const isBetterMatchExist = allMenuItems.some(item =>
         item.path !== path && item.path.startsWith(path) && pathname?.startsWith(item.path)
       );
       return !isBetterMatchExist;
@@ -44,7 +58,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     return false;
   };
 
-  const menuItems = [
+  const allMenuItems = [
     { name: 'Dashboard', path: '/dashboard', icon: '📊' },
     { name: 'Timeline', path: '/timeline', icon: '📱' },
     { name: 'Logbook', path: '/eservicedesk', icon: '📔' },
@@ -52,22 +66,23 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     { name: 'Order', path: '/order', icon: '🎫' },
     { name: 'Notepad', path: '/notepad', icon: '📝' },
     { name: 'Chatbot', path: '/chatbot', icon: '🤖' },
+    { name: 'WhatsApp Bot', path: '/whatsapp', icon: '📱' },
+    { name: 'Telegram', path: '/telegram', icon: '✈️' },
+    { name: 'Admin', path: '/admin', icon: '🔐' },
   ];
 
-  // Menu WhatsApp Bot (Admin & Super Only, and if visible)
-  if ((user.role === 'admin' || user.role === 'super') && isWhatsappVisible) {
-    menuItems.push({ name: 'WhatsApp Bot', path: '/whatsapp', icon: '📱' });
-  }
+  // Filter based on permissions
+  const menuItems = allMenuItems.filter(item => {
+    // Special case for WhatsApp visibility setting, but still check permission
+    if (item.path === '/whatsapp' && !isWhatsappVisible) return false;
 
-  // Menu Telegram Bot (Admin & Super Only)
-  if (user.role === 'admin' || user.role === 'super') {
-    menuItems.push({ name: 'Telegram', path: '/telegram', icon: '✈️' });
-  }
+    // Admin always sees everything in hardcoded list if they are 'admin'
+    // But we should respect the dynamic permissions if they are configured
+    if (user.role === 'admin') return true;
 
-  // Menu Admin Panel (Admin Only)
-  if (user.role === 'admin') {
-    menuItems.push({ name: 'Admin', path: '/admin', icon: '🔐' });
-  }
+    // For other roles, check permissions array
+    return permissions.includes(item.path);
+  });
 
 
   return (

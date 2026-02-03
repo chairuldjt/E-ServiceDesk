@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
                 t.*, 
                 u.username, 
                 u.profile_image,
-                (t.user_id = ? OR ? IN ('admin', 'super')) as is_owner,
+                (t.user_id = ? OR ? IN ('admin', 'moderator')) as is_owner,
                 (SELECT COUNT(*) FROM timeline_likes WHERE post_id = t.id) as like_count,
                 (SELECT COUNT(*) FROM timeline_comments WHERE post_id = t.id) as comment_count,
                 EXISTS(SELECT 1 FROM timeline_likes WHERE post_id = t.id AND user_id = ?) as user_liked

@@ -7,7 +7,7 @@ export interface User {
     id: number;
     username: string;
     email: string;
-    role: 'user' | 'admin' | 'super';
+    role: string;
     profile_image?: string | null;
 }
 

@@ -45,18 +45,48 @@ interface WebminUser {
   full_name: string;
 }
 
+interface Role {
+  id: number;
+  name: string;
+  description: string;
+  color: string;
+  created_at: string;
+}
+
+interface Permission {
+  menu_path: string;
+  is_allowed: number;
+}
+
+const colorPresets = [
+  { name: 'Indigo', value: 'indigo', class: 'bg-indigo-50 text-indigo-700 border-indigo-200', dot: 'bg-indigo-500' },
+  { name: 'Purple', value: 'purple', class: 'bg-purple-50 text-purple-700 border-purple-200', dot: 'bg-purple-500' },
+  { name: 'Amber', value: 'amber', class: 'bg-amber-50 text-amber-700 border-amber-200', dot: 'bg-amber-500' },
+  { name: 'Emerald', value: 'emerald', class: 'bg-emerald-50 text-emerald-700 border-emerald-200', dot: 'bg-emerald-500' },
+  { name: 'Rose', value: 'rose', class: 'bg-rose-50 text-rose-700 border-rose-200', dot: 'bg-rose-500' },
+  { name: 'Blue', value: 'blue', class: 'bg-blue-50 text-blue-700 border-blue-200', dot: 'bg-blue-500' },
+  { name: 'Slate', value: 'slate', class: 'bg-slate-50 text-slate-700 border-slate-200', dot: 'bg-slate-500' },
+];
+
 function AdminContent() {
   const { user, isLoading: userLoading } = useAuth();
   const { showToast, confirm } = useUI();
   const router = useRouter();
   const [eservicedeskEntries, setEServiceDeskEntries] = useState<EServiceDeskEntry[]>([]);
   const [users, setUsers] = useState<User[]>([]);
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'webmin'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'webmin' | 'roles'>('overview');
 
   const [webminUsers, setWebminUsers] = useState<WebminUser[]>([]);
   const [isWebminModalOpen, setIsWebminModalOpen] = useState(false);
   const [selectedWebminUser, setSelectedWebminUser] = useState<WebminUser | null>(null);
   const [webminFormData, setWebminFormData] = useState({ webmin_id: '', username: '', full_name: '' });
+
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+  const [roleFormData, setRoleFormData] = useState({ name: '', description: '', color: 'indigo' });
+  const [rolePermissions, setRolePermissions] = useState<Permission[]>([]);
+  const [isPermissionModalOpen, setIsPermissionModalOpen] = useState(false);
 
   const [stats, setStats] = useState({
     total: 0,
@@ -69,21 +99,54 @@ function AdminContent() {
 
   // Modal States
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
   const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [userFormData, setUserFormData] = useState({ username: '', email: '', password: '', role: 'user' });
+  const [userFormData, setUserFormData] = useState({ username: '', email: '', password: '', role: 'user', is_active: 1 });
   const [resetPassword, setResetPassword] = useState('');
+
+  const [permissions, setPermissions] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchPermissions = async () => {
+      try {
+        const res = await fetch('/api/auth/permissions');
+        if (res.ok) {
+          const data = await res.json();
+          setPermissions(data.permissions);
+        }
+      } catch (error) {
+        console.error('Failed to fetch permissions', error);
+      }
+    };
+    if (user) fetchPermissions();
+  }, [user]);
 
   useEffect(() => {
     if (userLoading) return;
-    if (!user || user.role !== 'admin') {
+    if (user && (user.role === 'admin' || permissions.includes('/admin'))) {
+      fetchLogbook();
+      fetchUsers();
+      fetchWebminUsers();
+      fetchRoles();
+    } else if (user && permissions.length > 0 && !permissions.includes('/admin')) {
       router.push('/dashboard');
-      return;
+    } else if (!user && !userLoading) {
+      router.push('/login');
     }
-    fetchLogbook();
-    fetchUsers();
-    fetchWebminUsers();
-  }, [user, userLoading, router]);
+  }, [user, userLoading, permissions, router]);
+
+  const fetchRoles = async () => {
+    try {
+      const response = await fetch('/api/admin/roles');
+      if (response.ok) {
+        const data = await response.json();
+        setRoles(data);
+      }
+    } catch (error) {
+      console.error('Error fetching roles:', error);
+    }
+  };
 
   const fetchLogbook = async () => {
     try {
@@ -202,9 +265,8 @@ function AdminContent() {
         if (res.ok) {
           showToast('User berhasil dibuat', 'success');
           setIsUserModalOpen(false);
-          setUserFormData({ username: '', email: '', password: '', role: 'user' });
+          setUserFormData({ username: '', email: '', password: '', role: 'user', is_active: 1 });
           fetchUsers();
-          setTimeout(() => window.location.reload(), 1000);
         } else {
           const err = await res.json();
           showToast(err.error || 'Gagal membuat user', 'error');
@@ -216,55 +278,49 @@ function AdminContent() {
     });
   };
 
-  const handleUpdateStatus = (id: number, currentStatus: number) => {
-    const newStatus = currentStatus ? 0 : 1;
-    const action = newStatus ? 'Aktifkan' : 'Nonaktifkan';
-
-    confirm(`${action} User?`, `Apakah anda yakin ingin ${action.toLowerCase()} user ini?`, async () => {
-      try {
-        const res = await fetch(`/api/auth/users/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ is_active: newStatus })
-        });
-        if (res.ok) {
-          showToast(`User berhasil ${newStatus ? 'diaktifkan' : 'dinonaktifkan'}`, 'success');
-          fetchUsers();
-          setTimeout(() => window.location.reload(), 1000);
-        } else {
-          showToast('Gagal mengubah status user', 'error');
-        }
-      } catch (error) { console.error(error); showToast('Terjadi kesalahan', 'error'); }
+  const openEditUserModal = (u: User) => {
+    setSelectedUser(u);
+    setUserFormData({
+      username: u.username,
+      email: u.email,
+      password: '', // Password empty by default
+      role: u.role,
+      is_active: u.is_active
     });
+    setIsEditUserModalOpen(true);
   };
 
+  const handleUpdateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedUser) return;
 
-  const handleChangeRole = (id: number, currentRole: string) => {
-    // Cycle: user -> super -> admin -> user
-    let newRole = 'user';
-    if (currentRole === 'user') newRole = 'super';
-    else if (currentRole === 'super') newRole = 'admin';
-    else if (currentRole === 'admin') newRole = 'user';
+    try {
+      const res = await fetch(`/api/auth/users/${selectedUser.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: userFormData.username,
+          email: userFormData.email,
+          role: userFormData.role,
+          is_active: userFormData.is_active
+        })
+      });
 
-    const roleName = newRole === 'super' ? 'Super User' : newRole === 'admin' ? 'Admin' : 'User';
-
-    confirm(`Ubah Role?`, `Ubah role user menjadi ${roleName}?`, async () => {
-      try {
-        const res = await fetch(`/api/auth/users/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ role: newRole })
-        });
-        if (res.ok) {
-          fetchUsers();
-          showToast(`Role berubah menjadi ${roleName}`, 'success');
-          setTimeout(() => window.location.reload(), 1000);
-        } else {
-          showToast('Gagal mengubah role', 'error');
-        }
-      } catch (error) { console.error(error); showToast('Terjadi kesalahan', 'error'); }
-    });
+      if (res.ok) {
+        showToast('User berhasil diperbarui', 'success');
+        setIsEditUserModalOpen(false);
+        setSelectedUser(null);
+        fetchUsers();
+      } else {
+        const err = await res.json();
+        showToast(err.error || 'Gagal memperbarui user', 'error');
+      }
+    } catch (error) {
+      console.error(error);
+      showToast('Terjadi kesalahan', 'error');
+    }
   };
+
 
   const handleDeleteUser = (id: number) => {
     confirm('Hapus User?', 'Yakin ingin menghapus user ini PERMANEN?', async () => {
@@ -273,7 +329,6 @@ function AdminContent() {
         if (res.ok) {
           showToast('User dihapus', 'success');
           fetchUsers();
-          setTimeout(() => window.location.reload(), 1000);
         } else {
           const err = await res.json();
           showToast(err.error, 'error');
@@ -330,6 +385,105 @@ function AdminContent() {
     }
   };
 
+  const handleSaveRole = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const isEdit = !!selectedRole;
+    const url = isEdit ? `/api/admin/roles/${selectedRole.id}` : '/api/admin/roles';
+    const method = isEdit ? 'PUT' : 'POST';
+
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(roleFormData)
+      });
+      if (res.ok) {
+        showToast(`Role berhasil ${isEdit ? 'diupdate' : 'dibuat'}`, 'success');
+        setIsRoleModalOpen(false);
+        setRoleFormData({ name: '', description: '', color: 'indigo' });
+        setSelectedRole(null);
+        fetchRoles();
+      } else {
+        const err = await res.json();
+        showToast(err.error || 'Gagal menyimpan role', 'error');
+      }
+    } catch (error) {
+      console.error(error); showToast('Terjadi kesalahan', 'error');
+    }
+  };
+
+  const handleDeleteRole = (id: number) => {
+    confirm('Hapus Role?', 'Yakin ingin menghapus role ini? User yang menggunakan role ini mungkin tidak bisa akses.', async () => {
+      try {
+        const res = await fetch(`/api/admin/roles/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          showToast('Role dihapus', 'success');
+          fetchRoles();
+        } else {
+          const err = await res.json();
+          showToast(err.error || 'Gagal menghapus role', 'error');
+        }
+      } catch (error) { console.error(error); showToast('Terjadi kesalahan', 'error'); }
+    });
+  };
+
+  const openPermissionModal = async (role: Role) => {
+    setSelectedRole(role);
+    try {
+      const res = await fetch(`/api/admin/roles/${role.id}/permissions`);
+      if (res.ok) {
+        const data = await res.json();
+        setRolePermissions(data);
+        setIsPermissionModalOpen(true);
+      }
+    } catch (error) {
+      showToast('Gagal memuat permissions', 'error');
+    }
+  };
+
+  const handleSavePermissions = async () => {
+    if (!selectedRole) return;
+    try {
+      const res = await fetch(`/api/admin/roles/${selectedRole.id}/permissions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ permissions: rolePermissions })
+      });
+      if (res.ok) {
+        showToast('Permissions berhasil disimpan', 'success');
+        setIsPermissionModalOpen(false);
+      } else {
+        showToast('Gagal menyimpan permissions', 'error');
+      }
+    } catch (error) {
+      showToast('Terjadi kesalahan', 'error');
+    }
+  };
+
+  const togglePermission = (path: string) => {
+    setRolePermissions(prev => {
+      const existing = prev.find(p => p.menu_path === path);
+      if (existing) {
+        return prev.map(p => p.menu_path === path ? { ...p, is_allowed: p.is_allowed ? 0 : 1 } : p);
+      } else {
+        return [...prev, { menu_path: path, is_allowed: 1 }];
+      }
+    });
+  };
+
+  const availableMenus = [
+    { name: 'Dashboard', path: '/dashboard' },
+    { name: 'Timeline', path: '/timeline' },
+    { name: 'Logbook', path: '/eservicedesk' },
+    { name: 'Monitoring', path: '/monitoring' },
+    { name: 'Order', path: '/order' },
+    { name: 'Notepad', path: '/notepad' },
+    { name: 'Chatbot', path: '/chatbot' },
+    { name: 'WhatsApp Bot', path: '/whatsapp' },
+    { name: 'Telegram', path: '/telegram' },
+    { name: 'Admin', path: '/admin' },
+  ];
+
   if (userLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -375,6 +529,15 @@ function AdminContent() {
               }`}
           >
             🔌 Webmin Users
+          </button>
+          <button
+            onClick={() => setActiveTab('roles')}
+            className={`flex-1 py-3 px-4 font-bold text-sm rounded-xl transition-all ${activeTab === 'roles'
+              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+              : 'text-slate-600 hover:bg-slate-50'
+              }`}
+          >
+            🛡️ Roles
           </button>
 
         </div>
@@ -458,34 +621,40 @@ function AdminContent() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <button
-                          onClick={() => handleChangeRole(u.id, u.role)}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-black border-2 transition-all hover:scale-105 uppercase tracking-wider ${u.role === 'admin'
-                            ? 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100'
-                            : u.role === 'super'
-                              ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
-                              : 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
-                            }`}
+                        <span
+                          className={`px-3 py-1.5 rounded-xl text-xs font-black border-2 transition-all uppercase tracking-wider ${(() => {
+                            const roleDef = roles.find(r => r.name === u.role);
+                            const color = roleDef?.color || 'indigo';
+                            const preset = colorPresets.find(p => p.value === color);
+                            return preset ? preset.class : 'bg-slate-50 text-slate-700 border-slate-200';
+                          })()}`}
                         >
-                          {u.role === 'admin' ? '🔐 Admin' : u.role === 'super' ? '⚡ Super' : '👤 User'}
-                        </button>
+                          {u.role === 'admin' ? '🔐 Admin' : u.role === 'super' ? '⚡ Super' : `👤 ${u.role}`}
+                        </span>
                       </td>
                       <td className="px-6 py-4">
-                        <button
-                          onClick={() => handleUpdateStatus(u.id, u.is_active)}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-black border-2 transition-all hover:scale-105 uppercase tracking-wider ${u.is_active
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                            : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+                        <span
+                          className={`px-3 py-1.5 rounded-xl text-xs font-black border-2 transition-all uppercase tracking-wider ${u.is_active
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            : 'bg-red-50 text-red-700 border-red-200'
                             }`}
                         >
                           {u.is_active ? '✅ Aktif' : '❌ Nonaktif'}
-                        </button>
+                        </span>
                       </td>
                       <td className="px-6 py-4 text-sm">
                         <div className="flex gap-2">
                           <button
+                            onClick={() => openEditUserModal(u)}
+                            className="text-blue-600 hover:text-blue-700 font-bold hover:bg-blue-50 px-2 py-1 rounded-lg transition"
+                            title="Edit User"
+                          >
+                            ✏️
+                          </button>
+                          <button
                             onClick={() => {
                               setSelectedUser(u);
+                              setResetPassword('');
                               setIsResetPasswordModalOpen(true);
                             }}
                             className="text-orange-600 hover:text-orange-700 font-bold hover:bg-orange-50 px-2 py-1 rounded-lg transition"
@@ -584,6 +753,82 @@ function AdminContent() {
         </div>
       )}
 
+      {activeTab === 'roles' && (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center bg-white p-6 rounded-3xl border-2 border-slate-100 shadow-sm">
+            <div>
+              <h2 className="text-xl font-black text-slate-900">Manajemen Role</h2>
+              <p className="text-sm font-bold text-slate-500">Kelola role dan hak akses menu</p>
+            </div>
+            <PremiumButton onClick={() => {
+              setSelectedRole(null);
+              setRoleFormData({ name: '', description: '', color: 'indigo' });
+              setIsRoleModalOpen(true);
+            }}>
+              <span className="text-lg">➕</span> Tambah Role
+            </PremiumButton>
+          </div>
+
+          <PremiumCard className="overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gradient-to-r from-slate-50 to-gray-50 border-b-2 border-slate-200">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-black text-slate-700 uppercase tracking-wider">Nama Role</th>
+                    <th className="px-6 py-4 text-left text-xs font-black text-slate-700 uppercase tracking-wider">Deskripsi</th>
+                    <th className="px-6 py-4 text-left text-xs font-black text-slate-700 uppercase tracking-wider">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {roles.map((r) => (
+                    <tr key={r.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-3 h-3 rounded-full ${colorPresets.find(p => p.value === r.color)?.dot || 'bg-slate-400'}`}></div>
+                          <span className="font-black text-slate-900 uppercase tracking-wider">{r.name}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-slate-500 font-medium">{r.description}</td>
+                      <td className="px-6 py-4 text-sm">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => openPermissionModal(r)}
+                            className="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-xl text-xs font-black transition-all"
+                            title="Manage Permissions"
+                          >
+                            🛡️ Permissions
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedRole(r);
+                              setRoleFormData({ name: r.name, description: r.description, color: r.color || 'indigo' });
+                              setIsRoleModalOpen(true);
+                            }}
+                            className="text-orange-600 hover:text-orange-700 font-bold hover:bg-orange-50 px-2 py-1 rounded-lg transition"
+                            title="Edit"
+                          >
+                            ✏️
+                          </button>
+                          {r.name !== 'admin' && (
+                            <button
+                              onClick={() => handleDeleteRole(r.id)}
+                              className="text-red-600 hover:text-red-700 font-bold hover:bg-red-50 px-2 py-1 rounded-lg transition"
+                              title="Hapus"
+                            >
+                              🗑️
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </PremiumCard>
+        </div>
+      )}
+
 
 
 
@@ -623,9 +868,9 @@ function AdminContent() {
               onChange={e => setUserFormData({ ...userFormData, role: e.target.value })}
               className="w-full px-4 py-3 border-2 border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium"
             >
-              <option value="user">User</option>
-              <option value="super">Super User</option>
-              <option value="admin">Admin</option>
+              {roles.map(r => (
+                <option key={r.id} value={r.name}>{r.name.charAt(0).toUpperCase() + r.name.slice(1)}</option>
+              ))}
             </select>
           </div>
           <div className="flex justify-end gap-3 pt-4">
@@ -682,6 +927,82 @@ function AdminContent() {
         </form>
       </PremiumModal>
 
+      {/* MODAL: Edit User */}
+      <PremiumModal
+        isOpen={isEditUserModalOpen}
+        onClose={() => {
+          setIsEditUserModalOpen(false);
+          setSelectedUser(null);
+        }}
+        title="Edit User"
+        size="sm"
+      >
+        <form onSubmit={handleUpdateUser} className="space-y-4">
+          <PremiumInput
+            label="Username"
+            type="text"
+            required
+            value={userFormData.username}
+            onChange={e => setUserFormData({ ...userFormData, username: e.target.value })}
+          />
+          <PremiumInput
+            label="Email"
+            type="email"
+            required
+            value={userFormData.email}
+            onChange={e => setUserFormData({ ...userFormData, email: e.target.value })}
+          />
+          <div>
+            <label className="block text-sm font-black text-slate-700 mb-2 uppercase tracking-wider">Role</label>
+            <select
+              value={userFormData.role}
+              onChange={e => setUserFormData({ ...userFormData, role: e.target.value })}
+              className="w-full px-4 py-3 border-2 border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium"
+            >
+              {roles.map(r => (
+                <option key={r.id} value={r.name}>{r.name.charAt(0).toUpperCase() + r.name.slice(1)}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-black text-slate-700 mb-2 uppercase tracking-wider">Status</label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setUserFormData({ ...userFormData, is_active: 1 })}
+                className={`flex-1 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all border-2 ${userFormData.is_active === 1
+                  ? 'bg-emerald-50 border-emerald-500 text-emerald-700 shadow-lg shadow-emerald-500/10'
+                  : 'bg-slate-50 border-slate-200 text-slate-400 opacity-50'
+                  }`}
+              >
+                ✅ Aktif
+              </button>
+              <button
+                type="button"
+                onClick={() => setUserFormData({ ...userFormData, is_active: 0 })}
+                className={`flex-1 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all border-2 ${userFormData.is_active === 0
+                  ? 'bg-red-50 border-red-500 text-red-700 shadow-lg shadow-red-500/10'
+                  : 'bg-slate-50 border-slate-200 text-slate-400 opacity-50'
+                  }`}
+              >
+                ❌ Nonaktif
+              </button>
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 pt-4">
+            <PremiumButton type="button" variant="secondary" onClick={() => {
+              setIsEditUserModalOpen(false);
+              setSelectedUser(null);
+            }}>
+              Batal
+            </PremiumButton>
+            <PremiumButton type="submit">
+              💾 Update User
+            </PremiumButton>
+          </div>
+        </form>
+      </PremiumModal>
+
       {/* MODAL: Reset Password */}
       <PremiumModal
         isOpen={isResetPasswordModalOpen}
@@ -721,6 +1042,103 @@ function AdminContent() {
             </div>
           </form>
         )}
+      </PremiumModal>
+      {/* MODAL: Role */}
+      <PremiumModal
+        isOpen={isRoleModalOpen}
+        onClose={() => setIsRoleModalOpen(false)}
+        title={selectedRole ? "Edit Role" : "Tambah Role Baru"}
+        size="sm"
+      >
+        <form onSubmit={handleSaveRole} className="space-y-4">
+          <PremiumInput
+            label="Nama Role"
+            type="text"
+            required
+            value={roleFormData.name}
+            onChange={e => setRoleFormData({ ...roleFormData, name: e.target.value.toLowerCase() })}
+            placeholder="contoh: teknisi"
+          />
+          <PremiumInput
+            label="Deskripsi"
+            type="text"
+            value={roleFormData.description}
+            onChange={e => setRoleFormData({ ...roleFormData, description: e.target.value })}
+            placeholder="Deskripsi singkat role ini"
+          />
+          <div>
+            <label className="block text-sm font-black text-slate-700 mb-2 uppercase tracking-wider">Design Status (Warna)</label>
+            <div className="grid grid-cols-4 gap-2">
+              {colorPresets.map((preset) => (
+                <button
+                  key={preset.value}
+                  type="button"
+                  onClick={() => setRoleFormData({ ...roleFormData, color: preset.value })}
+                  className={`flex flex-col items-center p-2 rounded-xl border-2 transition-all ${roleFormData.color === preset.value
+                    ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-100'
+                    : 'border-slate-100 bg-white hover:border-slate-200'
+                    }`}
+                >
+                  <div className={`w-6 h-6 rounded-full mb-1 ${preset.dot}`}></div>
+                  <span className="text-[10px] font-bold text-slate-600 uppercase">{preset.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 pt-4">
+            <PremiumButton type="button" variant="secondary" onClick={() => setIsRoleModalOpen(false)}>
+              Batal
+            </PremiumButton>
+            <PremiumButton type="submit">
+              💾 Simpan
+            </PremiumButton>
+          </div>
+        </form>
+      </PremiumModal>
+
+      {/* MODAL: Permissions */}
+      <PremiumModal
+        isOpen={isPermissionModalOpen}
+        onClose={() => setIsPermissionModalOpen(false)}
+        title={`Permissions: ${selectedRole?.name.toUpperCase()}`}
+        size="md"
+      >
+        <div className="space-y-4">
+          <p className="text-sm font-bold text-slate-500 px-1">Pilih menu yang dapat diakses oleh role ini:</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {availableMenus.map((menu) => {
+              const row = rolePermissions.find(p => p.menu_path === menu.path);
+              const isAllowed = row ? row.is_allowed === 1 : false;
+              return (
+                <button
+                  key={menu.path}
+                  onClick={() => togglePermission(menu.path)}
+                  className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${isAllowed
+                    ? 'bg-blue-50 border-blue-200 text-blue-700 ring-2 ring-blue-100'
+                    : 'bg-slate-50 border-slate-100 text-slate-400 hover:border-slate-200'
+                    }`}
+                >
+                  <div className="flex flex-col items-start">
+                    <span className="font-black text-sm">{menu.name}</span>
+                    <span className="text-[10px] opacity-70 font-mono">{menu.path}</span>
+                  </div>
+                  <div className={`w-6 h-6 rounded-lg flex items-center justify-center border-2 transition-all ${isAllowed ? 'bg-blue-600 border-blue-600 text-white' : 'bg-transparent border-slate-300'
+                    }`}>
+                    {isAllowed && <span className="text-xs">✓</span>}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          <div className="flex justify-end gap-3 pt-6">
+            <PremiumButton variant="secondary" onClick={() => setIsPermissionModalOpen(false)}>
+              Batal
+            </PremiumButton>
+            <PremiumButton onClick={handleSavePermissions}>
+              💾 Simpan Permissions
+            </PremiumButton>
+          </div>
+        </div>
       </PremiumModal>
     </div>
   );

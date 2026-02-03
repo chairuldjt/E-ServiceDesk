@@ -26,7 +26,7 @@ export async function PATCH(
             return NextResponse.json({ error: 'Post not found' }, { status: 404 });
         }
 
-        if (post[0].user_id !== payload.id && !['admin', 'super'].includes(payload.role)) {
+        if (post[0].user_id !== payload.id && !['admin', 'moderator'].includes(payload.role)) {
             connection.release();
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
@@ -88,7 +88,7 @@ export async function DELETE(
             return NextResponse.json({ error: 'Post not found' }, { status: 404 });
         }
 
-        if (post[0].user_id !== payload.id && !['admin', 'super'].includes(payload.role)) {
+        if (post[0].user_id !== payload.id && !['admin', 'moderator'].includes(payload.role)) {
             connection.release();
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }

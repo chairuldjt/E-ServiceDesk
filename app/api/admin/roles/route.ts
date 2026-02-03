@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { checkAdminAccess } from '@/lib/adminAuth';
@@ -10,7 +9,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const [rows] = await pool.query('SELECT * FROM webmin_users ORDER BY full_name ASC');
+        const [rows] = await pool.query('SELECT * FROM roles ORDER BY name ASC');
         return NextResponse.json(rows);
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
@@ -25,21 +24,21 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { webmin_id, username, full_name } = body;
+        const { name, description, color } = body;
 
-        if (!webmin_id || !username || !full_name) {
-            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        if (!name) {
+            return NextResponse.json({ error: 'Nama role wajib diisi' }, { status: 400 });
         }
 
         const [result]: any = await pool.execute(
-            'INSERT INTO webmin_users (webmin_id, username, full_name) VALUES (?, ?, ?)',
-            [webmin_id, username, full_name]
+            'INSERT INTO roles (name, description, color) VALUES (?, ?, ?)',
+            [name, description, color || 'indigo']
         );
 
-        return NextResponse.json({ id: result.insertId, webmin_id, username, full_name }, { status: 201 });
+        return NextResponse.json({ id: result.insertId, name, description, color: color || 'indigo' }, { status: 201 });
     } catch (error: any) {
         if (error.code === 'ER_DUP_ENTRY') {
-            return NextResponse.json({ error: 'Username already exists' }, { status: 409 });
+            return NextResponse.json({ error: 'Nama role sudah ada' }, { status: 409 });
         }
         return NextResponse.json({ error: error.message }, { status: 500 });
     }

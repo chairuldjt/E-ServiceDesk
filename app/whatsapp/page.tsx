@@ -20,11 +20,34 @@ const WhatsAppContent = () => {
     const { showToast, confirm } = useUI();
     const [state, setState] = useState<any>(null);
 
+    const [permissions, setPermissions] = useState<string[]>([]);
+
     useEffect(() => {
-        if (!userLoading && user && user.role !== 'admin' && user.role !== 'super') {
-            router.push('/dashboard');
+        const fetchPermissions = async () => {
+            try {
+                const res = await fetch('/api/auth/permissions');
+                if (res.ok) {
+                    const data = await res.json();
+                    setPermissions(data.permissions);
+                }
+            } catch (error) {
+                console.error('Failed to fetch permissions', error);
+            }
+        };
+        if (user) fetchPermissions();
+    }, [user]);
+
+    useEffect(() => {
+        if (!userLoading && user) {
+            // Allow if admin OR has /whatsapp permission
+            const hasPermission = user.role === 'admin' || permissions.includes('/whatsapp');
+
+            // Only redirect if permissions are loaded (avoid flickering redirect)
+            if (permissions.length > 0 && !hasPermission) {
+                router.push('/dashboard');
+            }
         }
-    }, [user, userLoading, router]);
+    }, [user, userLoading, permissions, router]);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
     const [activeTab, setActiveTab] = useState<'realtime' | 'upload'>('realtime');

@@ -44,8 +44,23 @@ function SettingsContent() {
 
     const [isWhatsappVisible, setIsWhatsappVisible] = useState(true);
 
+    const [permissions, setPermissions] = useState<string[]>([]);
+
+    const fetchPermissions = async () => {
+        try {
+            const res = await fetch('/api/auth/permissions');
+            if (res.ok) {
+                const data = await res.json();
+                setPermissions(data.permissions);
+            }
+        } catch (error) {
+            console.error('Failed to fetch permissions', error);
+        }
+    };
+
     useEffect(() => {
         fetchProfile();
+        fetchPermissions();
     }, []);
 
     const fetchProfile = async () => {
@@ -71,13 +86,11 @@ function SettingsContent() {
                 });
             }
 
-            // Fetch WhatsApp visibility setting (only for admin & super users)
-            if (user && (user.role === 'admin' || user.role === 'super')) {
-                const whatsappResp = await fetch('/api/settings/whatsapp-visibility');
-                const whatsappData = await whatsappResp.json();
-                if (whatsappResp.ok && whatsappData.visible !== undefined) {
-                    setIsWhatsappVisible(whatsappData.visible);
-                }
+            // Fetch WhatsApp visibility setting
+            const whatsappResp = await fetch('/api/settings/whatsapp-visibility');
+            const whatsappData = await whatsappResp.json();
+            if (whatsappResp.ok && whatsappData.visible !== undefined) {
+                setIsWhatsappVisible(whatsappData.visible);
             }
         } catch (error) {
             showToast('Gagal memuat profil', 'error');
@@ -451,8 +464,8 @@ function SettingsContent() {
                             </form>
                         </div>
 
-                        {/* WhatsApp Bot Visibility Section (Admin & Super Only) */}
-                        {(user?.role === 'admin' || user?.role === 'super') && (
+                        {/* WhatsApp Bot Visibility Section (Admin & Permissions based) */}
+                        {(user?.role === 'admin' || permissions.includes('/whatsapp')) && (
                             <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden">
                                 <div className="absolute top-0 right-0 w-24 h-24 bg-green-50 rounded-full flex items-center justify-center -mr-8 -mt-8 opacity-50">
                                     <span className="text-4xl">📱</span>

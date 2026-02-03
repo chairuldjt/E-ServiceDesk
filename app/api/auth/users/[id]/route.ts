@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
-import { getPayloadFromCookie } from '@/lib/jwt';
+import { checkAdminAccess } from '@/lib/adminAuth';
 import bcrypt from 'bcryptjs';
 
 // PUT update user (Role, Status, Reset Password)
@@ -9,9 +9,9 @@ export async function PUT(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const payload = await getPayloadFromCookie();
+        const payload = await checkAdminAccess();
 
-        if (!payload || payload.role !== 'admin') {
+        if (!payload) {
             return NextResponse.json(
                 { error: 'Unauthorized - Admin access required' },
                 { status: 403 }
@@ -91,9 +91,9 @@ export async function DELETE(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const payload = await getPayloadFromCookie();
+        const payload = await checkAdminAccess();
 
-        if (!payload || payload.role !== 'admin') {
+        if (!payload) {
             return NextResponse.json(
                 { error: 'Unauthorized - Admin access required' },
                 { status: 403 }

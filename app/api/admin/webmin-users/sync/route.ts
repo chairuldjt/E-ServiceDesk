@@ -1,13 +1,13 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getPayloadFromCookie } from '@/lib/jwt';
 import pool from '@/lib/db';
 import { getExternalUsers } from '@/lib/externalApi';
+import { checkAdminAccess } from '@/lib/adminAuth';
 
 export async function POST(request: NextRequest) {
     try {
-        const payload = await getPayloadFromCookie();
-        if (!payload || (payload.role !== 'admin' && payload.role !== 'super')) {
+        const payload = await checkAdminAccess();
+        if (!payload) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
