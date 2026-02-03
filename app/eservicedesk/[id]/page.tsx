@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useUI } from '@/context/UIContext';
-import { EXTERNAL_CATALOGS, EXTERNAL_USERS } from '@/lib/constants';
+import { EXTERNAL_CATALOGS } from '@/lib/constants';
 import { PageHeader, PremiumCard, PremiumButton, PremiumInput, PremiumTextarea, PremiumBadge, PremiumModal } from '@/components/ui/PremiumComponents';
 
 interface LogbookEntry {

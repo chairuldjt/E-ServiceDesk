@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
         const rekap: { [key: string]: number } = {};
         let totalOrder = 0;
 
-        const { EXTERNAL_USERS } = await import('@/lib/constants');
+        const [webminUsers]: any = await (await import('@/lib/db')).default.query('SELECT * FROM webmin_users');
 
         allOrders.forEach((o: any) => {
             if (o.create_date && o.create_date.includes(dateStringPHP)) {
@@ -72,13 +72,13 @@ export async function GET(request: NextRequest) {
                     const trimmed = nama.trim();
                     if (trimmed === "") return;
 
-                    // Match name with EXTERNAL_USERS to get full name
-                    const userMatch = EXTERNAL_USERS.find(u =>
-                        u.name.toLowerCase() === trimmed.toLowerCase() ||
-                        u.login?.toLowerCase() === trimmed.toLowerCase()
+                    // Match name with webminUsers to get full name
+                    const userMatch = webminUsers.find((u: any) =>
+                        u.full_name.toLowerCase() === trimmed.toLowerCase() ||
+                        (u.username && u.username.toLowerCase() === trimmed.toLowerCase())
                     );
 
-                    const displayName = userMatch ? userMatch.name : trimmed;
+                    const displayName = userMatch ? userMatch.full_name : trimmed;
                     rekap[displayName] = (rekap[displayName] || 0) + 1;
                 });
             }

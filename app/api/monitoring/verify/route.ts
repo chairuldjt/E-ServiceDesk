@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getExternalOrdersByStatus, postExternalVerify, getExternalOrderDetail, getExternalOrderHistory } from '@/lib/externalApi';
 import { getPayloadFromCookie } from '@/lib/jwt';
 import { getWebminConfig } from '@/lib/settings';
-import { EXTERNAL_USERS } from '@/lib/constants';
+
 
 export async function GET(request: NextRequest) {
     try {
@@ -64,7 +64,10 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Koneksi Webmin belum disetting.' }, { status: 400 });
         }
 
-        const externalUser = EXTERNAL_USERS.find(u => u.login === config.user);
+        const pool = (await import('@/lib/db')).default;
+        const [rows]: any = await pool.execute('SELECT * FROM webmin_users WHERE username = ?', [config.user]);
+        const externalUser = rows[0];
+
         if (!externalUser) {
             return NextResponse.json({ error: `User Webmin '${config.user}' tidak terdaftar.` }, { status: 400 });
         }
@@ -74,7 +77,7 @@ export async function POST(request: NextRequest) {
             status_code: status_code.toString(),
             faq_note: faq_note || "",
             note: note || "",
-            update_by: externalUser.id
+            update_by: externalUser.webmin_id
         };
 
         const result = await postExternalVerify(payload.id, verifyPayload);

@@ -38,13 +38,25 @@ interface User {
   created_at: string;
 }
 
+interface WebminUser {
+  id: number;
+  webmin_id: number;
+  username: string;
+  full_name: string;
+}
+
 function AdminContent() {
   const { user, isLoading: userLoading } = useAuth();
   const { showToast, confirm } = useUI();
   const router = useRouter();
   const [eservicedeskEntries, setEServiceDeskEntries] = useState<EServiceDeskEntry[]>([]);
   const [users, setUsers] = useState<User[]>([]);
-  const [activeTab, setActiveTab] = useState<'overview' | 'users'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'webmin'>('overview');
+
+  const [webminUsers, setWebminUsers] = useState<WebminUser[]>([]);
+  const [isWebminModalOpen, setIsWebminModalOpen] = useState(false);
+  const [selectedWebminUser, setSelectedWebminUser] = useState<WebminUser | null>(null);
+  const [webminFormData, setWebminFormData] = useState({ webmin_id: '', username: '', full_name: '' });
 
   const [stats, setStats] = useState({
     total: 0,
@@ -70,6 +82,7 @@ function AdminContent() {
     }
     fetchLogbook();
     fetchUsers();
+    fetchWebminUsers();
   }, [user, userLoading, router]);
 
   const fetchLogbook = async () => {
@@ -104,6 +117,77 @@ function AdminContent() {
       console.error('Error fetching users:', error);
       showToast('Gagal memuat users', 'error');
     }
+  };
+
+  const fetchWebminUsers = async () => {
+    try {
+      const response = await fetch('/api/admin/webmin-users');
+      if (response.ok) {
+        const data = await response.json();
+        setWebminUsers(data || []);
+      } else {
+        showToast('Gagal memuat webmin users', 'error');
+      }
+    } catch (error) {
+      console.error('Error fetching webmin users:', error);
+      showToast('Gagal memuat webmin users', 'error');
+    }
+  };
+
+  const handleSaveWebminUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const isEdit = !!selectedWebminUser;
+    const url = isEdit ? `/api/admin/webmin-users/${selectedWebminUser.id}` : '/api/admin/webmin-users';
+    const method = isEdit ? 'PUT' : 'POST';
+
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(webminFormData)
+      });
+      if (res.ok) {
+        showToast(`User Webmin berhasil ${isEdit ? 'diupdate' : 'dibuat'}`, 'success');
+        setIsWebminModalOpen(false);
+        setWebminFormData({ webmin_id: '', username: '', full_name: '' });
+        setSelectedWebminUser(null);
+        fetchWebminUsers();
+      } else {
+        const err = await res.json();
+        showToast(err.error || 'Gagal menyimpan user webmin', 'error');
+      }
+    } catch (error) {
+      console.error(error); showToast('Terjadi kesalahan', 'error');
+    }
+  };
+
+  const handleDeleteWebminUser = (id: number) => {
+    confirm('Hapus Webmin User?', 'Yakin ingin menghapus user ini dari Webmin?', async () => {
+      try {
+        const res = await fetch(`/api/admin/webmin-users/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          showToast('User Webmin dihapus', 'success');
+          fetchWebminUsers();
+        } else {
+          showToast('Gagal menghapus user', 'error');
+        }
+      } catch (error) { console.error(error); showToast('Terjadi kesalahan', 'error'); }
+    });
+  };
+
+  const openWebminModal = (user?: WebminUser) => {
+    if (user) {
+      setSelectedWebminUser(user);
+      setWebminFormData({
+        webmin_id: user.webmin_id.toString(),
+        username: user.username || '',
+        full_name: user.full_name
+      });
+    } else {
+      setSelectedWebminUser(null);
+      setWebminFormData({ webmin_id: '', username: '', full_name: '' });
+    }
+    setIsWebminModalOpen(true);
   };
 
   const handleCreateUser = async (e: React.FormEvent) => {
@@ -259,6 +343,15 @@ function AdminContent() {
           >
             👥 Users
           </button>
+          <button
+            onClick={() => setActiveTab('webmin')}
+            className={`flex-1 py-3 px-4 font-bold text-sm rounded-xl transition-all ${activeTab === 'webmin'
+              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+              : 'text-slate-600 hover:bg-slate-50'
+              }`}
+          >
+            🔌 Webmin Users
+          </button>
 
         </div>
       </PremiumCard>
@@ -394,6 +487,59 @@ function AdminContent() {
         </div>
       )}
 
+      {activeTab === 'webmin' && (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-black text-slate-900">Manajemen Webmin Users</h2>
+            <PremiumButton onClick={() => openWebminModal()}>
+              <span className="text-lg">➕</span> Tambah Webmin User
+            </PremiumButton>
+          </div>
+
+          <PremiumCard className="overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gradient-to-r from-slate-50 to-gray-50 border-b-2 border-slate-200">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-black text-slate-700 uppercase tracking-wider">Webmin ID</th>
+                    <th className="px-6 py-4 text-left text-xs font-black text-slate-700 uppercase tracking-wider">Login (Username)</th>
+                    <th className="px-6 py-4 text-left text-xs font-black text-slate-700 uppercase tracking-wider">Nama Lengkap</th>
+                    <th className="px-6 py-4 text-left text-xs font-black text-slate-700 uppercase tracking-wider">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {webminUsers.map((u) => (
+                    <tr key={u.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-6 py-4 font-mono text-sm">{u.webmin_id}</td>
+                      <td className="px-6 py-4 font-bold text-slate-900">{u.username}</td>
+                      <td className="px-6 py-4 text-slate-600">{u.full_name}</td>
+                      <td className="px-6 py-4 text-sm">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => openWebminModal(u)}
+                            className="text-orange-600 hover:text-orange-700 font-bold hover:bg-orange-50 px-2 py-1 rounded-lg transition"
+                            title="Edit"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            onClick={() => handleDeleteWebminUser(u.id)}
+                            className="text-red-600 hover:text-red-700 font-bold hover:bg-red-50 px-2 py-1 rounded-lg transition"
+                            title="Hapus"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </PremiumCard>
+        </div>
+      )}
+
 
 
 
@@ -440,6 +586,49 @@ function AdminContent() {
           </div>
           <div className="flex justify-end gap-3 pt-4">
             <PremiumButton type="button" variant="secondary" onClick={() => setIsUserModalOpen(false)}>
+              Batal
+            </PremiumButton>
+            <PremiumButton type="submit">
+              💾 Simpan
+            </PremiumButton>
+          </div>
+        </form>
+      </PremiumModal>
+
+      {/* MODAL: Webmin User */}
+      <PremiumModal
+        isOpen={isWebminModalOpen}
+        onClose={() => setIsWebminModalOpen(false)}
+        title={selectedWebminUser ? "Edit Webmin User" : "Tambah Webmin User"}
+        size="sm"
+      >
+        <form onSubmit={handleSaveWebminUser} className="space-y-4">
+          <PremiumInput
+            label="Webmin ID (ID External)"
+            type="number"
+            required
+            value={webminFormData.webmin_id}
+            onChange={e => setWebminFormData({ ...webminFormData, webmin_id: e.target.value })}
+            placeholder="Contoh: 123"
+          />
+          <PremiumInput
+            label="Username (Login)"
+            type="text"
+            required
+            value={webminFormData.username}
+            onChange={e => setWebminFormData({ ...webminFormData, username: e.target.value })}
+            placeholder="Contoh: windydwi"
+          />
+          <PremiumInput
+            label="Nama Lengkap"
+            type="text"
+            required
+            value={webminFormData.full_name}
+            onChange={e => setWebminFormData({ ...webminFormData, full_name: e.target.value })}
+            placeholder="Contoh: Windy Dwi"
+          />
+          <div className="flex justify-end gap-3 pt-4">
+            <PremiumButton type="button" variant="secondary" onClick={() => setIsWebminModalOpen(false)}>
               Batal
             </PremiumButton>
             <PremiumButton type="submit">

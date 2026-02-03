@@ -4,7 +4,7 @@ import { ProtectedRoute } from '@/components/ProtectedRoute';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useUI } from '@/context/UIContext';
-import { EXTERNAL_CATALOGS, EXTERNAL_USERS } from '@/lib/constants';
+import { EXTERNAL_CATALOGS } from '@/lib/constants';
 import { PageHeader, PremiumCard, PremiumButton, PremiumModal, PremiumInput, PremiumTextarea, PremiumBadge, SearchBar, CustomDropdown } from '@/components/ui/PremiumComponents';
 
 interface LogbookEntry {
