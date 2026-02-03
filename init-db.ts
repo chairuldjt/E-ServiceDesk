@@ -111,7 +111,7 @@ async function initDatabase() {
                 username VARCHAR(100) NOT NULL UNIQUE,
                 email VARCHAR(100) NOT NULL UNIQUE,
                 password_hash VARCHAR(255) NOT NULL,
-                role ENUM('user', 'admin', 'super') DEFAULT 'user',
+                role VARCHAR(50) DEFAULT 'user',
                 is_active TINYINT(1) DEFAULT 1,
                 profile_image VARCHAR(255) DEFAULT NULL,
                 telegram_session TEXT DEFAULT NULL,
@@ -119,6 +119,32 @@ async function initDatabase() {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         `);
         console.log('   - Table "users" ready');
+
+        // Roles Table
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS roles (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(50) NOT NULL UNIQUE,
+                description VARCHAR(255),
+                color VARCHAR(50) DEFAULT 'indigo',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        `);
+        console.log('   - Table "roles" ready');
+
+        // Role Permissions Table
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS role_permissions (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                role_id INT NOT NULL,
+                menu_path VARCHAR(255) NOT NULL,
+                is_allowed TINYINT(1) DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE KEY unique_perm (role_id, menu_path),
+                FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        `);
+        console.log('   - Table "role_permissions" ready');
 
         // Logbook Table
         await connection.query(`
@@ -352,13 +378,21 @@ async function initDatabase() {
             console.log('   - Column "images" added successfully');
         }
 
-        // Update role enum to include 'super'
-        console.log('   - Updating "users" role ENUM to include "super"...');
+        // Update role enum to VARCHAR to support dynamic roles
+        console.log('   - Ensuring "users" role column is VARCHAR...');
         try {
-            await connection.query("ALTER TABLE users MODIFY COLUMN role ENUM('user', 'admin', 'super') DEFAULT 'user'");
-            console.log('   - Role ENUM updated successfully');
+            await connection.query("ALTER TABLE users MODIFY COLUMN role VARCHAR(50) DEFAULT 'user'");
+            console.log('   - Role column updated successfully');
         } catch (e: any) {
-            console.log('   - Skipping role ENUM update (maybe already updated)');
+            console.log('   - Skipping role column update');
+        }
+
+        // Ensure color column in roles
+        const [roleCols]: any = await connection.query('SHOW COLUMNS FROM roles');
+        if (!roleCols.some((col: any) => col.Field === 'color')) {
+            console.log('   - Adding "color" column to "roles" table...');
+            await connection.query('ALTER TABLE roles ADD COLUMN color VARCHAR(50) DEFAULT "indigo"');
+            console.log('   - Column "color" added successfully');
         }
 
         // Step 4: Seed Admin User
@@ -375,6 +409,25 @@ async function initDatabase() {
             console.log(`✅ Admin user created (admin@eservicedesk.com / ${adminPassword})`);
         } else {
             console.log('ℹ️ Admin user already exists');
+        }
+
+        // Step 5: Seed Default Roles
+        console.log('Seeding default roles...');
+        const [roleCount]: any = await connection.query('SELECT COUNT(*) as count FROM roles');
+        if (roleCount[0].count === 0) {
+            await connection.query("INSERT INTO roles (name, description, color) VALUES ('admin', 'System Administrator', 'purple'), ('user', 'Regular User', 'indigo'), ('moderator', 'Staff/Moderator', 'amber')");
+            console.log('✅ Default roles seeded');
+
+            // Seed basic permissions for admin
+            const [adminRole]: any = await connection.query("SELECT id FROM roles WHERE name = 'admin'");
+            if (adminRole.length > 0) {
+                const adminId = adminRole[0].id;
+                const menus = ['/dashboard', '/timeline', '/eservicedesk', '/monitoring', '/order', '/notepad', '/chatbot', '/whatsapp', '/telegram', '/admin'];
+                for (const menu of menus) {
+                    await connection.query("INSERT IGNORE INTO role_permissions (role_id, menu_path, is_allowed) VALUES (?, ?, 1)", [adminId, menu]);
+                }
+                console.log('✅ Admin permissions seeded');
+            }
         }
 
         console.log('\n--- Database Initialization Complete ---');
