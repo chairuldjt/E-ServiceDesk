@@ -133,7 +133,8 @@ export async function getExternalCatalogs(userId: number) {
 
 export async function getExternalUsers(userId: number) {
     const { jwt, BASE } = await getExternalToken(userId);
-    const res = await fetch(`${BASE}/user/user_list`, {
+    // Changed from /user/user_list to /secure/user_list matching other working endpoints
+    const res = await fetch(`${BASE}/secure/user_list`, {
         headers: {
             'Authorization': `Bearer ${jwt}`,
             'access-token': jwt,
@@ -141,9 +142,12 @@ export async function getExternalUsers(userId: number) {
         },
     });
 
-    if (!res.ok) return [];
+    if (!res.ok) {
+        console.error('getExternalUsers failed:', res.status, await res.text());
+        return [];
+    }
     const data = await res.json();
-    return data.result || [];
+    return data.result || data || [];
 }
 
 export async function getExternalOrdersByStatus(userId: number, status: number) {

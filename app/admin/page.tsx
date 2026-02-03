@@ -306,6 +306,30 @@ function AdminContent() {
     });
   };
 
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const handleSyncWebmin = async () => {
+    setIsSyncing(true);
+    try {
+      const response = await fetch('/api/admin/webmin-users/sync', {
+        method: 'POST',
+      });
+      const data = await response.json();
+
+      if (response.ok) {
+        showToast(`Sync Selesai. +${data.added} data baru.`, 'success');
+        fetchWebminUsers();
+      } else {
+        showToast(data.error || 'Gagal sinkronisasi', 'error');
+      }
+    } catch (error) {
+      console.error('Error syncing:', error);
+      showToast('Gagal menghubungi server', 'error');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   if (userLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -487,16 +511,36 @@ function AdminContent() {
         </div>
       )}
 
+      {/* ... inside AdminContent ... */}
+      {/* ... previous content or tabs ... */}
+
       {activeTab === 'webmin' && (
         <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-black text-slate-900">Manajemen Webmin Users</h2>
-            <PremiumButton onClick={() => openWebminModal()}>
-              <span className="text-lg">➕</span> Tambah Webmin User
-            </PremiumButton>
+          <div className="flex justify-between items-center bg-white p-6 rounded-3xl border-2 border-slate-100 shadow-sm">
+            <div>
+              <h2 className="text-xl font-black text-slate-900">Manajemen Webmin Users</h2>
+              <p className="text-sm font-bold text-slate-500">Kelola daftar user external dari database</p>
+            </div>
+
+            <div className="flex gap-3">
+              <PremiumButton
+                onClick={handleSyncWebmin}
+                variant="secondary"
+                disabled={isSyncing}
+                className="bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100 shadow-none border-2"
+              >
+                <span className={`text-lg ${isSyncing ? 'animate-spin' : ''}`}>🔄</span>
+                {isSyncing ? 'Syncing...' : 'Fetch Update'}
+              </PremiumButton>
+
+              <PremiumButton onClick={() => openWebminModal()}>
+                <span className="text-lg">➕</span> Tambah Webmin User
+              </PremiumButton>
+            </div>
           </div>
 
           <PremiumCard className="overflow-hidden">
+
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gradient-to-r from-slate-50 to-gray-50 border-b-2 border-slate-200">

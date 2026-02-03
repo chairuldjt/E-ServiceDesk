@@ -491,21 +491,14 @@ Terima kasih`;
                         </div>
                       </td>
                       <td className="px-8 py-5 text-center">
-                        {(user?.role === 'admin' || user?.role === 'super') && (
-                          <button
-                            onClick={() => handleToggleOffOrder(item.teknisi, item.isOff)}
-                            className={`text-[10px] font-black px-3 py-1 rounded-lg border-2 transition-all ${item.isOff
-                              ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100'
-                              : 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'}`}
-                          >
-                            {item.isOff ? 'SET ACTIVE' : 'SET OFF'}
-                          </button>
-                        )}
-                        {user?.role === 'user' && (
-                          <span className={`text-[10px] font-black uppercase ${item.isOff ? 'text-red-500' : 'text-emerald-500'}`}>
-                            {item.isOff ? 'Off Order' : 'Active'}
-                          </span>
-                        )}
+                        <button
+                          onClick={() => handleToggleOffOrder(item.teknisi, item.isOff)}
+                          className={`text-[10px] font-black px-3 py-1 rounded-lg border-2 transition-all ${item.isOff
+                            ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100'
+                            : 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'}`}
+                        >
+                          {item.isOff ? 'SET ACTIVE' : 'SET OFF'}
+                        </button>
                       </td>
                     </tr>
                   );

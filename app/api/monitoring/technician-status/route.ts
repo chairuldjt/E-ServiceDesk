@@ -13,8 +13,8 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
     const payload = await getPayloadFromCookie();
-    if (!payload || payload.role !== 'admin' && payload.role !== 'super') {
-        return NextResponse.json({ error: 'Unauthorized: Admin only' }, { status: 401 });
+    if (!payload) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     try {
