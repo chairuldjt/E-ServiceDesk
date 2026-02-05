@@ -192,6 +192,29 @@ export function CreatePost({ onPostCreated }: CreatePostProps) {
                                 }
                             }
                         }}
+                        onPaste={(e) => {
+                            const items = e.clipboardData?.items;
+                            if (!items) return;
+
+                            const files: File[] = [];
+                            for (let i = 0; i < items.length; i++) {
+                                if (items[i].type.indexOf('image') !== -1) {
+                                    const file = items[i].getAsFile();
+                                    if (file) files.push(file);
+                                }
+                            }
+
+                            if (files.length > 0) {
+                                setSelectedImages(prev => [...prev, ...files]);
+                                files.forEach(file => {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => {
+                                        setPreviews(prev => [...prev, reader.result as string]);
+                                    };
+                                    reader.readAsDataURL(file);
+                                });
+                            }
+                        }}
                         placeholder="Apa yang Anda pikirkan?"
                         className="w-full min-h-[120px] px-4 pt-3 pb-2 border-none focus:ring-0 outline-none text-slate-800 placeholder:text-slate-400 text-lg resize-none leading-relaxed bg-transparent"
                     />
