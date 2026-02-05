@@ -253,7 +253,7 @@ Terima kasih`;
             href="/eservicedesk/create"
             className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-2xl hover:shadow-xl hover:shadow-blue-200 transition-all font-bold flex items-center gap-2 active:scale-95"
           >
-            <span className="text-lg">➕</span> Tambah Catatan
+            <span className="text-lg">➕</span> Tambah Order
           </Link>
         </div>
       </div>

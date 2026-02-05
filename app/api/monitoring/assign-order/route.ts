@@ -27,7 +27,9 @@ export async function POST(request: NextRequest) {
             user_id: payload.id // Using local user ID
         };
 
+        console.log('Sending Delegation to External API:', JSON.stringify(externalPayload));
         const result = await postExternalAssignOrderSave(payload.id, externalPayload);
+        console.log('External Delegation Response:', JSON.stringify(result));
         return NextResponse.json(result);
     } catch (error: any) {
         console.error('Assign Order API Error:', error);

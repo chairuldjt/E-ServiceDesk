@@ -474,7 +474,7 @@ function AdminContent() {
   const availableMenus = [
     { name: 'Dashboard', path: '/dashboard' },
     { name: 'Timeline', path: '/timeline' },
-    { name: 'Logbook', path: '/eservicedesk' },
+    { name: 'Create Order', path: '/eservicedesk' },
     { name: 'Monitoring', path: '/monitoring' },
     { name: 'Order', path: '/order' },
     { name: 'Notepad', path: '/notepad' },

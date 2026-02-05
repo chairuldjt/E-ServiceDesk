@@ -231,6 +231,25 @@ function VerifyOrderContent() {
         }
     };
 
+    const handleEditQuick = async (orderId: number) => {
+        setFetchingDetail(true);
+        try {
+            const response = await fetch(`/api/monitoring/verify/${orderId}`);
+            const data = await response.json();
+            if (response.ok) {
+                setEditFormData(data.result);
+                setIsEditModalOpen(true);
+                fetchAssignList(orderId);
+            } else {
+                showToast(data.error || 'Gagal mengambil detail untuk edit', 'error');
+            }
+        } catch (error) {
+            showToast('Terjadi kesalahan koneksi untuk edit', 'error');
+        } finally {
+            setFetchingDetail(false);
+        }
+    };
+
     const handleCancelOrder = async () => {
         if (!selectedOrder) return;
         confirm('Delete Order?', 'Apakah Anda yakin ingin membatalkan/menghapus order ini?', async () => {
@@ -290,9 +309,33 @@ function VerifyOrderContent() {
             });
 
             if (response.ok) {
-                showToast('Order berhasil dperbarui', 'success');
+                // If technician selected during edit, auto-assign
+                let delegated = false;
+                if (selectedTeknisi) {
+                    try {
+                        const assignRes = await fetch('/api/monitoring/assign-order', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                order_id: editFormData.order_id,
+                                id: editFormData.order_id,
+                                teknisi_id: selectedTeknisi.id,
+                                nama_lengkap: selectedTeknisi.name,
+                                assign_type_code: "1",
+                                assign_desc: "NEW", // Or "EDITED" depending on preference
+                                emoji_code: ":gear:"
+                            })
+                        });
+                        if (assignRes.ok) delegated = true;
+                    } catch (err) {
+                        console.error('Auto assign failed during edit:', err);
+                    }
+                }
+
+                showToast(`Order berhasil diperbarui${delegated ? ' & Delegasi dikirim' : ''}`, 'success');
                 setIsEditModalOpen(false);
                 setIsDetailModalOpen(false);
+                setSelectedTeknisi(null);
                 fetchOrders(currentStatus);
             } else {
                 const data = await response.json();
@@ -666,6 +709,11 @@ Maintenance: Tidak`;
                                                             onClick: () => handleViewDetail(order.order_id)
                                                         },
                                                         ...((currentStatus === 10 || currentStatus === 11 || currentStatus === 12) ? [
+                                                            {
+                                                                label: 'Edit Data Order',
+                                                                icon: '✏️',
+                                                                onClick: () => handleEditQuick(order.order_id)
+                                                            },
                                                             {
                                                                 label: 'Delegasikan Tugas',
                                                                 icon: '👥',
@@ -1127,6 +1175,25 @@ Maintenance: Tidak`;
                             required
                             rows={4}
                         />
+
+                        <div className="p-6 bg-blue-50/50 rounded-3xl border border-blue-100 space-y-4">
+                            <CustomDropdown
+                                label="Ganti / Delegasi Teknisi (Opsional)"
+                                value={selectedTeknisi?.id?.toString() || ''}
+                                onChange={val => {
+                                    const tech = assignList.find(t => t.teknisi_id.toString() === val);
+                                    setSelectedTeknisi(tech ? { id: tech.teknisi_id, name: tech.nama_lengkap } : null);
+                                }}
+                                options={[
+                                    { value: '', label: '-- Tetap / Pilih Teknisi Baru --' },
+                                    ...assignList.map((t: any) => ({
+                                        value: t.teknisi_id.toString(),
+                                        label: t.nama_lengkap
+                                    }))
+                                ]}
+                            />
+                            <p className="text-[10px] text-slate-400 font-bold px-1 italic">* Jika dipilih, tiket akan otomatis didelegasikan ke teknisi tersebut setelah disimpan.</p>
+                        </div>
                         <div className="flex gap-4 pt-4">
                             <PremiumButton
                                 type="button"

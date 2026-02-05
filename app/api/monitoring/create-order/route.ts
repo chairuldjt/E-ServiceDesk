@@ -60,7 +60,29 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        return NextResponse.json(result);
+        console.log('External Order System Response:', JSON.stringify(result));
+
+        let orderId = result.id || result.order_id || (result.result && (result.result.id || result.result.order_id)) || (result.payload && result.payload.order_id);
+
+        if ((!orderId || orderId === 0) && result.payload && result.payload.order_no) {
+            console.log(`ID not found directly. Attempting to lookup Order ID for No: ${result.payload.order_no}`);
+            try {
+                const { getExternalOrdersByStatus } = await import('@/lib/externalApi');
+                const openOrders = await getExternalOrdersByStatus(payload.id, 10);
+                const matched = (openOrders || []).find((o: any) => o.order_no === result.payload.order_no);
+                if (matched) {
+                    orderId = matched.order_id;
+                    console.log(`Lookup successful! ID: ${orderId}`);
+                }
+            } catch (err) {
+                console.error('Lookup failed:', err);
+            }
+        }
+
+        return NextResponse.json({
+            ...result,
+            id: orderId
+        });
     } catch (error: any) {
         console.error('Create External Order API Error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });

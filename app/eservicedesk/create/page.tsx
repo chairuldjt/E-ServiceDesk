@@ -3,14 +3,25 @@
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useUI } from '@/context/UIContext';
-import { PageHeader, PremiumCard, PremiumButton, PremiumInput, PremiumTextarea } from '@/components/ui/PremiumComponents';
+import { EXTERNAL_CATALOGS } from '@/lib/constants';
+import { PageHeader, PremiumCard, PremiumButton, PremiumInput, PremiumTextarea, CustomDropdown } from '@/components/ui/PremiumComponents';
 
 interface LogbookFormEntry {
   extensi: string;
   lokasi: string;
   catatan: string;
+  service_catalog_id: string;
+  createExternal: boolean;
+  technician_id: string;
+  technician_name: string;
+}
+
+interface Technician {
+  teknisi_id: number;
+  nama_lengkap: string;
+  nama_bidang: string;
 }
 
 export default function CreateLogbookPage() {
@@ -26,14 +37,31 @@ function CreateLogbookContent() {
   const { showToast } = useUI();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [technicians, setTechnicians] = useState<Technician[]>([]);
 
   // Multi-entry state
   const [entries, setEntries] = useState<LogbookFormEntry[]>([
-    { extensi: '', lokasi: '', catatan: '' }
+    { extensi: '', lokasi: '', catatan: '', service_catalog_id: '11', createExternal: false, technician_id: '', technician_name: '' }
   ]);
 
+  useEffect(() => {
+    fetchTechnicians();
+  }, []);
+
+  const fetchTechnicians = async () => {
+    try {
+      const res = await fetch('/api/monitoring/assign-list?orderId=0');
+      const data = await res.json();
+      if (res.ok) {
+        setTechnicians(data.result || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch technicians', err);
+    }
+  };
+
   const handleAddRow = () => {
-    setEntries([...entries, { extensi: '', lokasi: '', catatan: '' }]);
+    setEntries([...entries, { extensi: '', lokasi: '', catatan: '', service_catalog_id: '11', createExternal: false, technician_id: '', technician_name: '' }]);
   };
 
   const handleRemoveRow = (index: number) => {
@@ -42,10 +70,83 @@ function CreateLogbookContent() {
     }
   };
 
-  const handleChange = (index: number, field: keyof LogbookFormEntry, value: string) => {
+  const handleChange = (index: number, field: keyof LogbookFormEntry, value: any) => {
     const newEntries = [...entries];
-    newEntries[index][field] = value;
+    (newEntries[index] as any)[field] = value;
+
+    // Special case for technician name
+    if (field === 'technician_id') {
+      const selected = technicians.find(t => t.teknisi_id.toString() === value);
+      newEntries[index].technician_name = selected ? selected.nama_lengkap : '';
+    }
+
     setEntries(newEntries);
+  };
+
+  const callExternalApi = async (entry: LogbookFormEntry, logbookId: number) => {
+    try {
+      // 1. Create External Order (Status will be OPEN)
+      const response = await fetch('/api/monitoring/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          catatan: entry.catatan || entry.lokasi,
+          ext_phone: entry.extensi,
+          location_desc: entry.lokasi,
+          service_catalog_id: entry.service_catalog_id,
+          logbookId: logbookId
+        }),
+      });
+
+      const orderData = await response.json();
+      console.log('External Order System Response:', orderData);
+
+      if (!response.ok) {
+        console.error('External API failed:', orderData);
+        return { success: false, error: orderData.error };
+      }
+
+      const externalOrderId = orderData.id;
+
+      // 2. If technician is selected, DELEGATE automatically
+      if (entry.createExternal && entry.technician_id && externalOrderId) {
+        // High delay to ensure external DB is ready
+        await new Promise(r => setTimeout(r, 1000));
+
+        console.log(`Auto-delegating Order ID: ${externalOrderId} to Technician: ${entry.technician_id}`);
+
+        try {
+          const assignRes = await fetch('/api/monitoring/assign-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              order_id: externalOrderId,
+              id: externalOrderId,
+              teknisi_id: entry.technician_id,
+              nama_lengkap: entry.technician_name,
+              assign_type_code: "1",
+              assign_desc: "NEW", // Match standard flow
+              emoji_code: ":gear:"
+            })
+          });
+
+          if (!assignRes.ok) {
+            const assignErr = await assignRes.json();
+            console.error('Auto Delegation Failed:', assignErr);
+            return { success: true, warning: 'Order terbuat tapi gagal delegasi: ' + (assignErr.error || 'Unknown error') };
+          }
+          return { success: true, delegated: true };
+        } catch (assignCatch) {
+          console.error('Auto Delegation Error:', assignCatch);
+          return { success: true, warning: 'Order terbuat tapi gagal delegasi (Koneksi)' };
+        }
+      }
+
+      return { success: true };
+    } catch (err) {
+      console.error('External API error:', err);
+      return { success: false, error: 'Connection error' };
+    }
   };
 
   const handleSaveSingle = async (index: number) => {
@@ -63,16 +164,34 @@ function CreateLogbookContent() {
         body: JSON.stringify({ ...entry, nama: entry.lokasi }),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        showToast('Order berhasil disimpan', 'success');
+        let externalMsg = '';
+        let isError = false;
+
+        if (entry.createExternal && data.ids && data.ids[0]) {
+          const extResult = await callExternalApi(entry, data.ids[0]);
+          if (extResult.success) {
+            externalMsg = extResult.delegated ? ' & Delegasi Berhasil' : ' & External Order Sent';
+            if (extResult.warning) {
+              externalMsg = ` (${extResult.warning})`;
+              isError = true;
+            }
+          } else {
+            externalMsg = ' (Gagal external: ' + extResult.error + ')';
+            isError = true;
+          }
+        }
+
+        showToast(`Order berhasil disimpan${externalMsg}`, isError ? 'error' : 'success');
+
         if (entries.length > 1) {
           setEntries(entries.filter((_, i) => i !== index));
         } else {
-          // If it was the last row, redirect
           router.push('/eservicedesk');
         }
       } else {
-        const data = await response.json();
         showToast(data.error || 'Gagal menyimpan order', 'error');
       }
     } catch (error) {
@@ -88,7 +207,6 @@ function CreateLogbookContent() {
     setError('');
 
     try {
-      // Map entries for API (lokasi -> nama)
       const apiPayload = entries.map(entry => ({
         ...entry,
         nama: entry.lokasi
@@ -96,9 +214,7 @@ function CreateLogbookContent() {
 
       const response = await fetch('/api/eservicedesk', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(apiPayload),
       });
 
@@ -106,10 +222,37 @@ function CreateLogbookContent() {
 
       if (!response.ok) {
         setError(data.error || 'Gagal membuat logbook');
+        setLoading(false);
         return;
       }
 
-      showToast(`${entries.length} Catatan berhasil dibuat`, 'success');
+      // Handle External Orders & Delegation
+      let successExt = 0;
+      let failExt = 0;
+      let successDel = 0;
+
+      if (data.ids && data.ids.length === entries.length) {
+        for (let i = 0; i < entries.length; i++) {
+          if (entries[i].createExternal) {
+            const result = await callExternalApi(entries[i], data.ids[i]);
+            if (result.success) {
+              successExt++;
+              if (result.delegated) successDel++;
+            } else {
+              failExt++;
+            }
+            // Small delay to prevent rate limit
+            await new Promise(r => setTimeout(r, 400));
+          }
+        }
+      }
+
+      let toastMsg = `${entries.length} Catatan disimpan.`;
+      if (successExt > 0) toastMsg += ` External: ${successExt} sent.`;
+      if (successDel > 0) toastMsg += ` Delegasi: ${successDel} ok.`;
+      if (failExt > 0) toastMsg += ` Gagal: ${failExt}.`;
+
+      showToast(toastMsg, failExt > 0 ? 'error' : 'success');
       router.push('/eservicedesk');
     } catch (error) {
       setError('Terjadi kesalahan: ' + (error instanceof Error ? error.message : 'Unknown error'));
@@ -123,7 +266,7 @@ function CreateLogbookContent() {
       <PageHeader
         icon="➕"
         title="Tambah Order Baru"
-        subtitle="Buat beberapa catatan pekerjaan sekaligus"
+        subtitle="Buat catatan internal + external order + delegasi sekaligus"
         actions={
           <Link href="/eservicedesk">
             <PremiumButton variant="secondary" className="px-6 text-xs uppercase tracking-widest">
@@ -165,33 +308,80 @@ function CreateLogbookContent() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <PremiumInput
-                  label="Extensi"
-                  type="text"
-                  value={entry.extensi}
-                  onChange={(e) => handleChange(index, 'extensi', e.target.value)}
-                  placeholder="Contoh: 1234"
-                  required
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                <div className="space-y-6">
+                  <PremiumInput
+                    label="Nomor Extensi"
+                    type="text"
+                    value={entry.extensi}
+                    onChange={(e) => handleChange(index, 'extensi', e.target.value)}
+                    placeholder="Contoh: 1234"
+                    required
+                  />
 
-                <PremiumInput
-                  label="Nama / Lokasi"
-                  type="text"
-                  value={entry.lokasi}
-                  onChange={(e) => handleChange(index, 'lokasi', e.target.value)}
-                  placeholder="Nama user atau lokasi"
-                  required
-                />
+                  <PremiumInput
+                    label="Nama / Lokasi"
+                    type="text"
+                    value={entry.lokasi}
+                    onChange={(e) => handleChange(index, 'lokasi', e.target.value)}
+                    placeholder="Nama user atau lokasi"
+                    required
+                  />
+                </div>
+
+                <div className="bg-emerald-50/50 p-6 rounded-[2rem] border-2 border-emerald-100/50 space-y-5 h-full">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">🚀</span>
+                      <div>
+                        <p className="text-[10px] font-black text-emerald-700 uppercase tracking-widest leading-none">External & Delegasi</p>
+                        <p className="text-xs font-bold text-slate-800">SIMRS Escalation</p>
+                      </div>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={entry.createExternal}
+                        onChange={(e) => handleChange(index, 'createExternal', e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                    </label>
+                  </div>
+
+                  <div className={`space-y-4 transition-all duration-300 ${entry.createExternal ? 'opacity-100 translate-y-0' : 'opacity-40 pointer-events-none -translate-y-2'}`}>
+                    <CustomDropdown
+                      label="Service Catalog"
+                      value={entry.service_catalog_id}
+                      onChange={(val) => handleChange(index, 'service_catalog_id', val)}
+                      options={EXTERNAL_CATALOGS.map(cat => ({
+                        value: cat.id.toString(),
+                        label: cat.name
+                      }))}
+                    />
+
+                    <CustomDropdown
+                      label="Delegasi Teknisi (Opsional)"
+                      value={entry.technician_id}
+                      onChange={(val) => handleChange(index, 'technician_id', val)}
+                      options={[
+                        { value: '', label: '-- Pilih Teknisi (Opsional) --' },
+                        ...technicians.map(t => ({
+                          value: t.teknisi_id.toString(),
+                          label: t.nama_lengkap
+                        }))
+                      ]}
+                    />
+                  </div>
+                </div>
               </div>
 
               <PremiumTextarea
-                label="Catatan Kasus"
+                label="Catatan Kasus / Keluhan Utama"
                 value={entry.catatan}
                 onChange={(e) => handleChange(index, 'catatan', e.target.value)}
                 placeholder="Rincian masalah..."
-                rows={4}
-                className="mb-6"
+                rows={3}
               />
             </PremiumCard>
           ))}
@@ -209,14 +399,15 @@ function CreateLogbookContent() {
             <PremiumButton
               type="submit"
               disabled={loading}
-              className="flex-1 py-4 text-xs font-black uppercase tracking-widest shadow-2xl shadow-blue-100"
+              className="flex-1 py-4 text-xs font-black uppercase tracking-widest shadow-2xl shadow-blue-100 placeholder-opacity-50"
             >
-              {loading ? 'MENYIMPAN...' : '💾 SIMPAN SEMUA ORDER'}
+              <span className="mr-2">💾</span>
+              {loading ? 'MENYIMPAN...' : 'SIMPAN WORKLOG & EXTERNAL ORDER'}
             </PremiumButton>
           </div>
 
           {error && (
-            <div className="bg-red-50 border-2 border-red-200 text-red-700 px-6 py-4 rounded-2xl font-bold">
+            <div className="bg-red-50 border-2 border-red-200 text-red-700 px-6 py-4 rounded-2xl font-bold animate-pulse">
               ⚠️ {error}
             </div>
           )}

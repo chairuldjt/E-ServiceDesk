@@ -10,11 +10,7 @@ export async function GET(request: NextRequest) {
         }
 
         const { searchParams } = new URL(request.url);
-        const orderId = searchParams.get('orderId');
-
-        if (!orderId) {
-            return NextResponse.json({ error: 'Order ID is required' }, { status: 400 });
-        }
+        const orderId = searchParams.get('orderId') || '0';
 
         const result = await getExternalOrderAssignList(payload.id, parseInt(orderId));
         return NextResponse.json({ result });

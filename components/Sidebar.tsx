@@ -61,7 +61,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const allMenuItems = [
     { name: 'Dashboard', path: '/dashboard', icon: '📊' },
     { name: 'Timeline', path: '/timeline', icon: '📱' },
-    { name: 'Logbook', path: '/eservicedesk', icon: '📔' },
+    { name: 'Create Order', path: '/eservicedesk', icon: '📔' },
     { name: 'Monitoring', path: '/monitoring', icon: '📡' },
     { name: 'Order', path: '/order', icon: '🎫' },
     { name: 'Notepad', path: '/notepad', icon: '📝' },

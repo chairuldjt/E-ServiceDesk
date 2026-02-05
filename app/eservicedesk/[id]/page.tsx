@@ -6,7 +6,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useUI } from '@/context/UIContext';
 import { EXTERNAL_CATALOGS } from '@/lib/constants';
-import { PageHeader, PremiumCard, PremiumButton, PremiumInput, PremiumTextarea, PremiumBadge, PremiumModal } from '@/components/ui/PremiumComponents';
+import { PageHeader, PremiumCard, PremiumButton, PremiumInput, PremiumTextarea, PremiumBadge, PremiumModal, CustomDropdown } from '@/components/ui/PremiumComponents';
 
 interface LogbookEntry {
   id: number;
@@ -54,8 +54,11 @@ function DetailLogbookContent() {
 
   // Order Modal State
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
+  const [technicians, setTechnicians] = useState<any[]>([]);
   const [orderFormData, setOrderFormData] = useState({
-    service_catalog_id: '11'
+    service_catalog_id: '11',
+    technician_id: '',
+    technician_name: ''
   });
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
 
@@ -64,11 +67,28 @@ function DetailLogbookContent() {
     lokasi: '',
     catatan: '',
     status: 'pending_order',
+    createExternal: false,
+    service_catalog_id: '11',
+    technician_id: '',
+    technician_name: ''
   });
 
   useEffect(() => {
     fetchLogbook();
+    fetchTechnicians();
   }, [id]);
+
+  const fetchTechnicians = async () => {
+    try {
+      const res = await fetch('/api/monitoring/assign-list?orderId=0');
+      const data = await res.json();
+      if (res.ok) {
+        setTechnicians(data.result || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch technicians', err);
+    }
+  };
 
   const fetchLogbook = async () => {
     try {
@@ -88,6 +108,10 @@ function DetailLogbookContent() {
         lokasi: entry.lokasi || '',
         catatan: entry.catatan || '',
         status: entry.status || 'pending_order',
+        createExternal: false,
+        service_catalog_id: '11',
+        technician_id: '',
+        technician_name: ''
       });
     } catch (error) {
       setError('Terjadi kesalahan: ' + (error instanceof Error ? error.message : 'Unknown error'));
@@ -104,17 +128,51 @@ function DetailLogbookContent() {
     }));
   };
 
+  const handleExternalDelegation = async (externalOrderId: any, techId: string, techName: string) => {
+    if (!techId || !externalOrderId) return { success: true };
+
+    // High delay for sync (1s)
+    await new Promise(r => setTimeout(r, 1000));
+    console.log(`Auto-delegating Order ID: ${externalOrderId} to Tech: ${techId}`);
+
+    try {
+      const assignRes = await fetch('/api/monitoring/assign-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          order_id: externalOrderId,
+          id: externalOrderId,
+          teknisi_id: techId,
+          nama_lengkap: techName,
+          assign_type_code: "1",
+          assign_desc: "NEW",
+          emoji_code: ":gear:"
+        })
+      });
+
+      if (assignRes.ok) return { success: true };
+      const err = await assignRes.json();
+      return { success: false, error: err.error || 'Gagal delegasi' };
+    } catch (err) {
+      return { success: false, error: 'Koneksi delegasi gagal' };
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     setError('');
 
     try {
+      // 1. Update Local Logbook
       const response = await fetch(`/api/eservicedesk/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...formData,
+          extensi: formData.extensi,
+          lokasi: formData.lokasi,
+          catatan: formData.catatan,
+          status: formData.status,
           nama: formData.lokasi
         }),
       });
@@ -123,12 +181,46 @@ function DetailLogbookContent() {
 
       if (!response.ok) {
         setError(data.error || 'Gagal menyimpan logbook');
+        setSaving(false);
         return;
+      }
+
+      // 2. If Create External is toggled, process it
+      let externalInfo = '';
+      if (formData.createExternal && logbook && logbook.status !== 'ordered') {
+        const extRes = await fetch('/api/monitoring/create-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            catatan: formData.catatan,
+            ext_phone: formData.extensi,
+            location_desc: formData.lokasi,
+            service_catalog_id: formData.service_catalog_id,
+            logbookId: id
+          }),
+        });
+
+        const orderData = await extRes.json();
+        if (extRes.ok) {
+          const externalOrderId = orderData.id;
+          externalInfo = ' & Order External Berhasil';
+
+          if (formData.technician_id) {
+            const delRes = await handleExternalDelegation(externalOrderId, formData.technician_id, formData.technician_name);
+            if (delRes.success) {
+              externalInfo += ' + Delegasi Berhasil';
+            } else {
+              externalInfo += ` (Delegasi Gagal: ${delRes.error})`;
+            }
+          }
+        } else {
+          externalInfo = ` (Gagal External: ${orderData.error})`;
+        }
       }
 
       setLogbook(data.data);
       setIsEditing(false);
-      showToast('Data berhasil diperbarui', 'success');
+      showToast('Data berhasil diperbarui' + externalInfo, externalInfo.includes('Gagal') ? 'error' : 'success');
     } catch (error) {
       setError('Terjadi kesalahan: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
@@ -142,6 +234,7 @@ function DetailLogbookContent() {
 
     setIsSubmittingOrder(true);
     try {
+      // 1. Create External Order
       const response = await fetch('/api/monitoring/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -154,14 +247,55 @@ function DetailLogbookContent() {
         }),
       });
 
-      const result = await response.json();
-      if (response.ok) {
-        showToast('External Order berhasil dibuat', 'success');
-        setIsOrderModalOpen(false);
-        fetchLogbook(); // Refresh to show "Sudah Diorderkan"
-      } else {
-        showToast(`Gagal: ${result.error}`, 'error');
+      const orderData = await response.json();
+      console.log('External Order System Response:', orderData);
+
+      if (!response.ok) {
+        showToast(`Gagal: ${orderData.error}`, 'error');
+        setIsSubmittingOrder(false);
+        return;
       }
+
+      const externalOrderId = orderData.id;
+
+      // 2. Auto Delegation if technician is selected
+      if (orderFormData.technician_id && externalOrderId) {
+        // High delay for sync (1s)
+        await new Promise(r => setTimeout(r, 1000));
+
+        console.log(`Auto-delegating Order ID: ${externalOrderId} to Tech: ${orderFormData.technician_id}`);
+
+        try {
+          const assignRes = await fetch('/api/monitoring/assign-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              order_id: externalOrderId,
+              id: externalOrderId,
+              teknisi_id: orderFormData.technician_id,
+              nama_lengkap: orderFormData.technician_name,
+              assign_type_code: "1",
+              assign_desc: "NEW",
+              emoji_code: ":gear:"
+            })
+          });
+
+          if (assignRes.ok) {
+            showToast('External Order & Delegasi berhasil', 'success');
+          } else {
+            const assignErr = await assignRes.json();
+            showToast('Order terbuat, tapi delegasi gagal', 'error');
+            console.error('Delegation Error:', assignErr);
+          }
+        } catch (assignErr) {
+          showToast('Order terbuat, tapi koneksi delegasi gagal', 'error');
+        }
+      } else {
+        showToast('External Order berhasil dibuat', 'success');
+      }
+
+      setIsOrderModalOpen(false);
+      fetchLogbook(); // Refresh to show "Sudah Diorderkan"
     } catch (error: any) {
       console.error('Error creating order:', error);
       showToast('Terjadi kesalahan saat mengirim order', 'error');
@@ -306,6 +440,74 @@ function DetailLogbookContent() {
                   rows={6}
                 />
 
+                {/* External Options Integration */}
+                <div className={`p-8 rounded-[2.5rem] border-2 transition-all duration-500 bg-white shadow-xl ${formData.createExternal ? 'border-emerald-200 shadow-emerald-100/50' : 'border-slate-100'}`}>
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-lg transition-all duration-500 ${formData.createExternal ? 'bg-emerald-600 text-white rotate-12 scale-110 shadow-emerald-200' : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200'}`}>
+                        {formData.createExternal ? '🚀' : '📡'}
+                      </div>
+                      <div>
+                        <h4 className={`text-lg font-black tracking-tight transition-colors ${formData.createExternal ? 'text-emerald-900' : 'text-slate-700'}`}>
+                          External Option
+                        </h4>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mt-1">Eskalasi ke SIMRS</p>
+                      </div>
+                    </div>
+
+                    <label className="relative inline-flex items-center cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
+                        checked={formData.createExternal}
+                        onChange={(e) => setFormData({ ...formData, createExternal: e.target.checked })}
+                        disabled={logbook.status === 'ordered'}
+                      />
+                      <div className="w-14 h-8 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-100 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-600 shadow-inner"></div>
+                      <span className={`ml-3 text-xs font-black uppercase tracking-widest transition-colors ${formData.createExternal ? 'text-emerald-700' : 'text-slate-400'}`}>
+                        {formData.createExternal ? 'Direct Escalation Active' : 'Internal Only'}
+                      </span>
+                    </label>
+                  </div>
+
+                  {formData.createExternal && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in slide-in-from-top-4 duration-500">
+                      <CustomDropdown
+                        label="Service Catalog"
+                        value={formData.service_catalog_id}
+                        onChange={val => setFormData({ ...formData, service_catalog_id: val })}
+                        options={EXTERNAL_CATALOGS.map(cat => ({
+                          value: cat.id.toString(),
+                          label: cat.name
+                        }))}
+                      />
+
+                      <CustomDropdown
+                        label="Delegasi Teknisi (Opsional)"
+                        value={formData.technician_id}
+                        onChange={val => {
+                          const techName = technicians.find(t => t.teknisi_id.toString() === val)?.nama_lengkap || '';
+                          setFormData({ ...formData, technician_id: val, technician_name: techName });
+                        }}
+                        options={[
+                          { value: '', label: '-- Pilih Teknisi (Opsional) --' },
+                          ...technicians.map(t => ({
+                            value: t.teknisi_id.toString(),
+                            label: t.nama_lengkap
+                          }))
+                        ]}
+                      />
+                    </div>
+                  )}
+
+                  {logbook.status === 'ordered' && (
+                    <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-2xl flex items-center gap-3">
+                      <span className="text-xl">ℹ️</span>
+                      <p className="text-xs font-bold text-blue-700">Order ini sudah pernah dikirim ke SIMRS sebelumnya.</p>
+                    </div>
+                  )}
+                </div>
+
                 <div className="flex flex-col md:flex-row gap-4 pt-10">
                   <PremiumButton
                     type="button"
@@ -340,7 +542,7 @@ function DetailLogbookContent() {
         size="sm"
       >
         {logbook && (
-          <form onSubmit={handleCreateOrder} className="space-y-5">
+          <form onSubmit={handleCreateOrder} className="space-y-6">
             <div className="bg-emerald-50/50 p-6 rounded-[2rem] border-2 border-emerald-100/50 space-y-4">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-2xl shadow-sm">🛒</div>
@@ -361,22 +563,32 @@ function DetailLogbookContent() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest px-1">
-                Pilih Service Catalog
-              </label>
-              <select
+            <div className="space-y-4">
+              <CustomDropdown
+                label="Pilih Service Catalog"
                 value={orderFormData.service_catalog_id}
-                onChange={e => setOrderFormData({ ...orderFormData, service_catalog_id: e.target.value })}
-                className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-5 py-4 focus:ring-4 focus:ring-emerald-100 focus:border-emerald-600 outline-none transition-all font-bold text-slate-700 appearance-none shadow-sm"
-                style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%23cbd5e1\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\' /%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1.2rem center', backgroundSize: '1.2em' }}
-              >
-                {EXTERNAL_CATALOGS.map(cat => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
+                onChange={val => setOrderFormData({ ...orderFormData, service_catalog_id: val })}
+                options={EXTERNAL_CATALOGS.map(cat => ({
+                  value: cat.id.toString(),
+                  label: cat.name
+                }))}
+              />
+
+              <CustomDropdown
+                label="Delegasi Teknisi (Opsional)"
+                value={orderFormData.technician_id}
+                onChange={val => {
+                  const techName = technicians.find(t => t.teknisi_id.toString() === val)?.nama_lengkap || '';
+                  setOrderFormData({ ...orderFormData, technician_id: val, technician_name: techName });
+                }}
+                options={[
+                  { value: '', label: '-- Pilih Teknisi (Opsional) --' },
+                  ...technicians.map(t => ({
+                    value: t.technician_id?.toString() || t.teknisi_id?.toString(),
+                    label: t.nama_lengkap
+                  }))
+                ]}
+              />
             </div>
 
             <div className="flex flex-col gap-3 pt-6">

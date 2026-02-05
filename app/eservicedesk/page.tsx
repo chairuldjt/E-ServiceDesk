@@ -57,14 +57,17 @@ function EServiceDeskListContent() {
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<LogbookEntry | null>(null);
   const [orderFormData, setOrderFormData] = useState({
-    service_catalog_id: '11'
+    service_catalog_id: '11',
+    technician_id: ''
   });
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
+  const [technicians, setTechnicians] = useState<any[]>([]);
+  const [loadingTechnicians, setLoadingTechnicians] = useState(false);
 
   // Bulk Selection State
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [isBulkOrderModalOpen, setIsBulkOrderModalOpen] = useState(false);
-  const [bulkOrderData, setBulkOrderData] = useState<{ [key: number]: string }>({});
+  const [bulkOrderData, setBulkOrderData] = useState<{ [key: number]: { service_catalog_id: string, technician_id: string } }>({});
   const [isSubmittingBulk, setIsSubmittingBulk] = useState(false);
 
   // Export Modal State
@@ -76,7 +79,23 @@ function EServiceDeskListContent() {
 
   useEffect(() => {
     fetchLogbook(selectedDate);
+    fetchTechnicians();
   }, [selectedDate]);
+
+  const fetchTechnicians = async () => {
+    try {
+      setLoadingTechnicians(true);
+      const response = await fetch('/api/monitoring/assign-list?orderId=0');
+      const data = await response.json();
+      if (response.ok) {
+        setTechnicians(data.result || []);
+      }
+    } catch (error) {
+      console.error('Error fetching technicians:', error);
+    } finally {
+      setLoadingTechnicians(false);
+    }
+  };
 
   const changeDate = (days: number) => {
     const [y, m, d] = selectedDate.split('-').map(Number);
@@ -124,6 +143,31 @@ function EServiceDeskListContent() {
     });
   };
 
+  const handleBulkDelete = () => {
+    if (selectedIds.length === 0) return;
+    confirm('Hapus Semua Terpilih?', `Apakah Anda yakin ingin menghapus ${selectedIds.length} data yang dipilih?`, async () => {
+      try {
+        const response = await fetch('/api/eservicedesk', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: selectedIds }),
+        });
+
+        if (response.ok) {
+          setLogbookEntries(logbookEntries.filter(entry => !selectedIds.includes(entry.id)));
+          setSelectedIds([]);
+          showToast('Data terpilih berhasil dihapus', 'success');
+        } else {
+          const result = await response.json();
+          showToast(result.error || 'Gagal menghapus data bulk', 'error');
+        }
+      } catch (error) {
+        console.error('Error deleting bulk logbook:', error);
+        showToast('Terjadi kesalahan saat menghapus bulk', 'error');
+      }
+    });
+  };
+
   const toggleStatus = (entry: LogbookEntry) => {
     const newStatus = entry.status === 'ordered' ? 'pending_order' : 'ordered';
 
@@ -155,6 +199,10 @@ function EServiceDeskListContent() {
 
   const handleOrderClick = (entry: LogbookEntry) => {
     setSelectedEntry(entry);
+    setOrderFormData({
+      service_catalog_id: '11',
+      technician_id: ''
+    });
     setIsOrderModalOpen(true);
   };
 
@@ -178,7 +226,37 @@ function EServiceDeskListContent() {
 
       const result = await response.json();
       if (response.ok) {
-        showToast('Order berhasil dikirim dan status order diupdate', 'success');
+        let msg = 'Order berhasil dikirim dan status order diupdate';
+
+        // Handle delegation if technician is selected
+        if (orderFormData.technician_id && result.id) {
+          try {
+            // High delay to ensure external DB is ready
+            await new Promise(r => setTimeout(r, 1000));
+
+            const tech = technicians.find(t => t.teknisi_id.toString() === orderFormData.technician_id);
+            const assignRes = await fetch('/api/monitoring/assign-order', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                order_id: result.id,
+                id: result.id,
+                teknisi_id: orderFormData.technician_id,
+                nama_lengkap: tech ? tech.nama_lengkap : 'Teknisi',
+                assign_type_code: "1",
+                assign_desc: "NEW",
+                emoji_code: ":gear:"
+              }),
+            });
+            if (assignRes.ok) {
+              msg += ' & Teknisi berhasil didelegasikan';
+            }
+          } catch (err) {
+            console.error('Auto assign failed:', err);
+          }
+        }
+
+        showToast(msg, 'success');
         setIsOrderModalOpen(false);
         fetchLogbook(selectedDate);
       } else {
@@ -212,9 +290,9 @@ function EServiceDeskListContent() {
       return;
     }
     // Initialize bulkOrderData with default catalog (11)
-    const initialBulkData: { [key: number]: string } = {};
+    const initialBulkData: { [key: number]: { service_catalog_id: string, technician_id: string } } = {};
     selectedIds.forEach(id => {
-      initialBulkData[id] = '11';
+      initialBulkData[id] = { service_catalog_id: '11', technician_id: '' };
     });
     setBulkOrderData(initialBulkData);
     setIsBulkOrderModalOpen(true);
@@ -230,6 +308,7 @@ function EServiceDeskListContent() {
 
     for (const entry of selectedEntries) {
       try {
+        const itemData = bulkOrderData[entry.id];
         const response = await fetch('/api/monitoring/create-order', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -237,13 +316,39 @@ function EServiceDeskListContent() {
             catatan: entry.catatan || entry.nama,
             ext_phone: entry.extensi,
             location_desc: entry.lokasi,
-            service_catalog_id: bulkOrderData[entry.id],
+            service_catalog_id: itemData.service_catalog_id,
             logbookId: entry.id
           }),
         });
 
+        const result = await response.json();
         if (response.ok) {
           successCount++;
+
+          // Handle delegation if technician is selected
+          if (itemData.technician_id && result.id) {
+            try {
+              // High delay to ensure external DB is ready
+              await new Promise(r => setTimeout(r, 1000));
+
+              const tech = technicians.find(t => t.teknisi_id.toString() === itemData.technician_id);
+              await fetch('/api/monitoring/assign-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  order_id: result.id,
+                  id: result.id,
+                  teknisi_id: itemData.technician_id,
+                  nama_lengkap: tech ? tech.nama_lengkap : 'Teknisi',
+                  assign_type_code: "1",
+                  assign_desc: "NEW",
+                  emoji_code: ":gear:"
+                }),
+              });
+            } catch (err) {
+              console.error(`Auto assign failed for ID ${entry.id}:`, err);
+            }
+          }
         } else {
           failCount++;
         }
@@ -329,7 +434,7 @@ function EServiceDeskListContent() {
     <div className="min-h-screen p-4 md:p-8 space-y-6 animate-in fade-in duration-700">
       <PageHeader
         icon="📚"
-        title="E-ServiceDesk"
+        title="Create Order"
         subtitle="Kelola catatan pekerjaan dan internal hub"
         actions={
           <div className="flex flex-wrap items-center gap-3 md:justify-end">
@@ -404,14 +509,25 @@ function EServiceDeskListContent() {
           />
         </div>
 
-        <div className="w-full md:w-auto">
+        <div className="w-full md:w-auto flex items-center gap-2">
+          <PremiumButton
+            onClick={handleBulkDelete}
+            disabled={selectedIds.length === 0}
+            variant="danger"
+            size="sm"
+            className="flex-1 md:flex-none py-3 shadow-lg shadow-red-100 uppercase tracking-widest text-[10px] font-black disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            🗑️ Hapus ({selectedIds.length})
+          </PremiumButton>
+
           <PremiumButton
             onClick={handleOpenBulkModal}
             disabled={selectedIds.length === 0}
             variant="success"
-            className="w-full md:w-auto px-10 py-4 shadow-xl shadow-emerald-100 uppercase tracking-widest text-xs font-black disabled:opacity-50 disabled:cursor-not-allowed"
+            size="sm"
+            className="flex-1 md:flex-none py-3 shadow-lg shadow-emerald-100 uppercase tracking-widest text-[10px] font-black disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            🚀 Create Multiple Order ({selectedIds.length})
+            🚀 Bulk Order ({selectedIds.length})
           </PremiumButton>
         </div>
       </div>
@@ -601,6 +717,19 @@ function EServiceDeskListContent() {
               }))}
             />
 
+            <CustomDropdown
+              label="Delegasi Teknisi (Opsional)"
+              value={orderFormData.technician_id}
+              onChange={val => setOrderFormData({ ...orderFormData, technician_id: val })}
+              options={[
+                { value: '', label: '-- Pilih Teknisi (Opsional) --' },
+                ...technicians.map(t => ({
+                  value: t.teknisi_id.toString(),
+                  label: t.nama_lengkap
+                }))
+              ]}
+            />
+
             <div className="flex flex-col gap-3 pt-6">
               <PremiumButton
                 type="submit"
@@ -648,12 +777,33 @@ function EServiceDeskListContent() {
                       <div className="w-full">
                         <CustomDropdown
                           label="Service Catalog"
-                          value={bulkOrderData[entry.id]}
-                          onChange={(val) => setBulkOrderData({ ...bulkOrderData, [entry.id]: val })}
+                          value={bulkOrderData[entry.id]?.service_catalog_id}
+                          onChange={(val) => setBulkOrderData({
+                            ...bulkOrderData,
+                            [entry.id]: { ...bulkOrderData[entry.id], service_catalog_id: val }
+                          })}
                           options={EXTERNAL_CATALOGS.map(cat => ({
                             value: cat.id.toString(),
                             label: cat.name
                           }))}
+                          className="w-full"
+                        />
+                      </div>
+                      <div className="w-full">
+                        <CustomDropdown
+                          label="Delegasi Teknisi"
+                          value={bulkOrderData[entry.id]?.technician_id}
+                          onChange={(val) => setBulkOrderData({
+                            ...bulkOrderData,
+                            [entry.id]: { ...bulkOrderData[entry.id], technician_id: val }
+                          })}
+                          options={[
+                            { value: '', label: '-- Pilih Teknisi (Opsional) --' },
+                            ...technicians.map(t => ({
+                              value: t.teknisi_id.toString(),
+                              label: t.nama_lengkap
+                            }))
+                          ]}
                           className="w-full"
                         />
                       </div>
