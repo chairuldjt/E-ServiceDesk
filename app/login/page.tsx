@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
@@ -16,7 +16,14 @@ export default function LoginPage() {
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login } = useAuth();
+  const { login, user, isLoading } = useAuth();
+
+  useEffect(() => {
+    if (!isLoading && user) {
+      const redirect = searchParams.get('redirect') || '/dashboard';
+      router.replace(redirect);
+    }
+  }, [user, isLoading, router, searchParams]);
 
   const [formData, setFormData] = useState({
     email: '',

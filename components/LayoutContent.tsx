@@ -5,9 +5,11 @@ import { Sidebar } from '@/components/Sidebar';
 import { NotificationBell } from '@/components/NotificationBell';
 import { useAuth } from '@/hooks/useAuth';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export function LayoutContent({ children }: { children: React.ReactNode }) {
     const { user, logout } = useAuth();
+    const pathname = usePathname();
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -30,7 +32,9 @@ export function LayoutContent({ children }: { children: React.ReactNode }) {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    if (!user) {
+    const isPublicPage = pathname === '/login' || pathname === '/register';
+
+    if (!user || isPublicPage) {
         return <main className="min-h-screen">{children}</main>;
     }
 
