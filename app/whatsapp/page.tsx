@@ -650,11 +650,31 @@ const WhatsAppContent = () => {
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="bg-slate-50 p-8 rounded-[2rem] border-2 border-dashed border-slate-200 hover:border-emerald-200 transition-colors relative">
+                                    <div
+                                        className="bg-slate-50 p-8 rounded-[2rem] border-2 border-dashed border-slate-200 hover:border-emerald-200 transition-colors relative outline-none ring-offset-2 focus-within:ring-2 focus-within:ring-emerald-100"
+                                        onPaste={(e) => {
+                                            const items = e.clipboardData.items;
+                                            for (let i = 0; i < items.length; i++) {
+                                                if (items[i].type.indexOf('image') !== -1) {
+                                                    const blob = items[i].getAsFile();
+                                                    if (blob) {
+                                                        const fileInput = document.getElementById('imageUpload') as HTMLInputElement;
+                                                        if (fileInput) {
+                                                            const dataTransfer = new DataTransfer();
+                                                            dataTransfer.items.add(blob);
+                                                            fileInput.files = dataTransfer.files;
+                                                            showToast('Gambar berhasil ditempel (pasted)!', 'success');
+                                                        }
+                                                    }
+                                                    break;
+                                                }
+                                            }
+                                        }}
+                                    >
                                         <div className="space-y-6">
                                             <div className="flex items-center justify-between">
                                                 <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">
-                                                    {isChangingImage ? 'Pilih Gambar Baru untuk Otomatisasi' : 'Upload Gambar Otomatis'}
+                                                    {isChangingImage ? 'Pilih Gambar Baru (atau Paste)' : 'Upload Gambar (atau Paste)'}
                                                 </label>
                                                 {isChangingImage && (
                                                     <button
@@ -678,6 +698,9 @@ const WhatsAppContent = () => {
                                                         hover:file:bg-emerald-700
                                                         cursor-pointer transition-all shadow-sm"
                                             />
+                                            <p className="text-center text-xs text-slate-400 font-medium">
+                                                Tip: Anda bisa langsung <b>Ctrl+V</b> (Paste) gambar di area ini.
+                                            </p>
                                         </div>
                                     </div>
                                 )}
