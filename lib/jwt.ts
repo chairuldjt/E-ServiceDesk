@@ -2,7 +2,7 @@ import { sign, verify, type Secret, type SignOptions } from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 
 const JWT_SECRET = (process.env.JWT_SECRET || 'secret-key') as Secret;
-const JWT_EXPIRES_IN = (process.env.JWT_EXPIRES_IN || '7d');
+const JWT_EXPIRES_IN = (process.env.JWT_EXPIRES_IN || '10h');
 
 export interface JWTPayload {
   id: number;

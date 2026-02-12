@@ -17,6 +17,7 @@ interface AuthContextType {
     login: (token: string, userData: User) => void;
     logout: () => void;
     refreshUser: () => Promise<void>;
+    handleAuthError: (error: any) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -27,13 +28,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        const initializeAuth = () => {
+        const initializeAuth = async () => {
             const userData = localStorage.getItem('user');
-            if (userData) {
+            const token = localStorage.getItem('token');
+
+            if (userData && token) {
                 try {
                     setUser(JSON.parse(userData));
+                    // Verifikasi session ke server
+                    const response = await fetch('/api/user/profile');
+                    if (!response.ok) {
+                        if (response.status === 401) {
+                            // Session expired atau invalid
+                            localStorage.removeItem('token');
+                            localStorage.removeItem('user');
+                            setUser(null);
+                        }
+                    } else {
+                        const result = await response.json();
+                        setUser(result.data);
+                        localStorage.setItem('user', JSON.stringify(result.data));
+                    }
                 } catch (error) {
                     console.error('Error parsing user data:', error);
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    setUser(null);
                 }
             }
             setIsLoading(false);
@@ -74,8 +94,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    const handleAuthError = (error: any) => {
+        if (error?.status === 401 || error?.response?.status === 401) {
+            logout();
+        }
+    };
+
     return (
-        <AuthContext.Provider value={{ user, isLoading, login, logout, refreshUser }}>
+        <AuthContext.Provider value={{ user, isLoading, login, logout, refreshUser, handleAuthError }}>
             {children}
         </AuthContext.Provider>
     );

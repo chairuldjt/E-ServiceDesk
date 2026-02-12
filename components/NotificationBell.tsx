@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Bell, Check, X } from 'lucide-react';
 import Link from 'next/link';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Notification {
     id: number;
@@ -21,6 +22,8 @@ export function NotificationBell() {
     const [unreadCount, setUnreadCount] = useState(0);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
+    const { handleAuthError } = useAuth();
+
     const fetchNotifications = async () => {
         try {
             const res = await fetch('/api/notifications');
@@ -28,6 +31,8 @@ export function NotificationBell() {
                 const data = await res.json();
                 setNotifications(data);
                 setUnreadCount(data.filter((n: Notification) => !n.is_read).length);
+            } else if (res.status === 401) {
+                handleAuthError(res);
             }
         } catch (error) {
             console.error('Failed to fetch notifications:', error);

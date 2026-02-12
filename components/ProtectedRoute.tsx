@@ -1,27 +1,19 @@
 'use client';
 
 import { useRouter, usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { user, isLoading } = useAuth();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        router.push('/login?redirect=' + pathname);
-        return;
-      }
-      setIsAuthenticated(true);
-      setIsLoading(false);
-    };
-
-    checkAuth();
-  }, [router, pathname]);
+    if (!isLoading && !user) {
+      router.push('/login?redirect=' + pathname);
+    }
+  }, [user, isLoading, router, pathname]);
 
   if (isLoading) {
     return (
@@ -31,5 +23,5 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  return isAuthenticated ? <>{children}</> : null;
+  return user ? <>{children}</> : null;
 }
