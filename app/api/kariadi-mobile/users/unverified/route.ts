@@ -38,6 +38,21 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json(data);
     } catch (error: any) {
+        const errorData = error.response?.data;
+        const errorMessage = typeof errorData === 'string' ? errorData : JSON.stringify(errorData || {});
+
+        if (error.response?.status === 500 && (
+            errorMessage.includes('PHP Error') ||
+            errorMessage.includes('TypeError') ||
+            errorMessage.includes('MobileModel::')
+        )) {
+            return NextResponse.json({
+                data: [],
+                recordsTotal: 0,
+                recordsFiltered: 0,
+                warning: 'Captured buggy backend response'
+            });
+        }
         console.error('Kariadi Unverified List Error:', error.message);
         return NextResponse.json({ error: 'Failed to fetch unverified users' }, { status: 500 });
     }

@@ -119,16 +119,25 @@ function KariadiMobileContent() {
             });
             const result = await response.json();
 
-            if (response.ok || (result.success)) {
+            if (response.ok || result.success || result.status === true) {
                 setToast({
                     message: action === 'activate' ? 'Akun berhasil diaktifkan' :
                         action === 'delete' ? 'Akun berhasil dihapus' : 'Email konfirmasi berhasil dikirim',
                     type: 'success'
                 });
                 fetchUsers();
-                if (selectedUser) setSelectedUser(null);
+                if (selectedUser) {
+                    if (action === 'delete') {
+                        setSelectedUser(null);
+                        setDetailContent(null);
+                    } else {
+                        // Refresh detail if it's the current user
+                        setTimeout(() => fetchUserDetail(selectedUser), 1000);
+                    }
+                }
             } else {
-                setToast({ message: result.error || 'Gagal melakukan aksi', type: 'error' });
+                const errorDetail = result.details ? `: ${result.details}` : '';
+                setToast({ message: (result.error || result.message || 'Gagal melakukan aksi') + errorDetail, type: 'error' });
             }
         } catch (error) {
             setToast({ message: 'Terjadi kesalahan sistem', type: 'error' });
@@ -187,11 +196,20 @@ function KariadiMobileContent() {
                 const notifForm = notifDiv?.querySelector('form');
                 const notifAction = notifForm?.getAttribute('action');
 
+                // Extract Hidden Inputs (UserID, PartyID)
+                const hiddenInputs: any = {};
+                doc.querySelectorAll('input[type="hidden"]').forEach((input: any) => {
+                    const name = input.getAttribute('name');
+                    const value = input.getAttribute('value');
+                    if (name && value) hiddenInputs[name] = value;
+                });
+
                 setDetailContent({
                     profile: profileInfo,
                     patient: patientInfo,
                     notifications: notifications,
-                    notifAction: notifAction
+                    notifAction: notifAction,
+                    hiddenInputs: hiddenInputs
                 });
             } else {
                 setToast({ message: 'Gagal memuat detail pengguna', type: 'error' });
@@ -223,7 +241,7 @@ function KariadiMobileContent() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    id: selectedUser.id,
+                    id: detailContent?.hiddenInputs?.inputUserID || selectedUser.id,
                     actionUrl: detailContent?.notifAction,
                     title: notifTitle,
                     message: notifMessage
@@ -231,14 +249,15 @@ function KariadiMobileContent() {
             });
 
             const result = await response.json();
-            if (response.ok && (result.success || result.status === true)) {
+            // Kariadi send_notif might return a success message string or object
+            if (response.ok && (result.success || result.status === true || typeof result === 'string')) {
                 setToast({ message: 'Notifikasi berhasil dikirim', type: 'success' });
                 setNotifTitle('');
                 setNotifMessage('');
-                // Refresh detail to see new notification in history (if immediate)
-                fetchUserDetail(selectedUser);
+                // Refresh detail to see new notification in history
+                setTimeout(() => fetchUserDetail(selectedUser), 1500);
             } else {
-                setToast({ message: result.message || 'Gagal mengirim notifikasi', type: 'error' });
+                setToast({ message: result.message || result.error || 'Gagal mengirim notifikasi', type: 'error' });
             }
         } catch (error) {
             setToast({ message: 'Terjadi kesalahan sistem', type: 'error' });
@@ -277,9 +296,11 @@ function KariadiMobileContent() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     action: 'update_patient',
-                    id: updateFormData.id,
+                    id: detailContent?.hiddenInputs?.inputUserID || updateFormData.id,
                     medical_record: updateFormData.medical_record,
-                    nik: updateFormData.nik
+                    nik: updateFormData.nik,
+                    party_id: detailContent?.hiddenInputs?.inputPartyID,
+                    old_medical_record: detailContent?.hiddenInputs?.inputOldMedicalRecord
                 })
             });
 

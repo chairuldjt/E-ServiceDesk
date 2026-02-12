@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        let endpoint = actionUrl || '/users/send_notif'; // Fallback
+        let endpoint = actionUrl || '/features/notif/send';
 
         // Handle full URL if provided
         if (endpoint.includes('://')) {
@@ -41,9 +41,9 @@ export async function POST(request: NextRequest) {
         }
 
         const formData = new URLSearchParams();
-        formData.append('id', body.id);
-        formData.append('title', body.title);
-        formData.append('message', body.message);
+        formData.append('inputUserID', body.id);
+        formData.append('inputTitle', body.title);
+        formData.append('inputMessage', body.message);
 
         const data = await kariadiFetch(endpoint, {
             method: 'POST',
