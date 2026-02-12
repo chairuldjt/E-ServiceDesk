@@ -792,12 +792,20 @@ function KariadiMobileContent() {
                         <p className="text-slate-500 mb-8 leading-relaxed">
                             Anda belum mengonfigurasi kredensial <strong>Kariadi Mobile</strong>. Silakan atur username dan password terlebih dahulu di halaman pengaturan.
                         </p>
-                        <a
-                            href="/settings"
-                            className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all active:scale-95 block"
-                        >
-                            ⚙️ Ke Halaman Pengaturan
-                        </a>
+                        <div className="flex flex-col gap-3">
+                            <a
+                                href="/settings"
+                                className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all active:scale-95 block"
+                            >
+                                ⚙️ Ke Halaman Pengaturan
+                            </a>
+                            <button
+                                onClick={() => setShowSettingsModal(false)}
+                                className="w-full bg-slate-100 text-slate-600 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-200 transition-all active:scale-95"
+                            >
+                                Batal
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
