@@ -42,6 +42,11 @@ function SettingsContent() {
         base_url: ''
     });
 
+    const [kariadiConfig, setKariadiConfig] = useState({
+        username: '',
+        password: ''
+    });
+
     const [isWhatsappVisible, setIsWhatsappVisible] = useState(true);
 
     const [permissions, setPermissions] = useState<string[]>([]);
@@ -87,10 +92,18 @@ function SettingsContent() {
             }
 
             // Fetch WhatsApp visibility setting
+            // Fetch WhatsApp visibility setting
             const whatsappResp = await fetch('/api/settings/whatsapp-visibility');
             const whatsappData = await whatsappResp.json();
             if (whatsappResp.ok && whatsappData.visible !== undefined) {
                 setIsWhatsappVisible(whatsappData.visible);
+            }
+
+            // Fetch Kariadi config
+            const kariadiResp = await fetch('/api/settings/kariadi');
+            if (kariadiResp.ok) {
+                const kariadiData = await kariadiResp.json();
+                setKariadiConfig(prev => ({ ...prev, username: kariadiData.username || '' }));
             }
         } catch (error) {
             showToast('Gagal memuat profil', 'error');
@@ -229,6 +242,28 @@ function SettingsContent() {
             }
         } catch (error) {
             console.error(error);
+            showToast('Terjadi kesalahan', 'error');
+        } finally {
+            setUpdating(false);
+        }
+    };
+
+    const handleKariadiSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setUpdating(true);
+        try {
+            const response = await fetch('/api/settings/kariadi', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(kariadiConfig),
+            });
+
+            if (response.ok) {
+                showToast('Kredensial Kariadi Mobile berhasil disimpan', 'success');
+            } else {
+                showToast('Gagal menyimpan kredensial', 'error');
+            }
+        } catch (error) {
             showToast('Terjadi kesalahan', 'error');
         } finally {
             setUpdating(false);
@@ -506,6 +541,63 @@ function SettingsContent() {
                                         Menyembunyikan menu ini hanya akan menghilangkan tautan di sidebar Anda. Halaman <code className="bg-blue-100 px-1 rounded text-blue-900">/whatsapp</code> tetap dapat diakses secara langsung.
                                     </p>
                                 </div>
+                            </div>
+                        )}
+
+                        {/* Kariadi Mobile Connection Section */}
+                        {(user?.role === 'admin' || permissions.includes('/kariadi-mobile')) && (
+                            <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center -mr-8 -mt-8 opacity-50">
+                                    <span className="text-4xl">🏥</span>
+                                </div>
+                                <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                                    <span className="text-blue-600">Mobile</span> Kariadi Credentials
+                                </h3>
+                                <p className="text-sm text-gray-500 mb-8 leading-relaxed">
+                                    Konfigurasi kredensial akun Kariadi Mobile Anda agar dapat mengakses fitur manajemen user.
+                                </p>
+                                <form onSubmit={handleKariadiSubmit} className="space-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label className="block text-sm font-bold text-gray-700 mb-2">Username</label>
+                                            <input
+                                                type="text"
+                                                value={kariadiConfig.username}
+                                                onChange={(e) => setKariadiConfig({ ...kariadiConfig, username: e.target.value })}
+                                                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                placeholder="Contoh: TKJ.51464..."
+                                                required
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-bold text-gray-700 mb-2">Password</label>
+                                            <input
+                                                type="password"
+                                                value={kariadiConfig.password}
+                                                onChange={(e) => setKariadiConfig({ ...kariadiConfig, password: e.target.value })}
+                                                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                placeholder="••••••••"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-end pt-4 border-t border-slate-50">
+                                        <button
+                                            type="submit"
+                                            className="bg-blue-600 text-white px-8 py-2.5 rounded-xl font-semibold hover:bg-blue-700 transition shadow-lg shadow-blue-100 disabled:opacity-50 flex items-center gap-2"
+                                            disabled={updating}
+                                        >
+                                            {updating ? (
+                                                <>
+                                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                                    Menyimpan...
+                                                </>
+                                            ) : (
+                                                <>💾 Simpan Kredensial</>
+                                            )}
+                                        </button>
+                                    </div>
+                                </form>
                             </div>
                         )}
                     </div>

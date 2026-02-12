@@ -65,6 +65,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     { name: 'Monitoring', path: '/monitoring', icon: '📡' },
     { name: 'Order', path: '/order', icon: '🎫' },
     { name: 'Notepad', path: '/notepad', icon: '📝' },
+    { name: 'Kariadi Mobile', path: '/kariadi-mobile', icon: '🏥' },
     { name: 'Chatbot', path: '/chatbot', icon: '🤖' },
     { name: 'WhatsApp Bot', path: '/whatsapp', icon: '📱' },
     { name: 'Telegram', path: '/telegram', icon: '✈️' },

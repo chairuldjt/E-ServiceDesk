@@ -371,6 +371,20 @@ async function initDatabase() {
             console.log('   - Column "telegram_session" added successfully');
         }
 
+        const hasKariadiUser = userColumns.some((col: any) => col.Field === 'kariadi_username');
+        if (!hasKariadiUser) {
+            console.log('   - Adding missing "kariadi_username" column to "users" table...');
+            await connection.query('ALTER TABLE users ADD COLUMN kariadi_username VARCHAR(100) DEFAULT NULL AFTER telegram_session');
+            console.log('   - Column "kariadi_username" added successfully');
+        }
+
+        const hasKariadiPass = userColumns.some((col: any) => col.Field === 'kariadi_password');
+        if (!hasKariadiPass) {
+            console.log('   - Adding missing "kariadi_password" column to "users" table...');
+            await connection.query('ALTER TABLE users ADD COLUMN kariadi_password VARCHAR(255) DEFAULT NULL AFTER kariadi_username');
+            console.log('   - Column "kariadi_password" added successfully');
+        }
+
         const hasImages = columns.some((col: any) => col.Field === 'images');
         if (!hasImages) {
             console.log('   - Adding missing "images" column to "notes" table...');

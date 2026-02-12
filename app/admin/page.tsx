@@ -478,6 +478,7 @@ function AdminContent() {
     { name: 'Monitoring', path: '/monitoring' },
     { name: 'Order', path: '/order' },
     { name: 'Notepad', path: '/notepad' },
+    { name: 'Kariadi Mobile', path: '/kariadi-mobile' },
     { name: 'Chatbot', path: '/chatbot' },
     { name: 'WhatsApp Bot', path: '/whatsapp' },
     { name: 'Telegram', path: '/telegram' },
